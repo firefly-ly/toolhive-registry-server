@@ -1,0 +1,42 @@
+name: Lint Helm Chart
+
+on:
+    push:
+        branches: [main]
+        paths:
+            - "helm/**"
+            - ".github/workflows/lint-helm.yml"
+    pull_request:
+        branches: [main]
+        paths:
+            - "helm/**"
+            - ".github/workflows/lint-helm.yml"
+
+permissions:
+    contents: read
+
+jobs:
+    lint-chart:
+        name: Lint Helm Chart
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+              with:
+                  fetch-depth: 0
+
+            - name: Set up Helm
+              uses: azure/setup-helm@dda3372f752e03dde6b3237bc9431cdc2f7a02a2 # v5
+              with:
+                  version: "latest"
+
+            - name: Run Helm lint
+              run: |
+                  helm lint ./helm
+                  helm lint ./helm -f ./helm/values-dev.yaml
+
+            - name: Validate templates
+              run: |
+                  helm template toolhive-cloud-ui ./helm --kube-version 1.28.0 --debug
+                  helm template toolhive-cloud-ui ./helm -f ./helm/values-dev.yaml --kube-version 1.28.0 --debug

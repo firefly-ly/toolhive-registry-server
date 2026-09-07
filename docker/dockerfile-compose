@@ -5,6 +5,13 @@ USER root
 
 WORKDIR /workspace
 
+# Local dev behind a corporate/localhost proxy: the default Go module proxy
+# (proxy.golang.org -> storage.googleapis.com) gets reset by the Windows
+# localhost proxy. Point at a reachable mirror so "go mod download" / "go build"
+# can fetch modules. Override via: docker compose build --build-arg GOPROXY=...
+ARG GOPROXY=https://proxy.golang.com.cn,direct
+ENV GOPROXY=$GOPROXY
+
 # Copy the Go Modules manifests
 COPY go.mod go.mod
 COPY go.sum go.sum

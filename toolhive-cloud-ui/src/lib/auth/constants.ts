@@ -1,0 +1,108 @@
+/**
+ * Authentication constants and configuration.
+ */
+
+// Environment configuration
+// Hardcoded Better Auth provider identifier. This value is part of the
+// OAuth callback URL (/api/auth/oauth2/callback/oidc) and is stored in
+// the account table when DATABASE_URL is set. Changing it will invalidate
+// existing sessions and require updating the redirect URI in the IdP.
+export const OIDC_PROVIDER_ID = "oidc";
+export const OIDC_ISSUER_URL = process.env.OIDC_ISSUER_URL || "";
+export const OIDC_CLIENT_ID = process.env.OIDC_CLIENT_ID || "";
+export const OIDC_CLIENT_SECRET = process.env.OIDC_CLIENT_SECRET || "";
+export const BASE_URL = process.env.BETTER_AUTH_URL || "http://localhost:3000";
+export const IS_PRODUCTION = process.env.NODE_ENV === "production";
+export const OIDC_DISCOVERY_URL = `${OIDC_ISSUER_URL}/.well-known/openid-configuration`;
+export const BETTER_AUTH_SECRET =
+  process.env.BETTER_AUTH_SECRET || "build-time-better-auth-secret";
+export const OIDC_SCOPES = process.env.OIDC_SCOPES?.split(",") ?? [
+  "openid",
+  "email",
+  "profile",
+  "offline_access",
+];
+
+// OIDC endpoint paths (authorization / token / userinfo / JWKS).
+// Casdoor's OIDC endpoint layout differs from Keycloak's. We default to the
+// Casdoor paths so the platform works against Casdoor out of the box, but each
+// is overridable via env in case the IdP (e.g. a future Okta/Entra broker) uses
+// a different layout. The issuer + discovery URL are still derived from
+// OIDC_ISSUER_URL above.
+export const OIDC_AUTHORIZATION_URL =
+  process.env.OIDC_AUTHORIZATION_URL ||
+  `${OIDC_ISSUER_URL}/login/oauth/authorize`;
+export const OIDC_TOKEN_URL =
+  process.env.OIDC_TOKEN_URL || `${OIDC_ISSUER_URL}/api/login/oauth/access_token`;
+export const OIDC_USERINFO_URL =
+  process.env.OIDC_USERINFO_URL || `${OIDC_ISSUER_URL}/api/userinfo`;
+export const OIDC_JWKS_URL =
+  process.env.OIDC_JWKS_URL || `${OIDC_ISSUER_URL}/.well-known/jwks`;
+
+// Token expiration constants (in milliseconds and seconds)
+export const TOKEN_ONE_HOUR_MS = 60 * 60 * 1000; // 3,600,000 ms (1 hour)
+export const TOKEN_SEVEN_DAYS_SECONDS = 7 * 24 * 60 * 60; // 604,800 seconds (7 days)
+
+/**
+ * Buffer time subtracted from token expiration to account for clock skew
+ * between our server and the OIDC provider. Prevents edge cases where
+ * tokens appear valid locally but are rejected by the provider.
+ */
+export const CLOCK_SKEW_BUFFER_MS = 60 * 1000; // 60 seconds
+
+// Cookie configuration (used for stateless mode when DATABASE_URL is not set)
+export const OIDC_TOKEN_COOKIE_NAME = "oidc_token" as const;
+
+/**
+ * Whether to use secure cookies (HTTPS only).
+ * Set COOKIE_SECURE=false for local development over HTTP.
+ * Defaults to true in production, false otherwise.
+ */
+export const COOKIE_SECURE =
+  process.env.COOKIE_SECURE !== undefined
+    ? process.env.COOKIE_SECURE === "true"
+    : IS_PRODUCTION;
+
+// Database configuration (optional - enables database mode for large OIDC tokens)
+export const DATABASE_URL = process.env.DATABASE_URL;
+
+// Rate limiting configuration
+//
+// Better Auth has a default rate limit of 3 requests per 10 seconds for sign-in
+// endpoints. This causes E2E test failures when multiple tests authenticate in
+// quick succession (e.g., 3 tests using authenticatedPage fixture followed by
+// a login test = 4 sign-ins, triggering 429 Too Many Requests).
+//
+// Set BETTER_AUTH_RATE_LIMIT to a higher value (e.g., 100) for E2E tests.
+// See: node_modules/better-auth/dist/api/rate-limiter/index.mjs
+export const BETTER_AUTH_RATE_LIMIT = process.env.BETTER_AUTH_RATE_LIMIT
+  ? Number.parseInt(process.env.BETTER_AUTH_RATE_LIMIT, 10)
+  : undefined;
+
+// Trusted origins for Better Auth
+const trustedOriginsFromEnv = process.env.TRUSTED_ORIGINS
+  ? process.env.TRUSTED_ORIGINS.split(",").map((s) => s.trim())
+  : [BASE_URL, "http://localhost:3002", "http://localhost:3003"];
+
+/**
+ * Admin identity resolution (development fallback).
+ *
+ * The canonical admin判定 is the `admin` role from the OIDC IdP (Casdoor)
+ * userinfo, extracted in `getAuthContext`. Until the IdP is configured to
+ * surface roles in the userinfo claim, list administrator emails here
+ * (comma-separated) so the manager UI can be exercised locally.
+ *
+ * Example: ADMIN_EMAILS=alice@corp.com,bob@corp.com
+ */
+console.log("[debug] ADMIN_EMAILS raw env:", JSON.stringify(process.env.ADMIN_EMAILS));
+export const ADMIN_EMAILS = process.env.ADMIN_EMAILS
+  ? process.env.ADMIN_EMAILS.split(",")
+      .map((s) => s.trim().toLowerCase())
+      .filter(Boolean)
+  : [];
+console.log("[debug] ADMIN_EMAILS parsed:", ADMIN_EMAILS);
+
+// Ensure BASE_URL is always included in trusted origins
+export const TRUSTED_ORIGINS = trustedOriginsFromEnv.includes(BASE_URL)
+  ? trustedOriginsFromEnv
+  : [...trustedOriginsFromEnv, BASE_URL];

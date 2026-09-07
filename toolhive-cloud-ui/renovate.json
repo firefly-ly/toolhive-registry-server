@@ -1,0 +1,34 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended", "helpers:pinGitHubActionDigests"],
+  "rangeStrategy": "bump",
+  "labels": ["dependencies"],
+  "prConcurrentLimit": 3,
+  "timezone": "Europe/London",
+  "schedule": ["after 01:00 and before 07:00 every weekday"],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "fileMatch": ["^scripts/generate-swagger\\.ts$"],
+      "matchStrings": [
+        "renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+) versioning=(?<versioning>\\S+)\\s*\\n\\s*\\*/\\s*\\n.*?=\\s*[\"'](?<currentValue>v[\\d.]+)[\"']"
+      ]
+    },
+    {
+      "customType": "regex",
+      "fileMatch": ["^biome\\.json$"],
+      "matchStrings": [
+        "\"\\$schema\":\\s*\"https://biomejs\\.dev/schemas/(?<currentValue>[\\d.]+)/schema\\.json\""
+      ],
+      "depNameTemplate": "@biomejs/biome",
+      "datasourceTemplate": "npm"
+    }
+  ],
+  "minimumReleaseAge": "3 days",
+  "packageRules": [
+    {
+      "description": "Auto-regenerate API client via GitHub Actions workflow",
+      "matchDepNames": ["stacklok/toolhive-registry-server"]
+    }
+  ]
+}

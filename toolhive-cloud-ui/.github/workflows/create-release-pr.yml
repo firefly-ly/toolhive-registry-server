@@ -1,0 +1,67 @@
+# Create Release PR workflow using releaseo
+#
+# This workflow creates a release PR that bumps the version in:
+# - VERSION file (single source of truth)
+# - helm/Chart.yaml (version and appVersion)
+# - helm/values.yaml (image.tag with v prefix)
+#
+
+name: Create Release PR
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump_type:
+        description: "Version bump type"
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release:
+    name: Create Release PR
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          app-id: ${{ vars.RELEASE_APP_CLIENT_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+
+      - name: Create Release PR
+        id: release
+        uses: stacklok/releaseo@80e8d8131d41cf8763254d02360f2c5ce9b7c0df # v0.0.4
+        with:
+          releaseo_version: v0.0.3
+          bump_type: ${{ inputs.bump_type }}
+          token: ${{ steps.app-token.outputs.token }}
+          version_files: |
+            - file: helm/Chart.yaml
+              path: version
+            - file: helm/Chart.yaml
+              path: appVersion
+              prefix: v
+            - file: helm/values.yaml
+              path: image.cloudUiImage
+              prefix: v
+
+      - name: Summary
+        run: |
+          echo "## Release PR Created" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version**: ${{ steps.release.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **PR**: #${{ steps.release.outputs.pr_number }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **URL**: ${{ steps.release.outputs.pr_url }}" >> $GITHUB_STEP_SUMMARY

@@ -28,6 +28,7 @@ type ListSkillsOptions struct {
 	Search       *string
 	Limit        int
 	Cursor       *string
+	Status       string // comma-separated statuses to include; empty = active only
 	Claims       map[string]any
 }
 
@@ -76,6 +77,12 @@ func (o *ListSkillsOptions) setCursor(cursor string) error {
 //nolint:unparam
 func (o *ListSkillsOptions) setClaims(claims map[string]any) error {
 	o.Claims = claims
+	return nil
+}
+
+//nolint:unparam
+func (o *ListSkillsOptions) setStatus(status string) error {
+	o.Status = status
 	return nil
 }
 

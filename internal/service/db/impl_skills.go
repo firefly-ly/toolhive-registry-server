@@ -114,10 +114,51 @@ func (s *dbService) ListSkills(
 		skills[i] = skill
 	}
 
+	skills = filterSkillsByStatus(skills, options.Status)
+
 	return &service.ListSkillsResult{
 		Skills:     skills,
 		NextCursor: nextCursor,
 	}, nil
+}
+
+// filterSkillsByStatus returns only the skills whose status is in the allowed
+// set. When statusFilter is empty, only ACTIVE skills are returned. This ports
+// the behaviour of the mock backend, where deprecated/archived (and, in the
+// mock, removed/rejected) entries are hidden from listings by default.
+func filterSkillsByStatus(skills []*service.Skill, statusFilter string) []*service.Skill {
+	allowed := parseStatusFilter(statusFilter)
+	out := make([]*service.Skill, 0, len(skills))
+	for _, s := range skills {
+		if allowed[s.Status] {
+			out = append(out, s)
+		}
+	}
+	return out
+}
+
+// parseStatusFilter normalises a comma-separated status filter into a set of
+// canonical (uppercase) status values. An empty or unrecognised filter resolves
+// to ACTIVE only.
+func parseStatusFilter(statusFilter string) map[string]bool {
+	if strings.TrimSpace(statusFilter) == "" {
+		return map[string]bool{string(sqlc.SkillStatusACTIVE): true}
+	}
+	allowed := make(map[string]bool)
+	for _, tok := range strings.Split(statusFilter, ",") {
+		switch strings.TrimSpace(strings.ToLower(tok)) {
+		case "active":
+			allowed[string(sqlc.SkillStatusACTIVE)] = true
+		case "deprecated":
+			allowed[string(sqlc.SkillStatusDEPRECATED)] = true
+		case "archived":
+			allowed[string(sqlc.SkillStatusARCHIVED)] = true
+		}
+	}
+	if len(allowed) == 0 {
+		allowed[string(sqlc.SkillStatusACTIVE)] = true
+	}
+	return allowed
 }
 
 // fetchSkillPackages fetches OCI and Git packages for the given skill rows and

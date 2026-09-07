@@ -1,0 +1,156 @@
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { toast } from "sonner";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import SignInPage from "@/app/signin/page";
+import { SignInButton } from "@/app/signin/signin-button";
+import { authClient } from "@/lib/auth/auth-client";
+
+describe("SignInPage", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    cleanup();
+  });
+
+  test("renders signin page with all elements", () => {
+    render(<SignInPage />);
+
+    expect(
+      screen.getByRole("heading", {
+        level: 2,
+        name: /登录/i,
+      }),
+    ).toBeDefined();
+
+    expect(
+      screen.getByText(/使用企业账号登录/i),
+    ).toBeDefined();
+
+    expect(screen.getByRole("button", { name: /登录/i })).toBeDefined();
+  });
+
+  test("calls authClient.signIn.oauth2 when button is clicked", async () => {
+    const user = userEvent.setup();
+    vi.mocked(authClient.signIn.oauth2).mockResolvedValue({
+      data: { url: "http://example.com", redirect: true },
+      error: null,
+    });
+
+    render(<SignInPage />);
+
+    const signInButton = screen.getByRole("button", { name: /登录/i });
+    await user.click(signInButton);
+
+    await waitFor(() => {
+      expect(authClient.signIn.oauth2).toHaveBeenCalledWith({
+        providerId: "oidc",
+        callbackURL: "/catalog",
+      });
+    });
+  });
+
+  test("shows error toast when signin fails with error", async () => {
+    const user = userEvent.setup();
+    vi.mocked(authClient.signIn.oauth2).mockResolvedValue({
+      error: {
+        message: "Invalid credentials",
+      },
+    } as Awaited<ReturnType<typeof authClient.signIn.oauth2>>);
+
+    render(<SignInPage />);
+
+    const signInButton = screen.getByRole("button", { name: /登录/i });
+    await user.click(signInButton);
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith("登录失败", {
+        description: "Invalid credentials",
+      });
+    });
+  });
+
+  test("shows error toast when signin throws exception", async () => {
+    const user = userEvent.setup();
+    vi.mocked(authClient.signIn.oauth2).mockRejectedValue(
+      new Error("Network error"),
+    );
+
+    render(<SignInPage />);
+
+    const signInButton = screen.getByRole("button", { name: /登录/i });
+    await user.click(signInButton);
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith("登录出错", {
+        description: "Network error",
+      });
+    });
+  });
+
+  test("shows generic error message for unknown errors", async () => {
+    const user = userEvent.setup();
+    vi.mocked(authClient.signIn.oauth2).mockRejectedValue(
+      "Something went wrong",
+    );
+
+    render(<SignInPage />);
+
+    const signInButton = screen.getByRole("button", { name: /登录/i });
+    await user.click(signInButton);
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith("登录出错", {
+        description: "An unexpected error occurred",
+      });
+    });
+  });
+
+  test("calls signOut before signIn.oauth2 to clear stale session", async () => {
+    const user = userEvent.setup();
+    const callOrder: string[] = [];
+    vi.mocked(authClient.signOut).mockImplementation(async () => {
+      callOrder.push("signOut");
+      return { data: null, error: null };
+    });
+    vi.mocked(authClient.signIn.oauth2).mockImplementation(async () => {
+      callOrder.push("signIn");
+      return {
+        data: { url: "http://example.com", redirect: true },
+        error: null,
+      };
+    });
+
+    render(<SignInPage />);
+    await user.click(screen.getByRole("button", { name: /登录/i }));
+
+    await waitFor(() => {
+      expect(authClient.signOut).toHaveBeenCalledOnce();
+      expect(authClient.signIn.oauth2).toHaveBeenCalledOnce();
+      expect(callOrder).toEqual(["signOut", "signIn"]);
+    });
+  });
+
+  test("signin with custom provider id", async () => {
+    const user = userEvent.setup();
+    vi.mocked(authClient.signIn.oauth2).mockResolvedValue({
+      data: { url: "http://example.com", redirect: true },
+      error: null,
+    });
+
+    render(<SignInButton providerId="okta" />);
+
+    // Button always shows "登录" regardless of provider ID
+    const signInButton = screen.getByRole("button", { name: /登录/i });
+    await user.click(signInButton);
+
+    await waitFor(() => {
+      expect(authClient.signIn.oauth2).toHaveBeenCalledWith({
+        providerId: "okta",
+        callbackURL: "/catalog",
+      });
+    });
+  });
+});

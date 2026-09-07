@@ -1,0 +1,34 @@
+Dockerfile
+.dockerignore
+node_modules
+npm-debug.log
+README.md
+.next
+.git
+.gitignore
+.vscode
+.idea
+*.md
+.DS_Store
+.env*.local
+coverage
+.vercel
+
+# Build artifacts not needed in Docker
+tsconfig.tsbuildinfo
+playwright-report/
+test-results/
+.vitest/
+
+# Dev/test files not needed in production image
+tests/
+scripts/
+dev-auth/
+src/mocks/
+docker-compose.yaml
+biome.json
+knip.ts
+vitest.setup.ts
+openapi-ts.config.ts
+swagger.json
+.pnpm-debug.log

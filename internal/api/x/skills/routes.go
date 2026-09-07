@@ -33,6 +33,8 @@ func Router(svc service.RegistryService) http.Handler {
 	r.Get("/{namespace}/{name}", auditmw.AuditedSkill(auditmw.EventSkillRead, routes.getLatestVersion))
 	r.Get("/{namespace}/{name}/versions", auditmw.AuditedSkill(auditmw.EventSkillVersionsList, routes.listVersions))
 	r.Get("/{namespace}/{name}/versions/{version}", auditmw.AuditedSkill(auditmw.EventSkillVersionRead, routes.getVersion))
+	r.Get("/{namespace}/{name}/download", routes.downloadLatestSkill)
+	r.Get("/{namespace}/{name}/versions/{version}/download", routes.downloadSkillVersion)
 
 	return r
 }
@@ -80,6 +82,9 @@ func (routes *Routes) listSkills(w http.ResponseWriter, r *http.Request) {
 	}
 	if query.Cursor != "" {
 		opts = append(opts, service.WithCursor(query.Cursor))
+	}
+	if query.Status != "" {
+		opts = append(opts, service.WithStatus(query.Status))
 	}
 	if jwtClaims := auth.ClaimsFromContext(r.Context()); jwtClaims != nil {
 		opts = append(opts, service.WithClaims(map[string]any(jwtClaims)))

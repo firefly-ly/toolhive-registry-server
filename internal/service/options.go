@@ -30,6 +30,10 @@ type searchOption interface {
 	setSearch(search string) error
 }
 
+type statusOption interface {
+	setStatus(status string) error
+}
+
 type updatedSinceOption interface {
 	setUpdatedSince(updatedSince time.Time) error
 }
@@ -76,6 +80,20 @@ func WithSearch(search string) Option {
 		switch o := o.(type) {
 		case searchOption:
 			return o.setSearch(search)
+		default:
+			return fmt.Errorf("invalid option type: %T", o)
+		}
+	}
+}
+
+// WithStatus sets the status filter for the ListSkills operation.
+// The value is a comma-separated list of statuses (e.g. "active,deprecated").
+// An empty value means "active only" (deprecated/archived hidden by default).
+func WithStatus(status string) Option {
+	return func(o any) error {
+		switch o := o.(type) {
+		case statusOption:
+			return o.setStatus(status)
 		default:
 			return fmt.Errorf("invalid option type: %T", o)
 		}

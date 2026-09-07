@@ -1,0 +1,173 @@
+
+> toolhive-cloud-ui@0.1.0 dev D:\MCP和skill平台\toolhive-registry-server\toolhive-cloud-ui
+> concurrently -n "OIDC,Mock,Next" -c "blue,magenta,green" "pnpm oidc" "pnpm mock:server" "pnpm dev:next"
+
+[OIDC] 
+[OIDC] > toolhive-cloud-ui@0.1.0 oidc D:\MCP和skill平台\toolhive-registry-server\toolhive-cloud-ui
+[OIDC] > node dev-auth/oidc-provider.mjs
+[OIDC] 
+[Mock] 
+[Mock] > toolhive-cloud-ui@0.1.0 mock:server D:\MCP和skill平台\toolhive-registry-server\toolhive-cloud-ui
+[Mock] > tsx src/mocks/server.ts
+[Mock] 
+[Next] 
+[Next] > toolhive-cloud-ui@0.1.0 dev:next D:\MCP和skill平台\toolhive-registry-server\toolhive-cloud-ui
+[Next] > node scripts/dev-next.mjs
+[Next] 
+[Next] ⚠ Self-signed certificates are currently an experimental feature, use with caution.
+[OIDC] [dotenv@17.3.1] injecting env (0) from .env -- tip: ⚙️  suppress all logs with { quiet: true }
+[OIDC] [dotenv@17.3.1] injecting env (17) from .env.local -- tip: ⚙️  specify custom .env file path with { path: '/custom/path/.env' }
+[OIDC] oidc-provider WARNING: a quick start development-only in-memory adapter is used, you MUST change it in order to not lose all stateful provider data upon restart and to be able to share these between processes
+[OIDC] oidc-provider WARNING: a quick start development-only signing keys are used, you are expected to provide your own in the configuration "jwks" property
+[OIDC] node:events:497
+[OIDC]       throw er; // Unhandled 'error' event
+[OIDC]       ^
+[OIDC] 
+[OIDC] Error: listen EADDRINUSE: address already in use :::8000
+[OIDC]     at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+[OIDC]     at listenInCluster (node:net:1997:12)
+[OIDC]     at Server.listen (node:net:2102:7)
+[OIDC]     at Provider.listen (D:\MCP和skill平台\toolhive-registry-server\toolhive-cloud-ui\node_modules\.pnpm\koa@3.1.2\node_modules\koa\lib\application.js:105:19)
+[OIDC]     at file:///D:/MCP%E5%92%8Cskill%E5%B9%B3%E5%8F%B0/toolhive-registry-server/toolhive-cloud-ui/dev-auth/oidc-provider.mjs:184:6
+[OIDC]     at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+[OIDC]     at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:665:26)
+[OIDC]     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+[OIDC] Emitted 'error' event on Server instance at:
+[OIDC]     at emitErrorNT (node:net:1976:8)
+[OIDC]     at process.processTicksAndRejections (node:internal/process/task_queues:89:21) {
+[OIDC]   code: 'EADDRINUSE',
+[OIDC]   errno: -4091,
+[OIDC]   syscall: 'listen',
+[OIDC]   address: '::',
+[OIDC]   port: 8000
+[OIDC] }
+[OIDC] 
+[OIDC] Node.js v22.22.2
+[OIDC]  ELIFECYCLE  Command failed with exit code 1.
+[OIDC] pnpm oidc exited with code 1
+[Next] ▲ Next.js 16.2.6 (Turbopack)
+[Next] - Local:         https://localhost:3000
+[Next] - Network:       https://172.20.155.243:3000
+[Next] - Environments: .env.local
+[Next] ✓ Ready in 1409ms
+[Next] ⚠ Slow filesystem detected. The benchmark took 371ms. If D:\MCP和skill平台\toolhive-registry-server\toolhive-cloud-ui\.next/dev is a network drive, consider moving it to a local folder.
+[Next] See more: https://nextjs.org/docs/app/guides/local-development
+[Mock] [dotenv@17.3.1] injecting env (0) from .env -- tip: ⚡️ secrets for agents: https://dotenvx.com/as2
+[Mock] [dotenv@17.3.1] injecting env (17) from .env.local -- tip: 🤖 agentic secret storage: https://dotenvx.com/as2
+[Mock] node:events:497
+[Mock]       throw er; // Unhandled 'error' event
+[Mock]       ^
+[Mock] 
+[Mock] Error: listen EADDRINUSE: address already in use :::8080
+[Mock]     at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+[Mock]     at listenInCluster (node:net:1997:12)
+[Mock]     at Server.listen (node:net:2102:7)
+[Mock]     at Function.listen (D:\MCP和skill平台\toolhive-registry-server\toolhive-cloud-ui\node_modules\.pnpm\express@4.22.1\node_modules\express\lib\application.js:635:24)
+[Mock]     at <anonymous> (D:\MCP和skill平台\toolhive-registry-server\toolhive-cloud-ui\src\mocks\server.ts:31:12)
+[Mock]     at Object.<anonymous> (D:\MCP和skill平台\toolhive-registry-server\toolhive-cloud-ui\src\mocks\server.ts:33:2)
+[Mock]     at Module._compile (node:internal/modules/cjs/loader:1705:14)
+[Mock]     at Object.transformer (D:\MCP和skill平台\toolhive-registry-server\toolhive-cloud-ui\node_modules\.pnpm\tsx@4.21.0\node_modules\tsx\dist\register-D46fvsV_.cjs:3:1104)
+[Mock]     at Module.load (node:internal/modules/cjs/loader:1441:32)
+[Mock]     at Function._load (node:internal/modules/cjs/loader:1263:12)
+[Mock] Emitted 'error' event on Server instance at:
+[Mock]     at emitErrorNT (node:net:1976:8)
+[Mock]     at process.processTicksAndRejections (node:internal/process/task_queues:89:21) {
+[Mock]   code: 'EADDRINUSE',
+[Mock]   errno: -4091,
+[Mock]   syscall: 'listen',
+[Mock]   address: '::',
+[Mock]   port: 8080
+[Mock] }
+[Mock] 
+[Mock] Node.js v22.22.2
+[Mock]  ELIFECYCLE  Command failed with exit code 1.
+[Mock] pnpm mock:server exited with code 1
+[Next] - Experiments (use with caution):
+[Next]   · proxyClientMaxBodySize: "2gb"
+[Next]   · serverActions
+[Next] 
+[Next] [debug] ADMIN_EMAILS raw env: "admin@example.com,test@example.com"
+[Next] [debug] ADMIN_EMAILS parsed: [ 'admin@example.com', 'test@example.com' ]
+[Next]  GET /signin 200 in 1813ms (next.js: 1040ms, proxy.ts: 267ms, application-code: 506ms)
+[Next] ✓ Finished filesystem cache database compaction in 14.3s
+[Next]  GET / 307 in 943ms (next.js: 406ms, proxy.ts: 16ms, application-code: 521ms)
+[Next] No OpenRouter API key found
+[Next]  GET /catalog 200 in 4.9s (next.js: 557ms, proxy.ts: 8ms, application-code: 4.3s)
+[Next]  GET /skills 200 in 573ms (next.js: 381ms, proxy.ts: 10ms, application-code: 182ms)
+[Next]  GET /admin 200 in 551ms (next.js: 446ms, proxy.ts: 6ms, application-code: 99ms)
+[Next]  GET /admin?tab=audit 200 in 179ms (next.js: 6ms, proxy.ts: 6ms, application-code: 166ms)
+[Next]  GET /admin?tab=retired 200 in 128ms (next.js: 5ms, proxy.ts: 7ms, application-code: 116ms)
+[Next]  GET /admin?tab=published 200 in 84ms (next.js: 4ms, proxy.ts: 6ms, application-code: 74ms)
+[Next]  GET /admin?tab=reviews 200 in 128ms (next.js: 6ms, proxy.ts: 7ms, application-code: 115ms)
+[Next]  GET /submissions 200 in 489ms (next.js: 402ms, proxy.ts: 7ms, application-code: 81ms)
+[Next]  GET /submissions?tab=history 200 in 96ms (next.js: 8ms, proxy.ts: 6ms, application-code: 82ms)
+[Next]  GET /submissions?tab=new 200 in 85ms (next.js: 9ms, proxy.ts: 5ms, application-code: 72ms)
+[Next]  GET /admin 200 in 148ms (next.js: 5ms, proxy.ts: 5ms, application-code: 137ms)
+[Next]  GET /admin?tab=published 200 in 107ms (next.js: 4ms, proxy.ts: 6ms, application-code: 96ms)
+[Next]  GET /admin?tab=retired 200 in 93ms (next.js: 5ms, proxy.ts: 6ms, application-code: 82ms)
+[Next]  GET /admin?tab=published 200 in 82ms (next.js: 4ms, proxy.ts: 4ms, application-code: 74ms)
+[Next]  GET /catalog 200 in 2.5s (next.js: 5ms, proxy.ts: 4ms, application-code: 2.5s)
+[Next]  GET /catalog?cursor=15 200 in 2.5s (next.js: 5ms, proxy.ts: 6ms, application-code: 2.5s)
+[Next]  GET /catalog 200 in 26ms (next.js: 7ms, proxy.ts: 10ms, application-code: 9ms)
+[Next]  GET /catalog 200 in 2.6s (next.js: 6ms, proxy.ts: 6ms, application-code: 2.6s)
+[Next]  GET /favorites 200 in 1668ms (next.js: 429ms, proxy.ts: 6ms, application-code: 1233ms)
+[Next]  GET /stats 200 in 1662ms (next.js: 450ms, proxy.ts: 4ms, application-code: 1208ms)
+[Next]  GET /admin 200 in 95ms (next.js: 7ms, proxy.ts: 8ms, application-code: 80ms)
+[Next]  GET /stats 200 in 1182ms (next.js: 5ms, proxy.ts: 5ms, application-code: 1172ms)
+[Next]  GET /admin 200 in 119ms (next.js: 3ms, proxy.ts: 4ms, application-code: 112ms)
+[Next]  GET /submissions 200 in 70ms (next.js: 5ms, proxy.ts: 4ms, application-code: 61ms)
+[Next]  GET /skills 200 in 214ms (next.js: 5ms, proxy.ts: 4ms, application-code: 204ms)
+[Next]  GET /catalog 200 in 2.6s (next.js: 5ms, proxy.ts: 4ms, application-code: 2.6s)
+[Next]  GET /catalog 200 in 2.5s (next.js: 4ms, proxy.ts: 4ms, application-code: 2.5s)
+[Next]  GET /catalog 200 in 2.7s (next.js: 6ms, proxy.ts: 8ms, application-code: 2.7s)
+[Next]  GET /submissions 200 in 140ms (next.js: 8ms, proxy.ts: 6ms, application-code: 126ms)
+[Next]  GET /catalog 200 in 2.6s (next.js: 3ms, proxy.ts: 5ms, application-code: 2.6s)
+[Next]  GET /catalog 200 in 2.5s (next.js: 4ms, proxy.ts: 4ms, application-code: 2.5s)
+[Next]  GET /catalog?cursor=15 200 in 2.1s (next.js: 4ms, proxy.ts: 5ms, application-code: 2.1s)
+[Next]  GET /catalog 200 in 20ms (next.js: 5ms, proxy.ts: 6ms, application-code: 9ms)
+[Next]  GET /catalog 200 in 2.7s (next.js: 6ms, proxy.ts: 6ms, application-code: 2.7s)
+[Next]  GET /catalog?cursor=15 200 in 2.1s (next.js: 10ms, proxy.ts: 4ms, application-code: 2.1s)
+[Next]  GET /catalog 200 in 18ms (next.js: 4ms, proxy.ts: 6ms, application-code: 8ms)
+[Next]  GET /catalog 200 in 2.1s (next.js: 4ms, proxy.ts: 5ms, application-code: 2.1s)
+[Next]  GET /catalog?cursor=15 200 in 2.0s (next.js: 4ms, proxy.ts: 5ms, application-code: 2.0s)
+[Next]  GET /admin 200 in 221ms (next.js: 6ms, proxy.ts: 7ms, application-code: 208ms)
+[Next]  GET /admin?tab=published 200 in 98ms (next.js: 4ms, proxy.ts: 5ms, application-code: 89ms)
+[Next] Warning: a dynamic page path "/mcp/[ref]" was passed to "revalidatePath", but the "type" parameter is missing. This has no effect by default, see more info here https://nextjs.org/docs/app/api-reference/functions/revalidatePath
+[Next] failed to get redirect response TypeError: fetch failed
+[Next]     at ignore-listed frames {
+[Next]   [cause]: Error: self-signed certificate
+[Next]       at ignore-listed frames {
+[Next]     code: 'DEPTH_ZERO_SELF_SIGNED_CERT'
+[Next]   }
+[Next] }
+[Next]  POST /admin?tab=published 303 in 10.8s (next.js: 4ms, proxy.ts: 10ms, application-code: 10.7s)
+[Next]   └─ ƒ undeploySubmissionAction({}) in 10308ms src/app/(app)/submissions/actions.ts
+[Next] No OpenRouter API key found
+[Next]  GET /admin?tab=published 200 in 582ms (next.js: 5ms, proxy.ts: 8ms, application-code: 569ms)
+[Next]  GET /submissions 200 in 72ms (next.js: 4ms, proxy.ts: 4ms, application-code: 64ms)
+[Next]  GET /submissions?tab=history 200 in 71ms (next.js: 4ms, proxy.ts: 9ms, application-code: 58ms)
+[Next]  GET /admin 200 in 113ms (next.js: 6ms, proxy.ts: 6ms, application-code: 101ms)
+[Next]  GET /stats 200 in 551ms (next.js: 3ms, proxy.ts: 4ms, application-code: 543ms)
+[Next]  GET /admin 200 in 66ms (next.js: 4ms, proxy.ts: 4ms, application-code: 58ms)
+[Next]  GET /favorites 200 in 542ms (next.js: 4ms, proxy.ts: 4ms, application-code: 533ms)
+[Next]  GET /admin?tab=published 200 in 125ms (next.js: 7ms, proxy.ts: 7ms, application-code: 111ms)
+[Next]  GET /stats 200 in 590ms (next.js: 8ms, proxy.ts: 5ms, application-code: 577ms)
+[Next]  GET /submissions 200 in 54ms (next.js: 6ms, proxy.ts: 4ms, application-code: 44ms)
+[Next]  GET /catalog 200 in 1904ms (next.js: 6ms, proxy.ts: 4ms, application-code: 1894ms)
+[Next]  GET /admin 200 in 104ms (next.js: 6ms, proxy.ts: 4ms, application-code: 94ms)
+[Next]  GET /admin?tab=published 200 in 76ms (next.js: 5ms, proxy.ts: 7ms, application-code: 63ms)
+[Next] Warning: a dynamic page path "/mcp/[ref]" was passed to "revalidatePath", but the "type" parameter is missing. This has no effect by default, see more info here https://nextjs.org/docs/app/api-reference/functions/revalidatePath
+[Next] failed to get redirect response TypeError: fetch failed
+[Next]     at ignore-listed frames {
+[Next]   [cause]: Error: self-signed certificate
+[Next]       at ignore-listed frames {
+[Next]     code: 'DEPTH_ZERO_SELF_SIGNED_CERT'
+[Next]   }
+[Next] }
+[Next]  POST /admin?tab=published 303 in 11.8s (next.js: 8ms, proxy.ts: 14ms, application-code: 11.8s)
+[Next]   └─ ƒ undeploySubmissionAction({}) in 11544ms src/app/(app)/submissions/actions.ts
+[Next] No OpenRouter API key found
+[Next]  GET /admin?tab=published 200 in 524ms (next.js: 6ms, proxy.ts: 9ms, application-code: 509ms)
+[Next]  GET /admin?tab=audit 200 in 225ms (next.js: 7ms, proxy.ts: 6ms, application-code: 212ms)
+[Next] No OpenRouter API key found
+[Next]  GET /catalog 200 in 1936ms (next.js: 6ms, proxy.ts: 5ms, application-code: 1925ms)

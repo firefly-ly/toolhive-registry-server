@@ -1,0 +1,86 @@
+name: E2E Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+env:
+  # Ollama config for AI assistant tests
+  OLLAMA_MODELS: /home/runner/.ollama/models
+
+jobs:
+  e2e:
+    name: Playwright E2E
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      API_BASE_URL: http://localhost:9090
+      OIDC_ISSUER_URL: http://localhost:4000
+      OIDC_CLIENT_ID: test-only-not-a-real-id
+      OIDC_CLIENT_SECRET: test-only-not-a-real-secret
+      BETTER_AUTH_URL: http://localhost:3000
+      BETTER_AUTH_SECRET: test-only-not-a-real-better-auth-secret
+      USE_E2E_MODEL: "true"
+      E2E_MODEL_NAME: qwen3:1.7b
+      OLLAMA_BASE_URL: http://localhost:11434
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - name: Cache Ollama models
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+        with:
+          path: /home/runner/.ollama/models
+          key: ollama-qwen3-1.7b-v1
+
+      - name: Start Ollama via Docker
+        run: |
+          mkdir -p /home/runner/.ollama/models
+          docker run -d \
+            -v /home/runner/.ollama/models:/root/.ollama/models \
+            -p 11434:11434 \
+            --name ollama \
+            ollama/ollama:0.15.4
+          # Wait for Ollama to be ready
+          for i in {1..30}; do
+            curl -sf http://localhost:11434/api/tags && break
+            sleep 1
+          done
+
+      - name: Pull Ollama model
+        run: docker exec ollama ollama pull qwen3:1.7b
+
+      - name: Setup
+        uses: ./.github/actions/setup
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Build production app
+        run: pnpm build
+        env:
+          # These env vars must match the runtime values for token encryption/decryption to work
+          BETTER_AUTH_SECRET: test-only-not-a-real-better-auth-secret
+
+      - name: Run Playwright tests
+        run: pnpm test:e2e
+
+      - name: Upload test artifacts
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        if: failure()
+        with:
+          name: playwright-report
+          path: |
+            test-results/
+            playwright-report/
+          retention-days: 7
