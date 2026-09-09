@@ -62,28 +62,31 @@ export function ServerFilters({
         </ToggleGroupItem>
       </ToggleGroup>
 
-      <Select value={selectedRegistry} onValueChange={onRegistryChange}>
-        <SelectTrigger
-          className="w-38 h-9 bg-white dark:bg-card"
-          aria-label="选择注册表"
-        >
-          <SelectValue placeholder="选择注册表">
-            {selectedRegistry || undefined}
-          </SelectValue>
-        </SelectTrigger>
-        <SelectContent>
-          {registries
-            .filter(
-              (registry): registry is typeof registry & { name: string } =>
-                !!registry.name,
-            )
-            .map((registry) => (
-              <SelectItem key={registry.name} value={registry.name}>
-                {registry.name}
-              </SelectItem>
-            ))}
-        </SelectContent>
-      </Select>
+      {/* 注册表多于一个时才显示切换器：单数据源时选择器没有可切换的项，徒占视觉空间 */}
+      {registries.length > 1 && (
+        <Select value={selectedRegistry} onValueChange={onRegistryChange}>
+          <SelectTrigger
+            className="w-38 h-9 bg-white dark:bg-card"
+            aria-label="选择注册表"
+          >
+            <SelectValue placeholder="选择注册表">
+              {selectedRegistry || undefined}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            {registries
+              .filter(
+                (registry): registry is typeof registry & { name: string } =>
+                  !!registry.name,
+              )
+              .map((registry) => (
+                <SelectItem key={registry.name} value={registry.name}>
+                  {registry.name}
+                </SelectItem>
+              ))}
+          </SelectContent>
+        </Select>
+      )}
 
       <div className="relative w-48">
         <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />

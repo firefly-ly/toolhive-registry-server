@@ -2,7 +2,7 @@ import { headers } from "next/headers";
 import type { V0ServerJson } from "@/generated/types.gen";
 import { auth } from "@/lib/auth/auth";
 import {
-  getItemCounts,
+  getItemCountsCached,
   getMcpById,
   getMcpServers,
   listFavorites,
@@ -36,6 +36,9 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
       })
     : { servers: [] };
 
+  // 搜索词提前算好：搜索时跳过最重的版本聚合（见下），只做匹配与分页
+  const q = (search ?? "").trim().toLowerCase();
+
   // 从平台后端取当前用户的 MCP 收藏集合 + 各 MCP 的调用次数
   let favoritedRefs: string[] = [];
   let callsByRef: Record<string, number> = {};
@@ -44,60 +47,71 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
   try {
     const session = await auth.api.getSession({ headers: await headers() });
     const actor = session?.user?.email ?? session?.user?.name ?? "";
-    if (actor) {
-      const favorites = await listFavorites();
-      favoritedRefs = favorites
-        .filter((f) => f.user_id === actor && f.item_type === "mcp")
-        .map((f) => f.item_ref);
-    }
-    callsByRef = await getItemCounts("mcp", "call");
+    // 收藏 / 调用计数 / 已提交 MCP 三者相互独立，并行获取（原先串行三次往返）
+    const [favorites, counts, mcps] = await Promise.all([
+      actor
+        ? safe(listFavorites(), [], "catalog.listFavorites")
+        : Promise.resolve([]),
+      safe(getItemCountsCached("mcp", "call"), {}, "catalog.getItemCounts"),
+      safe(getMcpServers(), [], "catalog.getMcpServers"),
+    ]);
+    favoritedRefs = favorites
+      .filter((f) => f.user_id === actor && f.item_type === "mcp")
+      .map((f) => f.item_ref);
+    callsByRef = counts;
+    submittedMcps = mcps;
     // 已审批的用户提交 MCP（未审批不会出现在这里）
-    submittedMcps = await safe(getMcpServers(), [], "catalog.getMcpServers");
-    // 预聚合每个已提交 MCP 的同 group 完整卡片数据（含默认版 + 其它已上架版本）。
-    // 列表每 group 只下发默认版（最新已上架）一张卡，其余版本在此预取，供卡片标题版本下拉「就地切换」。
-    const groupKeys = Array.from(
-      new Set(
-        submittedMcps.map(
-          (m) => m.group_key || String(m.payload_ref || "").split(":")[0] || "",
-        ),
-      ),
-    ).filter(Boolean);
-    const groupResults = await Promise.all(
-      groupKeys.map(async (g) => {
-        let onShelfIds: string[] = [];
-        try {
-          const r = await listGroupVersions(g);
-          onShelfIds = (r.versions || [])
-            .filter((v) => v.on_shelf !== false && v.id)
-            .map((v) => v.id);
-        } catch (error) {
-          // 单个 group 的版本列表失败只影响该组卡片聚合，留痕
-          console.error(`[catalog.groupVersions:${g}]`, error);
-        }
-        const activeCards = submittedMcps.filter(
-          (m) =>
-            (m.group_key || String(m.payload_ref || "").split(":")[0] || "") ===
-            g,
-        );
-        const have = new Set(activeCards.map((m) => m.id));
-        const siblingIds = onShelfIds.filter((id) => !have.has(id));
-        const fetched = await Promise.all(
-          siblingIds.map((id) =>
-            safe(getMcpById(id), null, `catalog.getMcpById:${id}`),
+    if (!q) {
+      // 预聚合每个已提交 MCP 的同 group 完整卡片数据（含默认版 + 其它已上架版本）。
+      // 列表每 group 只下发默认版（最新已上架）一张卡，其余版本在此预取，供卡片标题版本下拉「就地切换」。
+      // ⚠️ 这是 N+1（每 group 一次 listGroupVersions + 每版本一次 getMcpById），
+      // 是目录页最重的一段；搜索场景用户只找匹配项，跳过聚合（搜索结果卡不带版本切换）。
+      const groupKeys = Array.from(
+        new Set(
+          submittedMcps.map(
+            (m) =>
+              m.group_key || String(m.payload_ref || "").split(":")[0] || "",
           ),
-        );
-        return {
-          g,
-          cards: [
-            ...activeCards,
-            ...fetched.filter((x): x is McpServer => !!x),
-          ],
-        };
-      }),
-    );
-    for (const { g, cards } of groupResults) {
-      // 仅当一个 group 有多张（不同版本）卡片时才下发，单版本不打扰
-      if (cards.length > 1) siblingGroups[g] = cards;
+        ),
+      ).filter(Boolean);
+      const groupResults = await Promise.all(
+        groupKeys.map(async (g) => {
+          let onShelfIds: string[] = [];
+          try {
+            const r = await listGroupVersions(g);
+            onShelfIds = (r.versions || [])
+              .filter((v) => v.on_shelf !== false && v.id)
+              .map((v) => v.id);
+          } catch (error) {
+            // 单个 group 的版本列表失败只影响该组卡片聚合，留痕
+            console.error(`[catalog.groupVersions:${g}]`, error);
+          }
+          const activeCards = submittedMcps.filter(
+            (m) =>
+              (m.group_key ||
+                String(m.payload_ref || "").split(":")[0] ||
+                "") === g,
+          );
+          const have = new Set(activeCards.map((m) => m.id));
+          const siblingIds = onShelfIds.filter((id) => !have.has(id));
+          const fetched = await Promise.all(
+            siblingIds.map((id) =>
+              safe(getMcpById(id), null, `catalog.getMcpById:${id}`),
+            ),
+          );
+          return {
+            g,
+            cards: [
+              ...activeCards,
+              ...fetched.filter((x): x is McpServer => !!x),
+            ],
+          };
+        }),
+      );
+      for (const { g, cards } of groupResults) {
+        // 仅当一个 group 有多张（不同版本）卡片时才下发，单版本不打扰
+        if (cards.length > 1) siblingGroups[g] = cards;
+      }
     }
   } catch (error) {
     // 后端不可用时静默降级，卡片照常渲染（无星标/计数），但留痕
@@ -105,7 +119,6 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
   }
 
   // 搜索词同时过滤用户提交 MCP，保证合并后的分页总数正确
-  const q = (search ?? "").trim().toLowerCase();
   const filteredSubmitted = q
     ? submittedMcps.filter(
         (m) =>

@@ -523,6 +523,30 @@ export async function getItemCounts(
   );
 }
 
+// 计数是全局统计（无用户维度）且业务上允许秒级陈旧：
+// 目录页每次搜索/翻页都会重渲染，30s 内存缓存避免反复打后端。
+let countsCache: {
+  at: number;
+  key: string;
+  data: Record<string, number>;
+} | null = null;
+export async function getItemCountsCached(
+  item_type: string,
+  event: string,
+): Promise<Record<string, number>> {
+  const key = `${item_type}:${event}`;
+  if (
+    countsCache &&
+    countsCache.key === key &&
+    Date.now() - countsCache.at < 30_000
+  ) {
+    return countsCache.data;
+  }
+  const data = await getItemCounts(item_type, event);
+  countsCache = { at: Date.now(), key, data };
+  return data;
+}
+
 // 近 N 天逐日事件序列（call/download），供趋势图
 export interface TrendSeries {
   item_type: string;
@@ -600,7 +624,9 @@ export async function replyIssue(
 }
 
 // 删除反馈（仅管理员，兜底操作；后端 403 非管理员）
-export async function deleteIssue(id: string): Promise<{ ok: boolean; id: string }> {
+export async function deleteIssue(
+  id: string,
+): Promise<{ ok: boolean; id: string }> {
   return request<{ ok: boolean; id: string }>(`/issues/${id}`, {
     method: "DELETE",
   });
