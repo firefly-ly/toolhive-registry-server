@@ -1,21 +1,21 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import { LayoutGrid, List, Search } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useMemo, useState } from "react";
 import { PageHeader } from "@/components/header-page";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { Skill } from "@/lib/platform-backend";
-import { SkillCard } from "./skill-card";
 import { CatalogPagination } from "../catalog/components/catalog-pagination";
+import { SkillCard } from "./skill-card";
 
 const SKILLS_PAGE_SIZE = 15;
 
 interface SkillsWrapperProps {
   skills: Skill[];
   favoritedRefs: string[];
-  /** group_key → 完整卡片数据（激活版 + 已上架版本），供卡片就地切换 */
+  /** group_key → 完整卡片数据（默认版 + 已上架版本），供卡片就地切换 */
   siblingGroups?: Record<string, Skill[]>;
 }
 
@@ -61,7 +61,7 @@ export function SkillsWrapper({
 
   return (
     <div className="flex h-full flex-col">
-      <PageHeader title="Skill Marketplace">
+      <PageHeader title="技能">
         {/* 与 Catalog 的 ServerFilters 保持一致的从左到右顺序：视图切换 -> 搜索 */}
         <div className="flex items-center gap-4">
           <Button
@@ -99,35 +99,41 @@ export function SkillsWrapper({
           <p className="text-muted-foreground">未找到匹配的技能。</p>
         ) : viewMode === "grid" ? (
           <div className="grid grid-cols-1 gap-3 pb-3 md:grid-cols-2 lg:grid-cols-3">
-{pageItems.map((s) => {
-          const gk = s.group_key || String(s.item_ref || s.name || "").split(":")[0] || "";
-          const sib = siblingGroups[gk];
-          return (
-            <SkillCard
-              key={s.id}
-              skill={s}
-              favorited={favoritedRefs.includes(s.id)}
-              onClick={(id: string) => router.push(`/skills/${id}`)}
-              siblingCards={sib}
-            />
-          );
-        })}
+            {pageItems.map((s) => {
+              const gk =
+                s.group_key ||
+                String(s.item_ref || s.name || "").split(":")[0] ||
+                "";
+              const sib = siblingGroups[gk];
+              return (
+                <SkillCard
+                  key={s.id}
+                  skill={s}
+                  favorited={favoritedRefs.includes(s.id)}
+                  onClick={(id: string) => router.push(`/skills/${id}`)}
+                  siblingCards={sib}
+                />
+              );
+            })}
           </div>
         ) : (
           <div className="space-y-3 pb-3">
-{pageItems.map((s) => {
-          const gk = s.group_key || String(s.item_ref || s.name || "").split(":")[0] || "";
-          const sib = siblingGroups[gk];
-          return (
-            <SkillCard
-              key={s.id}
-              skill={s}
-              favorited={favoritedRefs.includes(s.id)}
-              onClick={(id: string) => router.push(`/skills/${id}`)}
-              siblingCards={sib}
-            />
-          );
-        })}
+            {pageItems.map((s) => {
+              const gk =
+                s.group_key ||
+                String(s.item_ref || s.name || "").split(":")[0] ||
+                "";
+              const sib = siblingGroups[gk];
+              return (
+                <SkillCard
+                  key={s.id}
+                  skill={s}
+                  favorited={favoritedRefs.includes(s.id)}
+                  onClick={(id: string) => router.push(`/skills/${id}`)}
+                  siblingCards={sib}
+                />
+              );
+            })}
           </div>
         )}
       </div>

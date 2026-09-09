@@ -30,7 +30,11 @@ export function DetailHeader({
       <div className="flex flex-col gap-2">
         <div className="flex items-start justify-between gap-3">
           <h1 className="text-page-title m-0 p-0">{title}</h1>
-          {actions && <div className="flex shrink-0 items-center gap-2 pt-1">{actions}</div>}
+          {actions && (
+            <div className="flex shrink-0 items-center gap-2 pt-1">
+              {actions}
+            </div>
+          )}
         </div>
         {subtitle && (
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">

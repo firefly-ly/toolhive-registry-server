@@ -1,8 +1,13 @@
 import { headers } from "next/headers";
-import { auth } from "@/lib/auth/auth";
-import { listFavorites, getSkills, getMcpServers } from "@/lib/platform-backend";
 import { getServers } from "@/app/(app)/catalog/actions";
 import { PageHeader } from "@/components/header-page";
+import { auth } from "@/lib/auth/auth";
+import {
+  getMcpServers,
+  getSkills,
+  listFavorites,
+} from "@/lib/platform-backend";
+import { safe } from "@/lib/safe-async";
 import { FavsBlock } from "./favs-block";
 
 async function currentActor(): Promise<string> {
@@ -22,10 +27,10 @@ interface FavoriteRow {
 export default async function FavoritesPage() {
   const actor = await currentActor();
   const [favorites, skills, serversResult, submittedMcps] = await Promise.all([
-    listFavorites(actor).catch(() => []),
-    getSkills().catch(() => []),
-    getServers().catch(() => ({ servers: [] })),
-    getMcpServers().catch(() => []),
+    safe(listFavorites(actor), [], "favorites.list"),
+    safe(getSkills(), [], "favorites.getSkills"),
+    safe(getServers(), { servers: [] }, "favorites.getServers"),
+    safe(getMcpServers(), [], "favorites.getMcpServers"),
   ]);
 
   const skillById = new Map(skills.map((s) => [s.id, s]));
@@ -53,17 +58,16 @@ export default async function FavoritesPage() {
       item_ref: f.item_ref,
       title: registryServer?.title ?? submitted?.name ?? f.item_ref,
       subtitle: "MCP Server",
-      description:
-        registryServer?.description ?? submitted?.description ?? "",
+      description: registryServer?.description ?? submitted?.description ?? "",
       href: `/mcp/${encodeURIComponent(f.item_ref)}?from=favorites`,
     };
   });
 
   return (
     <div className="flex h-full flex-col">
-      <PageHeader title="My Favorites" />
+      <PageHeader title="我的收藏" />
 
-      <div className="flex-1 overflow-auto px-[3cm] pb-[3cm] pt-4">
+      <div className="flex-1 overflow-auto px-8 pb-10 pt-4">
         <FavsBlock title="我的收藏" count={rows.length} rows={rows} />
       </div>
     </div>

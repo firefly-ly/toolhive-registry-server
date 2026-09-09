@@ -114,7 +114,7 @@ export function ModelSelector({
                 </TooltipContent>
               </Tooltip>
             ) : (
-              <span className="text-sm">Select Model</span>
+              <span className="text-sm">选择模型</span>
             )}
           </div>
           <ChevronDown className="size-4 shrink-0" />

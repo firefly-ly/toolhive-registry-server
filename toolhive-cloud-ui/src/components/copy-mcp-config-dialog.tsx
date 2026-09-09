@@ -1,7 +1,7 @@
 "use client";
 
-import { Check, Clipboard, Copy } from "lucide-react";
-import { useState, type ComponentProps } from "react";
+import { Check, Clipboard, Copy, HelpCircle } from "lucide-react";
+import { type ComponentProps, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,8 +16,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   buildClaudeCodeCommand,
   buildWorkbuddyConfig,
-  normalizeServerName,
   type McpTransportConfig,
+  normalizeServerName,
 } from "@/lib/mcp/client-configs";
 import { cn } from "@/lib/utils";
 
@@ -39,22 +39,23 @@ function CodeBlock({ code }: { code: string }) {
   }
 
   return (
-    <div className="relative">
-      <pre className="max-h-72 overflow-auto rounded-md border bg-muted/50 p-3 pr-12 font-mono text-xs leading-5">
+    <div className="relative min-w-0">
+      {/* pre-wrap + break-words：长命令（含长 token）自动折行，避免把弹窗撑破 */}
+      <pre className="max-h-80 min-w-0 overflow-auto rounded-md border bg-muted/50 p-4 pr-14 font-mono text-base leading-6 whitespace-pre-wrap break-words">
         {code}
       </pre>
       <Button
         type="button"
         size="icon"
         variant="ghost"
-        className="absolute right-2 top-2 h-7 w-7"
+        className="absolute right-2.5 top-2.5 h-8 w-8"
         onClick={copy}
         aria-label="复制配置"
       >
         {copied ? (
-          <Check className="h-3.5 w-3.5 text-green-600" />
+          <Check className="size-4 text-green-600" />
         ) : (
-          <Copy className="h-3.5 w-3.5" />
+          <Copy className="size-4" />
         )}
       </Button>
     </div>
@@ -109,12 +110,14 @@ export function CopyMcpConfigDialog({
       </DialogTrigger>
 
       <DialogContent
-        className="sm:max-w-2xl"
+        className="sm:max-w-3xl"
         onClick={(e) => e.stopPropagation()}
       >
         <DialogHeader>
-          <DialogTitle>在客户端中接入「{serverName}」</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-xl">
+            在客户端中接入「{serverName}」
+          </DialogTitle>
+          <DialogDescription className="text-base">
             复制下方配置粘贴到你的客户端配置文件中，即可使用该 MCP。
           </DialogDescription>
         </DialogHeader>
@@ -127,25 +130,25 @@ export function CopyMcpConfigDialog({
           </TabsList>
 
           <TabsContent value="workbuddy" className="space-y-2">
-            <p className="text-xs text-muted-foreground">
-              粘贴到 <code className="font-mono">~/.workbuddy/mcp.json</code>
-              （Windows：<code className="font-mono">
-                C:\Users\&lt;你&gt;\.workbuddy\mcp.json
-              </code>
-              ）。保存后重启 WorkBuddy，在左侧「插件 → MCP 服务器」中信任并启用。
-            </p>
+            <div
+              className="inline-flex items-center gap-1 text-sm text-muted-foreground"
+              title="粘贴到 ~/.workbuddy/mcp.json（Windows：C:\\Users\\<你>\\.workbuddy\\mcp.json）。保存后重启 WorkBuddy，在左侧「插件 → MCP 服务器」中信任并启用。"
+            >
+              <HelpCircle className="size-4 cursor-help" />
+              <span>配置位置</span>
+            </div>
             <CodeBlock code={workbuddy} />
           </TabsContent>
 
           <TabsContent value="claude" className="space-y-2">
-            <p className="text-xs text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               在终端执行以下命令即可完成添加。
             </p>
             <CodeBlock code={claudeCode} />
           </TabsContent>
 
           <TabsContent value="raw" className="space-y-2">
-            <p className="text-xs text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               该 MCP 的原始连接配置，Cursor / VS Code 等客户端可参照填写。
             </p>
             <CodeBlock code={rawConfig} />

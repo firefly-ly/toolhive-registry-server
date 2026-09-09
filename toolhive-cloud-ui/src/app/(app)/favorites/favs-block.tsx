@@ -1,14 +1,11 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import Link from "next/link";
-import { Button, buttonVariants } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { cn } from "@/lib/utils";
 import { Star } from "lucide-react";
-import { toggleFavoriteAction } from "@/lib/platform-actions";
+import Link from "next/link";
+import { useMemo, useState } from "react";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -17,6 +14,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { toggleFavoriteAction } from "@/lib/platform-actions";
+import { cn } from "@/lib/utils";
 
 export interface FavRow {
   item_type: "mcp" | "skill";
@@ -83,7 +87,7 @@ export function FavsBlock({
                       variant: filter === key ? "default" : "ghost",
                       size: "sm",
                     }),
-                    "cursor-pointer border-none shadow-none"
+                    "cursor-pointer border-none shadow-none",
                   )}
                 >
                   {label}
@@ -141,7 +145,7 @@ export function FavsBlock({
                           "inline-flex items-center rounded-full px-2 py-0.5 text-sm font-medium",
                           r.item_type === "mcp"
                             ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
-                            : "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300"
+                            : "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300",
                         )}
                       >
                         {r.item_type === "mcp" ? "MCP" : "Skill"}

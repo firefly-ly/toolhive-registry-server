@@ -1,10 +1,10 @@
-import { Badge } from "@/components/ui/badge";
-import { DetailHeader } from "@/components/detail-header";
 import { ServerDetail } from "@/app/(app)/catalog/[repoName]/[serverName]/[version]/components/server-detail";
 import { ServerDetailTabs } from "@/app/(app)/catalog/[repoName]/[serverName]/[version]/components/server-detail-tabs";
-import { McpDetailActions } from "../mcp-detail-actions";
-import type { McpServer, Issue } from "@/lib/platform-backend";
+import { DetailHeader } from "@/components/detail-header";
+import { Badge } from "@/components/ui/badge";
+import type { Issue, McpServer } from "@/lib/platform-backend";
 import type { ServerTool } from "@/lib/schemas/server-meta";
+import { McpDetailActions } from "../mcp-detail-actions";
 
 interface McpServerDetailProps {
   mcp: McpServer;
@@ -13,6 +13,7 @@ interface McpServerDetailProps {
   favoriteCount: number;
   tools: ServerTool[];
   toolsLive: boolean;
+  toolsFailed?: boolean;
   issues: Issue[];
   isAdmin?: boolean;
   backHref: string;
@@ -28,6 +29,7 @@ export function McpServerDetail({
   favoriteCount,
   tools,
   toolsLive,
+  toolsFailed,
   issues,
   isAdmin,
   backHref,
@@ -71,8 +73,13 @@ export function McpServerDetail({
       <ServerDetailTabs
         tools={tools}
         toolsLive={toolsLive}
+        toolsFailed={toolsFailed}
         repositoryUrl={mcp.repository_url}
-        mcpInspect={mcp.mcp_inspect ?? null}
+        mcpReadme={mcp.mcp_readme ?? null}
+        mcpReadmeName={mcp.mcp_readme_name ?? null}
+        mcpId={mcp.id}
+        mcpTree={mcp.mcp_tree ?? null}
+        mcpFileCount={mcp.mcp_file_count ?? null}
         issues={issues}
         ociRef={mcp.payload_ref}
         isAdmin={isAdmin}

@@ -1,10 +1,8 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import type { Submission } from "@/lib/platform-backend";
-import { ApproveDialog } from "./approve-dialog";
 import {
   Table,
   TableBody,
@@ -13,21 +11,43 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import type { Submission } from "@/lib/platform-backend";
+import { ApproveDialog } from "./approve-dialog";
 
 function StatusBadge({ status }: { status: string }) {
   switch (status) {
     case "approved":
       return <Badge className="text-sm">已通过</Badge>;
     case "pending":
-      return <Badge variant="secondary" className="text-sm">待审批</Badge>;
+      return (
+        <Badge variant="secondary" className="text-sm">
+          待审批
+        </Badge>
+      );
     case "rejected":
-      return <Badge variant="destructive" className="text-sm">已拒绝</Badge>;
+      return (
+        <Badge variant="destructive" className="text-sm">
+          已拒绝
+        </Badge>
+      );
     case "deprecated":
-      return <Badge variant="outline" className="text-sm">已下架</Badge>;
+      return (
+        <Badge variant="outline" className="text-sm">
+          已下架
+        </Badge>
+      );
     case "removed":
-      return <Badge variant="outline" className="text-sm">已移除</Badge>;
+      return (
+        <Badge variant="outline" className="text-sm">
+          已移除
+        </Badge>
+      );
     default:
-      return <Badge variant="secondary" className="text-sm">{status}</Badge>;
+      return (
+        <Badge variant="secondary" className="text-sm">
+          {status}
+        </Badge>
+      );
   }
 }
 
@@ -117,7 +137,8 @@ export function SubmissionList({
                   colSpan={showActions ? 6 : 5}
                   className="py-10 text-center text-base text-muted-foreground"
                 >
-                  暂无{type === "mcp" ? "MCP" : type === "skill" ? "Skill" : ""}提交
+                  暂无{type === "mcp" ? "MCP" : type === "skill" ? "Skill" : ""}
+                  提交
                 </TableCell>
               </TableRow>
             )}
@@ -138,7 +159,10 @@ export function SubmissionList({
                           {subtitle}
                         </span>
                       )}
-                      <Badge variant="outline" className="mt-1 w-fit text-xs uppercase">
+                      <Badge
+                        variant="outline"
+                        className="mt-1 w-fit text-xs uppercase"
+                      >
                         {s.type}
                       </Badge>
                     </div>
@@ -158,7 +182,9 @@ export function SubmissionList({
                       {s.status === "pending" ? (
                         <ApproveDialog submission={s} />
                       ) : (
-                        <span className="text-sm text-muted-foreground">已处理</span>
+                        <span className="text-sm text-muted-foreground">
+                          已处理
+                        </span>
                       )}
                     </TableCell>
                   )}

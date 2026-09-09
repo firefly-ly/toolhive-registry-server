@@ -1,7 +1,7 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { ChevronDown } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export interface VersionOption {
   id: string;
@@ -11,8 +11,7 @@ export interface VersionOption {
 
 interface VersionSwitcherProps {
   basePath: // 'mcp' | 'skills'
-  | "mcp"
-    | "skills";
+  "mcp" | "skills";
   groupLabel: string;
   currentId: string;
   options: VersionOption[];
@@ -48,6 +47,8 @@ export function VersionSwitcher({
   };
   if (variant === "compact") {
     return (
+      /* biome-ignore lint/a11y/useKeyWithClickEvents: 仅阻止点击冒泡到卡片，非交互元素 */
+      /* biome-ignore lint/a11y/noStaticElementInteractions: 仅阻止点击冒泡到卡片，非交互元素 */
       <div
         className="relative"
         onClick={onClick}

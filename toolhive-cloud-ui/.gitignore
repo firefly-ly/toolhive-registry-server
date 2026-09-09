@@ -60,3 +60,6 @@ frontend.log
 frontend.err.log
 
 certificates
+# 本地运行日志与工具数据
+*.run.log
+.workbuddy/

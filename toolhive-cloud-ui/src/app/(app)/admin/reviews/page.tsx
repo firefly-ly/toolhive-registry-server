@@ -1,12 +1,12 @@
-import { redirect } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import { getAuthContext } from "@/lib/auth/context";
-import { listSubmissions } from "@/lib/platform-backend";
-import { SubmissionList } from "../../submissions/submission-list";
+import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/header-page";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft } from "lucide-react";
+import { getAuthContext } from "@/lib/auth/context";
+import { listSubmissions } from "@/lib/platform-backend";
+import { SubmissionList } from "../../submissions/submission-list";
 
 export default async function AdminReviewsPage() {
   const { isAdmin } = await getAuthContext();

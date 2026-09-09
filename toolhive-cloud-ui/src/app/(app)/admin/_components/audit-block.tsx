@@ -1,8 +1,12 @@
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
+import { DateField } from "@/components/admin/date-field";
+import { ErrorToast } from "@/components/error-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { queryAudit, type AuditEntry } from "@/lib/platform-backend";
+import {
+  type AuditEntry,
+  listSubmissions,
+  queryAudit,
+} from "@/lib/platform-backend";
 import { cn } from "@/lib/utils";
 
 // 动作中文名（后端 action 枚举 → 展示文案）
@@ -24,7 +28,7 @@ function actionLabel(action: string): string {
   return ACTION_LABELS[action] || action;
 }
 
-function resultBadge(result: string, actorAdmin: number) {
+function resultBadge(result: string) {
   if (result === "denied" || result === "error") {
     return (
       <span className="inline-flex items-center rounded-full border border-destructive/40 bg-destructive/10 px-2 py-0.5 text-xs font-semibold text-destructive">
@@ -33,8 +37,22 @@ function resultBadge(result: string, actorAdmin: number) {
     );
   }
   return (
-    <span className="inline-flex items-center rounded-full border bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-      {actorAdmin ? "管理员" : result}
+    <span className="inline-flex items-center rounded-full border border-green-500/40 bg-green-500/10 px-2 py-0.5 text-xs font-medium text-green-700 dark:text-green-400">
+      成功
+    </span>
+  );
+}
+
+/** 操作人列：邮箱 + （管理员时）角色小标 */
+function actorCell(email: string, admin: number) {
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <span className="text-sm">{email}</span>
+      {!!admin && (
+        <span className="rounded bg-violet-500/10 px-1.5 py-0.5 text-xs font-medium text-violet-700 dark:text-violet-300">
+          管理员
+        </span>
+      )}
     </span>
   );
 }
@@ -76,51 +94,132 @@ export async function AuditBlock({
     error = e instanceof Error ? e.message : String(e);
   }
 
+  // 对象 ID → 可读名称映射（来自提交记录 meta.name），提升表格可读性
+  const nameMap = new Map<string, string>();
+  try {
+    const subs = await listSubmissions();
+    for (const s of subs) {
+      let name = "";
+      try {
+        name =
+          (JSON.parse(s.meta ?? "{}") as Record<string, string>).name ?? "";
+      } catch {
+        /* meta 非法时回退 payload_ref */
+      }
+      nameMap.set(s.id, name || s.payload_ref || s.id);
+    }
+  } catch {
+    /* 提交列表不可用时按原样显示 ID */
+  }
+
   const selectCls =
     "h-9 rounded-md border bg-transparent px-2 text-sm shadow-xs dark:bg-input/30";
 
   return (
     <div className="space-y-4">
       {/* 筛选表单：GET 提交回 /admin?tab=audit，纯服务端过滤，无需 client state */}
-      <form method="get" action="/admin" className="flex flex-wrap items-end gap-3 rounded-xl border bg-muted/30 p-4">
+      <form
+        method="get"
+        action="/admin"
+        className="flex flex-wrap items-end gap-x-4 gap-y-3 rounded-xl border bg-muted/30 p-4"
+      >
         <input type="hidden" name="tab" value="audit" />
-        <div className="space-y-1">
-          <label className="text-xs text-muted-foreground">操作人</label>
-          <Input name="actor" defaultValue={filters.actor} placeholder="邮箱关键字" className="h-9 w-48" />
+        <div className="space-y-1.5">
+          <label
+            htmlFor="audit-f-actor"
+            className="block text-xs font-medium text-muted-foreground"
+          >
+            操作人
+          </label>
+          <Input
+            id="audit-f-actor"
+            name="actor"
+            defaultValue={filters.actor}
+            placeholder="邮箱关键字"
+            className="h-9 w-48"
+          />
         </div>
-        <div className="space-y-1">
-          <label className="text-xs text-muted-foreground">动作</label>
-          <select name="action" defaultValue={filters.action} className={selectCls}>
+        <div className="space-y-1.5">
+          <label
+            htmlFor="audit-f-action"
+            className="block text-xs font-medium text-muted-foreground"
+          >
+            动作
+          </label>
+          <select
+            id="audit-f-action"
+            name="action"
+            defaultValue={filters.action}
+            className={selectCls}
+          >
             <option value="">全部</option>
             {Object.entries(ACTION_LABELS).map(([k, v]) => (
-              <option key={k} value={k}>{v}</option>
+              <option key={k} value={k}>
+                {v}
+              </option>
             ))}
           </select>
         </div>
-        <div className="space-y-1">
-          <label className="text-xs text-muted-foreground">对象 ID</label>
-          <Input name="target_id" defaultValue={filters.target_id} placeholder="sub_..." className="h-9 w-56 font-mono" />
+        <div className="space-y-1.5">
+          <label
+            htmlFor="audit-f-target"
+            className="block text-xs font-medium text-muted-foreground"
+          >
+            对象 ID
+          </label>
+          <Input
+            id="audit-f-target"
+            name="target_id"
+            defaultValue={filters.target_id}
+            placeholder="sub_... / mcp:..."
+            className="h-9 w-56 font-mono"
+          />
         </div>
-        <div className="space-y-1">
-          <label className="text-xs text-muted-foreground">开始日期</label>
-          <Input type="date" name="from" defaultValue={filters.from} className="h-9 w-40" />
+        <div className="space-y-1.5">
+          <label
+            htmlFor="audit-f-from"
+            className="block text-xs font-medium text-muted-foreground"
+          >
+            开始日期
+          </label>
+          <DateField
+            id="audit-f-from"
+            name="from"
+            placeholder="开始日期"
+            defaultValue={filters.from}
+          />
         </div>
-        <div className="space-y-1">
-          <label className="text-xs text-muted-foreground">结束日期</label>
-          <Input type="date" name="to" defaultValue={filters.to} className="h-9 w-40" />
+        <div className="space-y-1.5">
+          <label
+            htmlFor="audit-f-to"
+            className="block text-xs font-medium text-muted-foreground"
+          >
+            结束日期
+          </label>
+          <DateField
+            id="audit-f-to"
+            name="to"
+            placeholder="结束日期"
+            defaultValue={filters.to}
+          />
         </div>
-        <Button type="submit" size="sm" className="h-9">查询</Button>
-        <Button type="submit" size="sm" variant="ghost" className="h-9" asChild={false}>
-          <a href="/admin?tab=audit">重置</a>
-        </Button>
+        <div className="flex items-center gap-2 pb-0.5">
+          <Button type="submit" size="sm" className="h-9 px-5">
+            查询
+          </Button>
+          <Button
+            type="submit"
+            size="sm"
+            variant="ghost"
+            className="h-9"
+            asChild={false}
+          >
+            <a href="/admin?tab=audit">重置</a>
+          </Button>
+        </div>
       </form>
 
-      {error && (
-        <Alert variant="destructive">
-          <AlertTitle>审计查询失败</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
+      {error && <ErrorToast message={`审计查询失败：${error}`} />}
 
       {!error && (
         <div className="overflow-hidden rounded-xl border">
@@ -138,27 +237,63 @@ export async function AuditBlock({
             <tbody>
               {items.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-3 py-8 text-center text-muted-foreground">
+                  <td
+                    colSpan={6}
+                    className="px-3 py-8 text-center text-muted-foreground"
+                  >
                     没有符合条件的审计记录
                   </td>
                 </tr>
               )}
               {items.map((e) => {
                 const detail = safeParseDetail(e.detail);
+                const niceName = e.target_id
+                  ? nameMap.get(e.target_id)
+                  : undefined;
                 return (
-                  <tr key={e.id} className={cn("border-t align-top", e.result !== "success" && "bg-destructive/5")}>
-                    <td className="whitespace-nowrap px-3 py-2 font-mono text-sm">{formatTs(e.ts)}</td>
-                    <td className="px-3 py-2 text-sm">{e.actor_email}</td>
+                  <tr
+                    key={e.id}
+                    className={cn(
+                      "border-t align-top",
+                      e.result !== "success" && "bg-destructive/5",
+                    )}
+                  >
+                    <td className="whitespace-nowrap px-3 py-2 font-mono text-sm">
+                      {formatTs(e.ts)}
+                    </td>
+                    <td className="px-3 py-2">
+                      {actorCell(e.actor_email, e.actor_admin)}
+                    </td>
                     <td className="px-3 py-2 whitespace-nowrap">
                       {actionLabel(e.action)}
                     </td>
-                    <td className="px-3 py-2 font-mono text-sm">
-                      <span className="text-muted-foreground">{e.target_type}</span> {e.target_id || "—"}
+                    <td className="max-w-[16rem] px-3 py-2">
+                      {niceName ? (
+                        <div className="min-w-0">
+                          <div className="truncate text-sm font-medium">
+                            {niceName}
+                          </div>
+                          <div
+                            className="truncate font-mono text-xs text-muted-foreground"
+                            title={`${e.target_type} ${e.target_id}`}
+                          >
+                            {e.target_type} {e.target_id}
+                          </div>
+                        </div>
+                      ) : (
+                        <span className="font-mono text-sm text-muted-foreground">
+                          {e.target_type} {e.target_id || "—"}
+                        </span>
+                      )}
                     </td>
-                    <td className="px-3 py-2 whitespace-nowrap">{resultBadge(e.result, e.actor_admin)}</td>
+                    <td className="px-3 py-2 whitespace-nowrap">
+                      {resultBadge(e.result)}
+                    </td>
                     <td className="px-3 py-2">
                       <details>
-                        <summary className="cursor-pointer text-sm text-primary">展开</summary>
+                        <summary className="cursor-pointer text-sm text-primary">
+                          展开
+                        </summary>
                         <pre className="mt-1 max-w-lg overflow-x-auto whitespace-pre-wrap rounded bg-muted/40 p-2 text-sm">
                           {JSON.stringify(detail, null, 2)}
                         </pre>
@@ -173,7 +308,9 @@ export async function AuditBlock({
       )}
 
       {!error && items.length > 0 && (
-        <p className="text-xs text-muted-foreground">共 {items.length} 条（最多返回 1000 条，可用筛选缩小范围）</p>
+        <p className="text-xs text-muted-foreground">
+          共 {items.length} 条（最多返回 1000 条，可用筛选缩小范围）
+        </p>
       )}
     </div>
   );

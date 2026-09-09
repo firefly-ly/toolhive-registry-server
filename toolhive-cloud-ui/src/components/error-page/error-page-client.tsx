@@ -16,10 +16,10 @@ export function ErrorPage({ error, reset }: ErrorPageProps) {
 
   return (
     <ErrorPageLayout
-      title="Something went wrong"
+      title="页面出错了"
       actions={
         <Button onClick={reset} variant="default">
-          Try again
+          重试
         </Button>
       }
     >

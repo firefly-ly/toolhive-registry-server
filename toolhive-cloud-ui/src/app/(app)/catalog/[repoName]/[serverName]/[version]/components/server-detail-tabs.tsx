@@ -1,20 +1,40 @@
 "use client";
 
+import { ExternalLink, Github } from "lucide-react";
+import dynamic from "next/dynamic";
 import type { ReactNode } from "react";
-import { Github, ExternalLink } from "lucide-react";
-import Link from "next/link";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type { ServerTool } from "@/lib/schemas/server-meta";
-import type { Issue, McpImageInspect } from "@/lib/platform-backend";
-import { ServerToolsTable } from "./server-tools-table";
 import { IssuesPanel } from "@/components/issues-panel";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import type { Issue } from "@/lib/platform-backend";
+import type { ServerTool } from "@/lib/schemas/server-meta";
+import { PackageFileTree } from "./package-file-tree";
+import { ServerToolsTable } from "./server-tools-table";
+
+// react-markdown + remark-gfm 只在 README tab 首次激活时下载（Radix 非激活 tab 不渲染）
+const MarkdownView = dynamic(
+  () => import("@/components/markdown-view").then((m) => m.MarkdownView),
+  {
+    loading: () => (
+      <p className="text-muted-foreground py-8 text-center text-sm">
+        README 加载中…
+      </p>
+    ),
+  },
+);
 
 interface ServerDetailTabsProps {
   children: ReactNode;
   tools: ServerTool[];
   toolsLive?: boolean;
+  toolsFailed?: boolean;
   repositoryUrl?: string;
-  mcpInspect?: McpImageInspect | null;
+  // 源码包内提取的 README（无则回退仓库链接/占位提示）
+  mcpReadme?: string | null;
+  mcpReadmeName?: string | null;
+  // 源码包文件树（「代码」标签页展示 zip 包内文件）
+  mcpId?: string;
+  mcpTree?: string[] | null;
+  mcpFileCount?: number | null;
   issues: Issue[];
   ociRef: string;
   isAdmin?: boolean;
@@ -25,18 +45,23 @@ export function ServerDetailTabs({
   children,
   tools,
   toolsLive,
+  toolsFailed,
   repositoryUrl,
-  mcpInspect,
+  mcpReadme,
+  mcpReadmeName,
+  mcpId,
+  mcpTree,
+  mcpFileCount,
   issues,
   ociRef,
   isAdmin,
 }: ServerDetailTabsProps) {
   const tabs = [
-    { value: "about", label: "About" },
-    { value: "tools", label: toolsLive ? "Tools · 实时" : "Tools" },
+    { value: "about", label: "关于" },
+    { value: "tools", label: toolsLive ? "工具 · 实时" : "工具" },
     { value: "readme", label: "README" },
-    { value: "code", label: "Code" },
-    { value: "issues", label: "Issues" },
+    { value: "code", label: "代码" },
+    { value: "issues", label: "反馈" },
   ] as const;
 
   return (
@@ -46,7 +71,7 @@ export function ServerDetailTabs({
           <TabsTrigger
             key={tab.value}
             value={tab.value}
-            className="rounded-lg border-0 px-6 text-muted-foreground data-[state=active]:text-foreground data-[state=active]:shadow-none dark:data-[state=active]:bg-card"
+            className="rounded-lg border-0 px-6 text-muted-foreground data-[state=active]:text-primary-foreground data-[state=active]:shadow-none"
           >
             {tab.label}
           </TabsTrigger>
@@ -56,11 +81,31 @@ export function ServerDetailTabs({
       <TabsContent value="about">{children}</TabsContent>
 
       <TabsContent value="tools">
-        <ServerToolsTable tools={tools} />
+        <ServerToolsTable tools={tools} failed={toolsFailed} />
       </TabsContent>
 
       <TabsContent value="readme">
-        {repositoryUrl ? (
+        {mcpReadme ? (
+          <div className="space-y-3">
+            {mcpReadmeName && (
+              <p className="text-xs text-muted-foreground">
+                提取自提交源码包内的 {mcpReadmeName}
+              </p>
+            )}
+            <MarkdownView content={mcpReadme} />
+            {repositoryUrl && (
+              <a
+                href={repositoryUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
+              >
+                <Github className="size-4" />
+                在仓库查看最新 README
+              </a>
+            )}
+          </div>
+        ) : repositoryUrl ? (
           <div className="space-y-3 rounded-lg border p-4">
             <p className="text-sm text-muted-foreground">
               该 MCP 的源码与 README 托管在外部仓库：
@@ -77,13 +122,22 @@ export function ServerDetailTabs({
           </div>
         ) : (
           <p className="rounded-lg border p-4 text-sm text-muted-foreground">
-            未提供仓库地址，无法展示 README。提交时填写 repository_url 即可。
+            暂无可展示的 README。提交源码包时在包内放一个 README 文件，或填写
+            repository_url 即可。
           </p>
         )}
       </TabsContent>
 
       <TabsContent value="code">
         <div className="space-y-4">
+          {mcpId && mcpTree && mcpTree.length > 0 && (
+            <PackageFileTree
+              kind="mcp"
+              itemId={mcpId}
+              tree={mcpTree}
+              fileCount={mcpFileCount}
+            />
+          )}
           {repositoryUrl && (
             <a
               href={repositoryUrl}
@@ -95,64 +149,11 @@ export function ServerDetailTabs({
               在仓库查看源码
             </a>
           )}
-          <div className="rounded-lg border p-4">
-            <h3 className="mb-2 text-sm font-bold">
-              镜像元数据（来自 docker inspect）
-            </h3>
-            {mcpInspect ? (
-              <dl className="space-y-3 text-sm">
-                {mcpInspect.labels &&
-                  Object.keys(mcpInspect.labels).length > 0 && (
-                    <div>
-                      <dt className="text-muted-foreground">Labels</dt>
-                      <dd className="mt-1 space-y-1">
-                        {Object.entries(mcpInspect.labels).map(([k, v]) => (
-                          <code
-                            key={k}
-                            className="block rounded bg-muted px-2 py-1 text-xs"
-                          >
-                            {k} = {v}
-                          </code>
-                        ))}
-                      </dd>
-                    </div>
-                  )}
-                {mcpInspect.exposed_ports && (
-                  <div>
-                    <dt className="text-muted-foreground">Exposed Ports</dt>
-                    <dd className="mt-1">{mcpInspect.exposed_ports.join(", ")}</dd>
-                  </div>
-                )}
-                {mcpInspect.entrypoint && (
-                  <div>
-                    <dt className="text-muted-foreground">Entrypoint</dt>
-                    <dd className="mt-1 font-mono text-xs">
-                      {mcpInspect.entrypoint.join(" ")}
-                    </dd>
-                  </div>
-                )}
-                {mcpInspect.env && (
-                  <div>
-                    <dt className="text-muted-foreground">Environment</dt>
-                    <dd className="mt-1 space-y-1">
-                      {mcpInspect.env.slice(0, 20).map((e) => (
-                        <code
-                          key={e}
-                          className="block rounded bg-muted px-2 py-1 text-xs"
-                        >
-                          {e}
-                        </code>
-                      ))}
-                    </dd>
-                  </div>
-                )}
-              </dl>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                暂无镜像元数据。镜像需经平台审批部署后才会提取；若未关联平台提交记录也可能无法匹配。
-              </p>
-            )}
-          </div>
+          {(!mcpTree || mcpTree.length === 0) && (
+            <p className="rounded-lg border p-4 text-sm text-muted-foreground">
+              暂无可展示的源码包文件。提交源码包（zip/tar.gz）后在详情页即可浏览包内文件。
+            </p>
+          )}
         </div>
       </TabsContent>
 

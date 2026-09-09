@@ -4,7 +4,6 @@ import { CircleSlash, Loader2, Play, Star } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CopyMcpConfigDialog } from "@/components/copy-mcp-config-dialog";
 import { callMcpAction, toggleFavoriteAction } from "@/lib/platform-actions";
 
 interface McpDetailActionsProps {
@@ -17,8 +16,6 @@ interface McpDetailActionsProps {
   // 终端用户可达的对外端点（复制配置给用户时用）。后端只在探活可达时才下发，
   // 因此「有 endpoint 但没有 publicEndpoint」= 有部署记录但实例不可达。
   publicEndpoint?: string;
-  // 代理调用凭证（restricted 条目必带）：经 Authorization Header 传递，URL 不再携带 token
-  mcpHeaders?: Record<string, string>;
   healthy?: boolean;
   // 展示名，用于生成客户端配置里的 key
   name?: string;
@@ -29,7 +26,49 @@ interface McpDetailActionsProps {
 interface McpTool {
   name: string;
   description?: string;
-  inputSchema?: { properties?: Record<string, unknown> };
+  inputSchema?: {
+    properties?: Record<string, unknown>;
+    required?: string[];
+  };
+}
+
+interface SchemaProp {
+  type?: string;
+  description?: string;
+  items?: { type?: string };
+}
+
+// 按工具 inputSchema 生成参数模板：字段带类型示例值，无 schema 则为 {}
+function argsTemplate(tool?: McpTool): string {
+  const props = tool?.inputSchema?.properties;
+  if (!props || typeof props !== "object" || Object.keys(props).length === 0) {
+    return "{}";
+  }
+  const out: Record<string, unknown> = {};
+  for (const [key, raw] of Object.entries(props)) {
+    const schema = (raw ?? {}) as SchemaProp;
+    switch (schema.type) {
+      case "string":
+        out[key] = "";
+        break;
+      case "number":
+      case "integer":
+        out[key] = 0;
+        break;
+      case "boolean":
+        out[key] = false;
+        break;
+      case "array":
+        out[key] = schema.items?.type === "string" ? [""] : [];
+        break;
+      case "object":
+        out[key] = {};
+        break;
+      default:
+        out[key] = null;
+    }
+  }
+  return JSON.stringify(out, null, 2);
 }
 
 type CallPhase =
@@ -52,8 +91,6 @@ export function McpDetailActions({
   favoriteCount,
   endpoint,
   publicEndpoint,
-  mcpHeaders,
-  healthy,
   name,
   autoCall,
 }: McpDetailActionsProps) {
@@ -69,14 +106,13 @@ export function McpDetailActions({
   const runnable = Boolean(endpoint);
 
   // 从目录卡片「调用」按钮带 ?call=1 进入时，挂载即自动拉起工具面板
+  // biome-ignore lint/correctness/useExhaustiveDependencies: loadTools 每次渲染重建，这里只应在挂载/autoCall 变化时触发
   useEffect(() => {
     if (autoCall && endpoint) {
       setError("");
       void loadTools();
     }
-    // 仅挂载时触发一次
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [endpoint, autoCall]);
 
   async function loadTools() {
     setPhase("loading-tools");
@@ -94,6 +130,7 @@ export function McpDetailActions({
       const list = last?.result?.tools ?? [];
       setTools(list);
       setSelected(list[0]?.name ?? "");
+      setArgsText(argsTemplate(list[0]));
       setPhase("tools");
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -165,16 +202,7 @@ export function McpDetailActions({
           </Badge>
         )}
 
-        {/* 后端只在探活可达时才下发 publicEndpoint，有它才给复制按钮 */}
-        {publicEndpoint && (
-          <CopyMcpConfigDialog
-            serverName={name || itemRef}
-            config={{ url: publicEndpoint, headers: mcpHeaders }}
-            variant="outline"
-            size="lg"
-            className="gap-2"
-          />
-        )}
+        {/* 「复制配置」已收敛到上方「使用方式」区块，此处不再重复 */}
         {!publicEndpoint && endpoint && (
           <Badge
             variant="outline"
@@ -194,13 +222,18 @@ export function McpDetailActions({
 
       {(phase === "tools" || phase === "loading-call") && (
         <div className="rounded-md border p-4 space-y-3">
-          <div className="text-sm font-medium">
+          <div className="text-base font-medium">
             选择工具执行（共 {tools.length} 个）
           </div>
           <select
             value={selected}
-            onChange={(e) => setSelected(e.target.value)}
-            className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+            onChange={(e) => {
+              const t = tools.find((it) => it.name === e.target.value);
+              setSelected(e.target.value);
+              // 切换工具即填入该工具的参数模板（无入参则为 {}）
+              setArgsText(argsTemplate(t));
+            }}
+            className="w-full rounded-md border bg-background px-3 py-2 text-base"
           >
             {tools.map((t) => (
               <option key={t.name} value={t.name}>
@@ -209,21 +242,51 @@ export function McpDetailActions({
             ))}
           </select>
           {selected && (
-            <p className="text-xs text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               {tools.find((t) => t.name === selected)?.description}
             </p>
           )}
           <div>
-            <div className="mb-1 text-xs text-muted-foreground">
-              参数（JSON，默认 {"{}"}）
+            <div className="mb-1 text-sm text-muted-foreground">
+              参数（JSON，已按工具定义生成模板）
             </div>
             <textarea
               value={argsText}
               onChange={(e) => setArgsText(e.target.value)}
-              rows={3}
-              className="w-full rounded-md border bg-background px-3 py-2 font-mono text-xs"
+              rows={4}
+              className="w-full rounded-md border bg-background px-3 py-2 font-mono text-base"
               placeholder='{"key":"value"}'
             />
+            {(() => {
+              const t = tools.find((it) => it.name === selected);
+              const props = t?.inputSchema?.properties;
+              if (!props || Object.keys(props).length === 0) return null;
+              const required = new Set(t?.inputSchema?.required ?? []);
+              return (
+                <ul className="mt-1.5 space-y-0.5 text-sm text-muted-foreground">
+                  {Object.entries(props).map(([key, raw]) => {
+                    const schema = (raw ?? {}) as SchemaProp;
+                    return (
+                      <li key={key}>
+                        <span className="font-mono text-foreground">{key}</span>
+                        {schema.type && (
+                          <span className="mx-1 opacity-70">
+                            ({schema.type}
+                            {schema.items?.type ? `<{schema.items.type}>` : ""})
+                          </span>
+                        )}
+                        {required.has(key) && (
+                          <span className="mr-1 text-destructive">*</span>
+                        )}
+                        {schema.description && (
+                          <span>：{schema.description}</span>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              );
+            })()}
           </div>
           <Button
             type="button"
@@ -243,8 +306,8 @@ export function McpDetailActions({
 
       {phase === "result" && (
         <div className="rounded-md border p-4 space-y-2">
-          <div className="text-sm font-medium">调用结果</div>
-          <pre className="max-h-80 overflow-auto rounded bg-muted p-3 text-xs leading-5 whitespace-pre-wrap">
+          <div className="text-base font-medium">调用结果</div>
+          <pre className="max-h-80 overflow-auto rounded bg-muted p-3 text-base leading-6 whitespace-pre-wrap">
             {output}
           </pre>
           <Button type="button" variant="ghost" size="sm" onClick={loadTools}>
@@ -254,7 +317,7 @@ export function McpDetailActions({
       )}
 
       {phase === "error" && (
-        <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+        <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-base text-destructive">
           {error}
         </div>
       )}

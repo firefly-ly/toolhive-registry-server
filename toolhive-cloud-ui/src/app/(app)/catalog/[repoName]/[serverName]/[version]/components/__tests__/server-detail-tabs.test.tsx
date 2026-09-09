@@ -39,8 +39,8 @@ describe("ServerDetailTabs", () => {
       </ServerDetailTabs>,
     );
 
-    expect(screen.getByRole("tab", { name: "About" })).toBeVisible();
-    expect(screen.getByRole("tab", { name: "Tools" })).toBeVisible();
+    expect(screen.getByRole("tab", { name: "关于" })).toBeVisible();
+    expect(screen.getByRole("tab", { name: "工具" })).toBeVisible();
   });
 
   it("switches to Tools tab and shows tools table", async () => {
@@ -52,7 +52,7 @@ describe("ServerDetailTabs", () => {
       </ServerDetailTabs>,
     );
 
-    await user.click(screen.getByRole("tab", { name: "Tools" }));
+    await user.click(screen.getByRole("tab", { name: "工具" }));
 
     expect(screen.getByText("get_vulnerability")).toBeVisible();
     expect(screen.getByText("query_vulnerabilities_batch")).toBeVisible();
@@ -71,9 +71,9 @@ describe("ServerDetailTabs", () => {
       </ServerDetailTabs>,
     );
 
-    await user.click(screen.getByRole("tab", { name: "Tools" }));
+    await user.click(screen.getByRole("tab", { name: "工具" }));
 
-    expect(screen.getByText("No tools available")).toBeVisible();
+    expect(screen.getByText("暂无工具")).toBeVisible();
   });
 
   it("shows 'No description' for tools without description", async () => {
@@ -81,12 +81,16 @@ describe("ServerDetailTabs", () => {
     const toolsWithoutDesc: ServerTool[] = [{ name: "my_tool" }];
 
     render(
-      <ServerDetailTabs tools={toolsWithoutDesc} issues={[]} ociRef="test:1.0.0">
+      <ServerDetailTabs
+        tools={toolsWithoutDesc}
+        issues={[]}
+        ociRef="test:1.0.0"
+      >
         <p>About content</p>
       </ServerDetailTabs>,
     );
 
-    await user.click(screen.getByRole("tab", { name: "Tools" }));
+    await user.click(screen.getByRole("tab", { name: "工具" }));
 
     expect(screen.getByText("my_tool")).toBeVisible();
     expect(screen.getByText("No description")).toBeVisible();
@@ -101,11 +105,9 @@ describe("ServerDetailTabs", () => {
       </ServerDetailTabs>,
     );
 
-    await user.click(screen.getByRole("tab", { name: "Tools" }));
+    await user.click(screen.getByRole("tab", { name: "工具" }));
 
-    expect(screen.getByRole("columnheader", { name: "Tools" })).toBeVisible();
-    expect(
-      screen.getByRole("columnheader", { name: "Description" }),
-    ).toBeVisible();
+    expect(screen.getByRole("columnheader", { name: "工具" })).toBeVisible();
+    expect(screen.getByRole("columnheader", { name: "描述" })).toBeVisible();
   });
 });

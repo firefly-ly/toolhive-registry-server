@@ -25,9 +25,9 @@ export function ServersTable({ servers, onServerClick }: ServersTableProps) {
       <Table className="min-w-full">
         <TableHeader>
           <TableRow>
-            <TableHead className="w-full pl-4 sm:w-1/5">Server</TableHead>
+            <TableHead className="w-full pl-4 sm:w-1/5">名称</TableHead>
             <TableHead className="hidden sm:w-7/10 sm:table-cell">
-              About
+              描述
             </TableHead>
             <TableHead className="p-3 text-right sm:w-2/10" />
           </TableRow>

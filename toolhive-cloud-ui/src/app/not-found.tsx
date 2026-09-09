@@ -5,14 +5,14 @@ import { Button } from "@/components/ui/button";
 export default async function NotFound() {
   return (
     <ErrorPageLayout
-      title="Page Not Found"
+      title="页面不存在"
       actions={
         <Button asChild variant="action">
-          <Link href="/catalog">Browse Catalog</Link>
+          <Link href="/catalog">浏览 MCP 市场</Link>
         </Button>
       }
     >
-      The page you're looking for doesn't exist or has been moved.
+      你要访问的页面不存在或已被移动。
     </ErrorPageLayout>
   );
 }

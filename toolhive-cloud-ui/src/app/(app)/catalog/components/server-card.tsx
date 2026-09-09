@@ -12,8 +12,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import type { V0ServerJson } from "@/generated/types.gen";
-import { isVirtualMCPServer } from "@/lib/utils";
 import { toggleFavoriteAction } from "@/lib/platform-actions";
+import { isVirtualMCPServer } from "@/lib/utils";
 
 interface ServerCardProps {
   server: V0ServerJson;
@@ -44,11 +44,14 @@ export function ServerCard({
 
   return (
     <Card
-      className="flex h-full w-full flex-col shadow-none rounded-md gap-4 py-4"
+      className="card-hover flex h-full w-full flex-col gap-4 py-4"
       onClick={onClick ? () => onClick() : undefined}
     >
       <CardHeader className="cursor-pointer gap-1">
-        <CardTitle className="text-xl font-semibold leading-7 tracking-tight">
+        <CardTitle
+          className="truncate text-xl font-semibold leading-7 tracking-tight"
+          title={server.title ?? name}
+        >
           {server.title ?? name}
         </CardTitle>
         <CardDescription className="flex items-center gap-1.5 text-xs leading-5">
@@ -65,11 +68,12 @@ export function ServerCard({
       </CardHeader>
       <CardContent className="flex flex-1 flex-col gap-3">
         <p className="line-clamp-3 text-sm leading-[18px] text-muted-foreground cursor-pointer">
-          {description || "No description available"}
+          {description || "暂无描述"}
         </p>
         {/* 收藏星标 + 调用次数统计（GitHub 式） */}
         <div className="mt-auto flex items-center justify-between border-t pt-3">
           <div className="flex items-center gap-3">
+            {/* biome-ignore lint/a11y/useKeyWithClickEvents: 仅阻止点击冒泡到卡片，非交互元素 */}
             <form action={toggleFav} onClick={(e) => e.stopPropagation()}>
               <Button
                 type="submit"

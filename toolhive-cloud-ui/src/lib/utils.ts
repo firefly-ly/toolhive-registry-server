@@ -13,7 +13,7 @@ export function cn(...inputs: ClassValue[]) {
  */
 export function isVirtualMCPServer(server: V0ServerJson): boolean {
   const result = parseStacklokMeta(server);
-  if (!result || !result.success) return false;
+  if (!result?.success) return false;
 
   return Object.values(result.data).some(
     (t) => t.metadata?.kubernetes?.kind === "VirtualMCPServer",
@@ -33,7 +33,7 @@ export function isVirtualMCPServer(server: V0ServerJson): boolean {
  */
 export function getTools(server: V0ServerJson): ServerTool[] {
   const result = parseStacklokMeta(server);
-  if (!result || !result.success) return [];
+  if (!result?.success) return [];
 
   return Object.values(result.data).flatMap((t) => {
     if (t.tool_definitions && t.tool_definitions.length > 0) {

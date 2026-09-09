@@ -41,7 +41,7 @@ describe("ServersWrapper", () => {
       <ServersWrapper servers={mockServers} registries={mockRegistries} />,
     );
 
-    expect(screen.getByText("MCP Server Catalog")).toBeVisible();
+    expect(screen.getByText("MCP 目录")).toBeVisible();
   });
 
   it("has catalog filters", () => {
@@ -51,8 +51,8 @@ describe("ServersWrapper", () => {
 
     expect(screen.getByLabelText("List view")).toBeVisible();
     expect(screen.getByLabelText("Grid view")).toBeVisible();
-    expect(screen.getByLabelText("Select registry")).toBeVisible();
-    expect(screen.getByPlaceholderText("Search")).toBeVisible();
+    expect(screen.getByLabelText("选择注册表")).toBeVisible();
+    expect(screen.getByPlaceholderText("搜索")).toBeVisible();
   });
 
   it("displays servers in grid mode by default", () => {
@@ -73,8 +73,8 @@ describe("ServersWrapper", () => {
     await user.click(screen.getByLabelText("List view"));
 
     await waitFor(() => {
-      expect(screen.getByText("Server")).toBeVisible();
-      expect(screen.getByText("About")).toBeVisible();
+      expect(screen.getByText("名称")).toBeVisible();
+      expect(screen.getByText("描述")).toBeVisible();
       expect(screen.getByText("AWS Nova Canvas")).toBeVisible();
     });
   });
@@ -100,9 +100,7 @@ describe("ServersWrapper", () => {
       <ServersWrapper servers={mockServers} registries={mockRegistries} />,
     );
 
-    const searchInput = screen.getByPlaceholderText(
-      "Search",
-    ) as HTMLInputElement;
+    const searchInput = screen.getByPlaceholderText("搜索") as HTMLInputElement;
     await user.type(searchInput, "aws");
 
     // Search is server-side — the input value updates immediately (nuqs buffers URL updates)
@@ -115,16 +113,14 @@ describe("ServersWrapper", () => {
       <ServersWrapper servers={mockServers} registries={mockRegistries} />,
     );
 
-    const searchInput = screen.getByPlaceholderText(
-      "Search",
-    ) as HTMLInputElement;
+    const searchInput = screen.getByPlaceholderText("搜索") as HTMLInputElement;
     await user.type(searchInput, "aws");
     expect(searchInput.value).toBe("aws");
 
     await user.click(screen.getByLabelText("List view"));
 
     await waitFor(() => {
-      expect(screen.getByText("Server")).toBeVisible();
+      expect(screen.getByText("名称")).toBeVisible();
     });
 
     expect(searchInput.value).toBe("aws");
@@ -135,11 +131,9 @@ describe("ServersWrapper", () => {
       <ServersWrapper servers={mockServers} registries={mockRegistries} />,
     );
 
-    expect(
-      screen.getByRole("button", { name: /previous page/i }),
-    ).toBeVisible();
-    expect(screen.getByRole("button", { name: /next page/i })).toBeVisible();
-    expect(screen.getByText("Items per page")).toBeVisible();
+    expect(screen.getByRole("button", { name: /上一页/ })).toBeVisible();
+    expect(screen.getByRole("button", { name: /下一页/ })).toBeVisible();
+    expect(screen.getByText(/第 \d+ 页/)).toBeVisible();
   });
 
   it("disables previous button on first page", () => {
@@ -147,9 +141,7 @@ describe("ServersWrapper", () => {
       <ServersWrapper servers={mockServers} registries={mockRegistries} />,
     );
 
-    expect(
-      screen.getByRole("button", { name: /previous page/i }),
-    ).toBeDisabled();
+    expect(screen.getByRole("button", { name: /上一页/ })).toBeDisabled();
   });
 
   it("disables next button when there is no nextCursor", () => {
@@ -157,7 +149,7 @@ describe("ServersWrapper", () => {
       <ServersWrapper servers={mockServers} registries={mockRegistries} />,
     );
 
-    expect(screen.getByRole("button", { name: /next page/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /下一页/ })).toBeDisabled();
   });
 
   it("enables next button when nextCursor is provided", () => {
@@ -169,8 +161,6 @@ describe("ServersWrapper", () => {
       />,
     );
 
-    expect(
-      screen.getByRole("button", { name: /next page/i }),
-    ).not.toBeDisabled();
+    expect(screen.getByRole("button", { name: /下一页/ })).not.toBeDisabled();
   });
 });

@@ -35,14 +35,15 @@ describe("ServerCard", () => {
     );
 
     expect(authorElement?.textContent).toBeFalsy();
-    expect(screen.getByText("No description available")).toBeTruthy();
+    expect(screen.getByText("暂无描述")).toBeTruthy();
   });
 
-  it("has copy URL button", () => {
+  it("has 调用 (connect) button", () => {
     render(<ServerCard server={mockServer} serverUrl="/servers/test-server" />);
 
-    const copyButton = screen.getByRole("button", { name: /copy url/i });
-    expect(copyButton).toBeTruthy();
+    // 卡片上的接入动作已由 Copy URL 按钮升级为「调用」配置弹窗
+    const callButton = screen.getByRole("button", { name: /调用/ });
+    expect(callButton).toBeTruthy();
   });
 
   it("displays Virtual MCP badge for Virtual MCP servers", () => {

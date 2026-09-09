@@ -1,25 +1,18 @@
-import { redirect } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import { getAuthContext } from "@/lib/auth/context";
-import { listSubmissions, listActiveVersions } from "@/lib/platform-backend";
-import { buildGroups, GroupRow } from "../_components/submission-groups";
+import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/header-page";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft } from "lucide-react";
+import { getAuthContext } from "@/lib/auth/context";
+import { listSubmissions } from "@/lib/platform-backend";
+import { buildGroups, GroupRow } from "../_components/submission-groups";
 
 export default async function AdminPublishedPage() {
   const { isAdmin } = await getAuthContext();
   if (!isAdmin) redirect("/catalog");
 
-  const [submissions, activeVersions] = await Promise.all([
-    listSubmissions(),
-    listActiveVersions(),
-  ]);
-
-  const activeMap = new Map(
-    activeVersions.map((a) => [a.group_key, a.active_submission_id]),
-  );
+  const submissions = await listSubmissions();
 
   // 已发布区域：正常上线 + 已下架（可回滚）+ 已下线（部署状态）都统一在此管理
   const published = submissions.filter(
@@ -51,18 +44,12 @@ export default async function AdminPublishedPage() {
               ) : (
                 <div className="space-y-3">
                   {Array.from(groups.entries()).map(([gk, items]) => (
-                    <GroupRow
-                      key={gk}
-                      group_key={gk}
-                      items={items}
-                      activeId={activeMap.get(gk)}
-                    />
+                    <GroupRow key={gk} group_key={gk} items={items} />
                   ))}
                 </div>
               )}
             </CardContent>
           </Card>
-
         </div>
       </div>
     </div>

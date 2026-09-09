@@ -47,7 +47,7 @@ export function Reasoning({ part, status }: ReasoningProps) {
           ) : (
             <ChevronRight className="size-3" />
           )}
-          <span>View reasoning steps</span>
+          <span>查看思考过程</span>
         </Button>
 
         {isOpen && (

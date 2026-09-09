@@ -1,25 +1,32 @@
 "use client";
 
-import { useState } from "react";
+import { Download, Link2, Server, Star, Tag, User } from "lucide-react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
-import {
-  Copy,
-  Download,
-  Link2,
-  Server,
-  Star,
-  Tag,
-  User,
-} from "lucide-react";
+import { useState } from "react";
+import { PackageFileTree } from "@/app/(app)/catalog/[repoName]/[serverName]/[version]/components/package-file-tree";
+import { DetailHeader } from "@/components/detail-header";
+import { IssuesPanel } from "@/components/issues-panel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type { Skill, Issue } from "@/lib/platform-backend";
-import { recordDownloadAction, toggleFavoriteAction } from "@/lib/platform-actions";
-import { IssuesPanel } from "@/components/issues-panel";
-import { DetailHeader } from "@/components/detail-header";
-import { toast } from "sonner";
+import {
+  recordDownloadAction,
+  toggleFavoriteAction,
+} from "@/lib/platform-actions";
+import type { Issue, Skill } from "@/lib/platform-backend";
+
+// react-markdown + remark-gfm 只在 README tab 首次激活时下载（Radix 非激活 tab 不渲染）
+const MarkdownView = dynamic(
+  () => import("@/components/markdown-view").then((m) => m.MarkdownView),
+  {
+    loading: () => (
+      <p className="text-muted-foreground py-8 text-center text-sm">
+        README 加载中…
+      </p>
+    ),
+  },
+);
 
 interface SkillDetailViewProps {
   skill: Skill;
@@ -31,45 +38,6 @@ interface SkillDetailViewProps {
   actions?: React.ReactNode;
 }
 
-function GettingStarted({ skill }: { skill: Skill }) {
-  const refText = skill.item_ref || skill.name || "";
-
-  async function handleCopy() {
-    try {
-      await navigator.clipboard.writeText(refText);
-      toast.success("已复制引用标识");
-    } catch {
-      toast.error("复制失败");
-    }
-  }
-
-  return (
-    <div className="space-y-3 rounded-lg border p-4">
-      <h2 className="text-base font-bold">使用方式</h2>
-      <p className="text-base leading-7 text-muted-foreground">
-        在 WorkBuddy 中引用该技能时，使用以下标识：
-      </p>
-      <div className="flex items-center gap-2">
-        <Input
-          readOnly
-          value={refText}
-          className="min-w-80 max-w-xl font-mono text-sm text-muted-foreground bg-background"
-        />
-        <Button
-          type="button"
-          variant="secondary"
-          size="sm"
-          onClick={handleCopy}
-          className="gap-2"
-        >
-          <Copy className="h-4 w-4" />
-          复制
-        </Button>
-      </div>
-    </div>
-  );
-}
-
 export function SkillDetailView({
   skill,
   favorited,
@@ -79,7 +47,12 @@ export function SkillDetailView({
   isAdmin,
   actions,
 }: SkillDetailViewProps) {
-  const toggleFav = toggleFavoriteAction.bind(null, "skill", skill.id, favorited);
+  const toggleFav = toggleFavoriteAction.bind(
+    null,
+    "skill",
+    skill.id,
+    favorited,
+  );
   const [activeTab, setActiveTab] = useState("about");
 
   function handleDownload() {
@@ -157,16 +130,16 @@ export function SkillDetailView({
         <TabsList className="h-11 rounded-xl p-1">
           {(
             [
-              { value: "about", label: "About" },
+              { value: "about", label: "关于" },
               { value: "readme", label: "README" },
-              { value: "files", label: "Code" },
-              { value: "issues", label: "Issues" },
+              { value: "files", label: "代码" },
+              { value: "issues", label: "反馈" },
             ] as const
           ).map((tab) => (
             <TabsTrigger
               key={tab.value}
               value={tab.value}
-              className="rounded-lg border-0 px-6 text-muted-foreground data-[state=active]:text-foreground data-[state=active]:shadow-none dark:data-[state=active]:bg-card"
+              className="rounded-lg border-0 px-6 text-muted-foreground data-[state=active]:text-primary-foreground data-[state=active]:shadow-none"
             >
               {tab.label}
             </TabsTrigger>
@@ -224,16 +197,11 @@ export function SkillDetailView({
             </a>
           )}
 
-          <GettingStarted skill={skill} />
-
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             {meta.map((m) => (
-              <div
-                key={m.label}
-                className="rounded-lg border bg-muted/40 p-3"
-              >
+              <div key={m.label} className="rounded-lg border bg-muted/40 p-3">
                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <m.icon className="h-3.5 w-3.5" />
+                  <m.icon className="h-3.5 w-3.5 text-primary/70" />
                   {m.label}
                 </div>
                 <div
@@ -249,9 +217,25 @@ export function SkillDetailView({
 
         <TabsContent value="readme">
           {skill.skill_readme ? (
-            <pre className="max-h-[60vh] overflow-auto whitespace-pre-wrap rounded-lg border bg-muted/30 p-4 text-sm leading-6">
-              {skill.skill_readme}
-            </pre>
+            <div className="space-y-3">
+              {skill.skill_readme_name && (
+                <p className="text-xs text-muted-foreground">
+                  提取自提交源码包内的 {skill.skill_readme_name}
+                </p>
+              )}
+              <MarkdownView content={skill.skill_readme} />
+              {skill.repository_url && (
+                <a
+                  href={skill.repository_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
+                >
+                  <Link2 className="h-4 w-4" />
+                  在仓库查看最新 README
+                </a>
+              )}
+            </div>
           ) : (
             <div className="space-y-2 rounded-lg border p-4 text-sm text-muted-foreground">
               <p>该技能包未包含 README 文件。</p>
@@ -272,18 +256,12 @@ export function SkillDetailView({
 
         <TabsContent value="files">
           {skill.skill_tree && skill.skill_tree.length > 0 ? (
-            <div className="rounded-lg border p-4">
-              <p className="mb-2 text-xs text-muted-foreground">
-                共 {skill.skill_file_count ?? skill.skill_tree.length} 个文件
-              </p>
-              <ul className="max-h-[60vh] overflow-auto font-mono text-xs leading-6">
-                {skill.skill_tree.map((f, i) => (
-                  <li key={i} className="truncate" title={f}>
-                    {f}
-                  </li>
-                ))}
-              </ul>
-            </div>
+            <PackageFileTree
+              kind="skill"
+              itemId={skill.id}
+              tree={skill.skill_tree}
+              fileCount={skill.skill_file_count}
+            />
           ) : (
             <p className="rounded-lg border p-4 text-sm text-muted-foreground">
               该技能包未提供可解析的文件清单。

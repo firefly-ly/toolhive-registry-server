@@ -25,9 +25,7 @@ describe("SignInPage", () => {
       }),
     ).toBeDefined();
 
-    expect(
-      screen.getByText(/使用企业账号登录/i),
-    ).toBeDefined();
+    expect(screen.getByText(/使用企业账号登录/i)).toBeDefined();
 
     expect(screen.getByRole("button", { name: /登录/i })).toBeDefined();
   });

@@ -1,7 +1,7 @@
 "use client";
 
+import { Eye, HelpCircle, Users } from "lucide-react";
 import { useState } from "react";
-import { Eye, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -51,7 +51,16 @@ export function VisibilityDialog({ s }: { s: Submission }) {
   );
   const vis = readVisibility(s);
   const notOnShelf =
-    (s.meta ? (() => { try { const m = JSON.parse(s.meta); return m?.visibility_configured === false; } catch { return false; } })() : false) === true;
+    (s.meta
+      ? (() => {
+          try {
+            const m = JSON.parse(s.meta);
+            return m?.visibility_configured === false;
+          } catch {
+            return false;
+          }
+        })()
+      : false) === true;
   const isMcp = s.type === "mcp";
 
   return (
@@ -160,10 +169,13 @@ export function VisibilityDialog({ s }: { s: Submission }) {
                   placeholder="product-team, platform-eng"
                   className={inputClass}
                 />
-                <p className="text-xs text-muted-foreground">
-                  组名与登录用户身上的 groups 标识匹配（来自 Casdoor / IdP 的
-                  groups 声明）。管理员始终可见全部条目。
-                </p>
+                <div
+                  className="inline-flex items-center gap-1 text-xs text-muted-foreground"
+                  title="组名与登录用户身上的 groups 标识匹配（来自 Casdoor / IdP 的 groups 声明）。管理员始终可见全部条目。"
+                >
+                  <HelpCircle className="size-3.5 cursor-help" />
+                  <span>组名匹配规则</span>
+                </div>
               </div>
             </div>
           )}
@@ -176,9 +188,7 @@ export function VisibilityDialog({ s }: { s: Submission }) {
             >
               取消
             </Button>
-            <Button type="submit">
-              {notOnShelf ? "保存并上线" : "保存"}
-            </Button>
+            <Button type="submit">{notOnShelf ? "保存并上线" : "保存"}</Button>
           </DialogFooter>
         </form>
       </DialogContent>

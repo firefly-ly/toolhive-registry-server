@@ -6,8 +6,8 @@ import type { V0ServerJson } from "@/generated/types.gen";
 import type { McpServer } from "@/lib/platform-backend";
 import { EmptyState } from "./empty-state";
 import { ServerCard } from "./server-card";
-import { SubmittedMcpCard } from "./submitted-mcp-card";
 import { ServersTable } from "./servers-table";
+import { SubmittedMcpCard } from "./submitted-mcp-card";
 
 interface ServersProps {
   servers: V0ServerJson[];
@@ -59,16 +59,16 @@ export function Servers({
 
   const hasAnyGridItems = servers.length > 0 || visibleSubmitted.length > 0;
 
-  if (!hasAnyGridItems && viewMode === "grid") {
+  if (!hasAnyGridItems) {
     if (searchQuery) {
       return (
         <EmptyState
           variant="no-matching-items"
-          title="No results found"
-          description={`We couldn't find any servers matching "${searchQuery}". Try adjusting your search.`}
+          title="未找到匹配结果"
+          description={`没有找到与"${searchQuery}"匹配的服务，试试调整搜索条件。`}
           actions={
             <Button variant="outline" onClick={onClearSearch}>
-              Clear search
+              清除搜索
             </Button>
           }
         />
@@ -77,8 +77,8 @@ export function Servers({
     return (
       <EmptyState
         variant="no-items"
-        title="No servers available"
-        description="There are no MCP servers in the catalog yet. Check back later."
+        title="暂无可用服务"
+        description="目录中还没有 MCP 服务，稍后再来看看。"
       />
     );
   }
@@ -102,7 +102,8 @@ export function Servers({
             />
           ))}
           {visibleSubmitted.map((m) => {
-            const gk = m.group_key || String(m.payload_ref || "").split(":")[0] || "";
+            const gk =
+              m.group_key || String(m.payload_ref || "").split(":")[0] || "";
             const sib = siblingGroups[gk];
             return (
               <SubmittedMcpCard

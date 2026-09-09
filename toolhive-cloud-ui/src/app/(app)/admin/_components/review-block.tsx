@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { buttonVariants } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import type { Submission } from "@/lib/platform-backend";
 import { SubmissionList } from "@/app/(app)/submissions/submission-list";
+import { buttonVariants } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import type { Submission } from "@/lib/platform-backend";
+import { cn } from "@/lib/utils";
 
 const FILTERS: { key: "all" | "mcp" | "skill"; label: string }[] = [
   { key: "all", label: "全部" },
@@ -20,7 +20,9 @@ export function ReviewBlock({ pending }: { pending: Submission[] }) {
   return (
     <Card className="flex h-full flex-col shadow-none">
       <CardHeader className="flex flex-col gap-3 pb-3 sm:flex-row sm:items-center sm:justify-between">
-        <CardTitle className="text-xl">待审核提交（{pending.length}）</CardTitle>
+        <CardTitle className="text-xl">
+          待审核提交（{pending.length}）
+        </CardTitle>
         <div className="inline-flex rounded-lg border bg-muted p-1">
           {FILTERS.map(({ key, label }) => (
             <button
@@ -32,7 +34,7 @@ export function ReviewBlock({ pending }: { pending: Submission[] }) {
                   variant: filter === key ? "default" : "ghost",
                   size: "sm",
                 }),
-                "cursor-pointer border-none shadow-none"
+                "cursor-pointer border-none shadow-none",
               )}
             >
               {label}

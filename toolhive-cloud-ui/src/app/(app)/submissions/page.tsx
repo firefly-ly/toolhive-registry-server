@@ -1,11 +1,12 @@
 import Link from "next/link";
-import { listSubmissions } from "@/lib/platform-backend";
-import { getAuthContext } from "@/lib/auth/context";
-import { createSubmissionAction } from "./actions";
 import { PageHeader } from "@/components/header-page";
 import { buttonVariants } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { getAuthContext } from "@/lib/auth/context";
+import { listSubmissions } from "@/lib/platform-backend";
+import { safe } from "@/lib/safe-async";
+import { cn } from "@/lib/utils";
+import { createSubmissionAction } from "./actions";
 import { SubmissionForm } from "./submission-form";
 import { SubmissionsBlock } from "./submissions-block";
 
@@ -16,7 +17,7 @@ export default async function SubmissionsPage({
 }) {
   const { tab = "new" } = await searchParams;
   const [submissions, ctx] = await Promise.all([
-    listSubmissions().catch(() => []),
+    safe(listSubmissions(), [], "submissions.list"),
     getAuthContext(),
   ]);
 
@@ -33,10 +34,10 @@ export default async function SubmissionsPage({
 
   return (
     <div className="flex h-full flex-col">
-      <PageHeader title="Submission Management" />
+      <PageHeader title="提交管理" />
 
       {/* 顶部 Tab 切换：新建提交 / 历史提交（与 admin 一致，整块可点） */}
-      <div className="px-[3cm] pt-2">
+      <div className="px-8 pt-2">
         <div className="inline-flex gap-2 rounded-lg border bg-muted p-1">
           <Link
             href="/submissions?tab=new"
@@ -65,7 +66,7 @@ export default async function SubmissionsPage({
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto px-[3cm] pb-[3cm] pt-8">
+      <div className="flex-1 overflow-auto px-8 pb-10 pt-4">
         {tab === "new" ? (
           <Card className="mx-auto max-w-7xl shadow-none">
             <CardHeader>

@@ -1,4 +1,4 @@
-import { NextRequest } from "next/server";
+import type { NextRequest } from "next/server";
 import { getAuthContext } from "@/lib/auth/context";
 import { request, type Submission } from "@/lib/platform-backend";
 
@@ -45,7 +45,9 @@ export async function GET(
   const sub = all.find((s) => s.id === id);
   if (!sub) return new Response("Submission not found", { status: 404 });
   if (sub.type !== "skill") {
-    return new Response("Only skill submissions have artifacts", { status: 400 });
+    return new Response("Only skill submissions have artifacts", {
+      status: 400,
+    });
   }
 
   const meta = parseMeta(sub.meta);
@@ -57,7 +59,8 @@ export async function GET(
   // 待审(staging)制品后端静态路由已收紧：仅携带内部令牌的可信代理可回源，
   // 此处 Next 服务端已通过管理员鉴权，带上令牌以放行 staging 制品（published 同样兼容）。
   const headers = {
-    "x-internal-proxy": process.env.INTERNAL_PROXY_TOKEN || "thv-internal-proxy",
+    "x-internal-proxy":
+      process.env.INTERNAL_PROXY_TOKEN || "thv-internal-proxy",
   };
   const upstream = await fetch(
     `${BACKEND_BASE}/artifacts/${encodeURIComponent(key)}`,

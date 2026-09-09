@@ -49,7 +49,7 @@ export class ErrorBoundary extends Component<
         <div className="flex h-full flex-col items-center justify-center gap-4 p-8 text-center">
           <AlertCircle className="h-12 w-12 text-destructive" />
           <div className="space-y-2">
-            <h3 className="font-semibold text-lg">Something went wrong</h3>
+            <h3 className="font-semibold text-lg">组件出错了</h3>
             <p className="text-muted-foreground text-sm">
               {this.state.error?.message || "An unexpected error occurred"}
             </p>
@@ -61,7 +61,7 @@ export class ErrorBoundary extends Component<
             className="gap-2"
           >
             <RefreshCw className="h-4 w-4" />
-            Try again
+            重试
           </Button>
         </div>
       );

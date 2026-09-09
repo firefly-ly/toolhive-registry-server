@@ -194,7 +194,8 @@ export async function uploadArtifact(file: File): Promise<string> {
       method: "POST",
       headers: {
         "Content-Type": "application/octet-stream",
-        "x-internal-proxy": process.env.INTERNAL_PROXY_TOKEN || "thv-internal-proxy",
+        "x-internal-proxy":
+          process.env.INTERNAL_PROXY_TOKEN || "thv-internal-proxy",
       },
       body: buf,
       cache: "no-store",
@@ -219,7 +220,8 @@ export async function uploadTarArtifact(file: File): Promise<string> {
       method: "POST",
       headers: {
         "Content-Type": "application/octet-stream",
-        "x-internal-proxy": process.env.INTERNAL_PROXY_TOKEN || "thv-internal-proxy",
+        "x-internal-proxy":
+          process.env.INTERNAL_PROXY_TOKEN || "thv-internal-proxy",
       },
       body: buf,
       cache: "no-store",
@@ -229,7 +231,11 @@ export async function uploadTarArtifact(file: File): Promise<string> {
     const text = await res.text().catch(() => "");
     throw new Error(`镜像包上传失败: ${res.status} ${text}`);
   }
-  const data = (await res.json()) as { key: string; sha256?: string; size?: number };
+  const data = (await res.json()) as {
+    key: string;
+    sha256?: string;
+    size?: number;
+  };
   return data.key;
 }
 
@@ -372,14 +378,20 @@ export interface McpServer {
   repository_url?: string;
   mcp_labels?: Record<string, string> | null;
   mcp_inspect?: McpImageInspect | null;
+  // 源码包内提取的 README（审批/详情懒回填时提取，仅 /mcp/:id 详情返回）
+  mcp_readme?: string | null;
+  mcp_readme_name?: string | null;
+  // 源码包内文件树（相对路径列表，最多 2000 条，仅 /mcp/:id 详情返回）
+  mcp_tree?: string[] | null;
+  mcp_file_count?: number | null;
 }
 
-// MCP 镜像提取到的 Config 元数据（来自 docker inspect）
+// MCP 镜像提取到的 Config 元数据（来自 docker inspect，已脱敏）
+// 安全约定：后端不返回 env（镜像 ENV 常内置密钥）；entrypoint/cmd/labels 敏感值已掩码
 export interface McpImageInspect {
   labels?: Record<string, string> | null;
   entrypoint?: string[] | null;
   cmd?: string[] | null;
-  env?: string[] | null;
   exposed_ports?: string[] | null;
   working_dir?: string | null;
 }
@@ -394,9 +406,33 @@ export async function getMcpById(id: string): Promise<McpServer> {
   return request<McpServer>(`/mcp/${encodeURIComponent(id)}`);
 }
 
+// 源码包单文件内容预览（敏感文件/二进制/超大文件后端会拒绝并返回 error）
+export async function getMcpFile(
+  id: string,
+  path: string,
+): Promise<{ path: string; content: string; size: number }> {
+  return request(
+    `/mcp/${encodeURIComponent(id)}/file?path=${encodeURIComponent(path)}`,
+  );
+}
+
+// Skill 源码包单文件内容预览（与 MCP 同一套后端安全约束）
+export async function getSkillFile(
+  id: string,
+  path: string,
+): Promise<{ path: string; content: string; size: number }> {
+  return request(
+    `/skills/${encodeURIComponent(id)}/file?path=${encodeURIComponent(path)}`,
+  );
+}
+
 // 真实 tools/list：后端连运行中实例取回真实能力清单（无实例/失败返回 {tools:[],live:false}）
-export async function getMcpTools(id: string): Promise<{ tools: ServerTool[]; live: boolean }> {
-  return request<{ tools: ServerTool[]; live: boolean }>(`/mcp/${encodeURIComponent(id)}/tools`);
+export async function getMcpTools(
+  id: string,
+): Promise<{ tools: ServerTool[]; live: boolean; failed?: boolean }> {
+  return request<{ tools: ServerTool[]; live: boolean }>(
+    `/mcp/${encodeURIComponent(id)}/tools`,
+  );
 }
 
 // P3：触发/取消 ToolHive 部署（仅 MCP）
@@ -433,18 +469,7 @@ export async function syncRegistry(
   });
 }
 
-// P7：某产品组下的所有版本（含当前激活版本）
-export interface ActiveVersion {
-  group_key: string;
-  item_type: string;
-  active_submission_id: string;
-  updated_at: string;
-}
-
-export async function listActiveVersions(): Promise<ActiveVersion[]> {
-  return request<ActiveVersion[]>("/active-versions");
-}
-
+// 某产品组下的所有版本（2026-09-08：激活指针已废弃，响应不再含 active/active_submission_id）
 export interface GroupVersion {
   id: string;
   payload_ref: string;
@@ -455,33 +480,17 @@ export interface GroupVersion {
   deploy_status?: string;
   registry_synced?: string;
   on_shelf?: boolean;
-  active: boolean;
   created_at: string;
 }
 
 export async function listGroupVersions(group_key: string): Promise<{
   group_key: string;
-  active_submission_id: string;
   versions: GroupVersion[];
 }> {
   return request<{
     group_key: string;
-    active_submission_id: string;
     versions: GroupVersion[];
   }>(`/groups/${encodeURIComponent(group_key)}/versions`);
-}
-
-export async function activateVersion(
-  group_key: string,
-  id: string,
-): Promise<{
-  group_key: string;
-  active_submission_id: string;
-}> {
-  return request<{ group_key: string; active_submission_id: string }>(
-    `/groups/${encodeURIComponent(group_key)}/activate/${encodeURIComponent(id)}`,
-    { method: "POST" },
-  );
 }
 
 // 下载指定版本的 Skill（旧版本仍可被引用）
@@ -532,10 +541,12 @@ export async function getTrend(
 // 每个 (item_type,item_ref,event) 的去重用户数（近 N 天），供留存/唯一用户
 export async function getUniqueUsers(
   days = 30,
-): Promise<{ item_type: string; item_ref: string; event: string; u: number }[]> {
-  return request<{ item_type: string; item_ref: string; event: string; u: number }[]>(
-    `/stats/unique?days=${days}`,
-  );
+): Promise<
+  { item_type: string; item_ref: string; event: string; u: number }[]
+> {
+  return request<
+    { item_type: string; item_ref: string; event: string; u: number }[]
+  >(`/stats/unique?days=${days}`);
 }
 
 // 平台自建反馈 / Issues（MCP 与 Skill 共用）
@@ -585,5 +596,12 @@ export async function replyIssue(
   return request<{ id: string; status: string }>(`/issues/${id}`, {
     method: "PUT",
     body: JSON.stringify(input),
+  });
+}
+
+// 删除反馈（仅管理员，兜底操作；后端 403 非管理员）
+export async function deleteIssue(id: string): Promise<{ ok: boolean; id: string }> {
+  return request<{ ok: boolean; id: string }>(`/issues/${id}`, {
+    method: "DELETE",
   });
 }

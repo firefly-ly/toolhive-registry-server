@@ -1,4 +1,11 @@
-import { CalendarDays, Copy, ExternalLink, Github, Link2, Server, Tag, User } from "lucide-react";
+import {
+  CalendarDays,
+  ExternalLink,
+  Github,
+  Server,
+  Tag,
+  User,
+} from "lucide-react";
 import Link from "next/link";
 import { AddMcpToClientDropdown } from "@/components/add-mcp-to-client-dropdown";
 import { CopyMcpConfigDialog } from "@/components/copy-mcp-config-dialog";
@@ -22,10 +29,10 @@ function GettingStarted({
   serverUrl?: string;
 }) {
   return (
-    <div className="space-y-3 rounded-lg border p-4">
-      <h2 className="text-base font-bold">使用方式</h2>
+    <div className="space-y-3 rounded-lg border bg-muted/30 p-4">
+      <h2 className="text-sm font-semibold tracking-wide">使用方式</h2>
       <p className="text-base leading-7 text-muted-foreground">
-        复制下方 Endpoint URL，在你的应用或自动化流程中使用：
+        复制下方接入端点 URL，在你的应用或自动化流程中使用：
       </p>
       {serverUrl && (
         <div className="flex items-center gap-2">
@@ -43,9 +50,9 @@ function GettingStarted({
           <CopyMcpConfigDialog
             serverName={serverName ?? ""}
             config={{ url: serverUrl }}
-            variant="secondary"
-            size="sm"
-            labelClassName="hidden sm:inline"
+            variant="outline"
+            size="lg"
+            className="gap-2"
           />
           {serverName && (
             <AddMcpToClientDropdown
@@ -84,7 +91,7 @@ export function ServerDetail({
     { icon: Server, label: "版本", value: version ? `v${version}` : "未知" },
     {
       icon: CalendarDays,
-      label: "Endpoint",
+      label: "接入端点",
       value: serverUrl ? "已配置" : "未配置",
     },
   ];
@@ -106,32 +113,6 @@ export function ServerDetail({
             </Link>
           </Button>
         )}
-        {serverUrl && (
-          <>
-            <CopyUrlButton
-              url={serverUrl}
-              variant="secondary"
-              size="lg"
-              labelClassName="hidden sm:inline"
-            />
-            <CopyMcpConfigDialog
-              serverName={serverName ?? ""}
-              config={{ url: serverUrl }}
-              variant="secondary"
-              size="lg"
-              labelClassName="hidden sm:inline"
-              className="gap-2"
-            />
-          </>
-        )}
-        {serverName && serverUrl && (
-          <div className="hidden sm:block">
-            <AddMcpToClientDropdown
-              serverName={serverName}
-              serverUrl={serverUrl}
-            />
-          </div>
-        )}
       </div>
 
       {repositoryUrl && (
@@ -150,12 +131,9 @@ export function ServerDetail({
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {meta.map((m) => (
-          <div
-            key={m.label}
-            className="rounded-lg border bg-muted/40 p-3"
-          >
+          <div key={m.label} className="rounded-lg border bg-muted/40 p-3">
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <m.icon className="h-3.5 w-3.5" />
+              <m.icon className="h-3.5 w-3.5 text-primary/70" />
               {m.label}
             </div>
             <div

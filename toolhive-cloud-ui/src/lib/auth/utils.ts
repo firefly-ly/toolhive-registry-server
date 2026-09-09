@@ -135,11 +135,7 @@ function stripOrgPrefix(s: string): string {
 }
 export function claimAsStringArray(value: unknown): string[] | undefined {
   if (Array.isArray(value)) {
-    if (
-      value.length > 0 &&
-      typeof value[0] === "object" &&
-      value[0] !== null
-    ) {
+    if (value.length > 0 && typeof value[0] === "object" && value[0] !== null) {
       const names = (value as Record<string, unknown>[])
         .map((v) => {
           if (typeof v?.name === "string") return stripOrgPrefix(v.name);
@@ -150,7 +146,9 @@ export function claimAsStringArray(value: unknown): string[] | undefined {
         .filter((n): n is string => Boolean(n));
       if (names.length > 0) return names;
     }
-    return value.map((v) => (typeof v === "string" ? stripOrgPrefix(v) : String(v)));
+    return value.map((v) =>
+      typeof v === "string" ? stripOrgPrefix(v) : String(v),
+    );
   }
   if (typeof value === "string") {
     return value
@@ -328,7 +326,7 @@ export async function getUserClaimsFromDatabase(
     }
 
     // If the id_token didn't carry the claims, fall back to the access_token.
-    if ((!claims || (!claims.roles && !claims.groups))) {
+    if (!claims || (!claims.roles && !claims.groups)) {
       const accessToken = await getTokenFromDatabase(userId);
       const atClaims = accessToken ? decodeJwtClaims(accessToken) : null;
       if (atClaims) {

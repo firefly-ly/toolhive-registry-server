@@ -20,12 +20,10 @@ describe("ErrorPage", () => {
     expect(console.error).toHaveBeenCalledWith(error);
   });
 
-  it("displays 'Something went wrong' title", () => {
+  it("displays '页面出错了' title", () => {
     render(<ErrorPage error={new Error("Test")} reset={vi.fn()} />);
 
-    expect(
-      screen.getByRole("heading", { name: /something went wrong/i }),
-    ).toBeVisible();
+    expect(screen.getByRole("heading", { name: "页面出错了" })).toBeVisible();
   });
 
   it("displays error description", () => {
@@ -40,7 +38,7 @@ describe("ErrorPage", () => {
 
     render(<ErrorPage error={new Error("Test")} reset={reset} />);
 
-    await user.click(screen.getByRole("button", { name: /try again/i }));
+    await user.click(screen.getByRole("button", { name: /重试/ }));
 
     expect(reset).toHaveBeenCalledTimes(1);
   });

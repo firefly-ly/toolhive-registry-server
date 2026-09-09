@@ -73,7 +73,7 @@ export function ToolCall({ part }: ToolCallProps) {
           ) : (
             <ChevronRight className="size-3" />
           )}
-          <span>Tool Details</span>
+          <span>工具详情</span>
         </Button>
 
         {isDetailsOpen && (
@@ -119,7 +119,7 @@ export function ToolCall({ part }: ToolCallProps) {
             ) : (
               <ChevronRight className="size-3" />
             )}
-            <span>Input Parameters</span>
+            <span>输入参数</span>
             {state === "input-streaming" && (
               <span className="text-blue-500">(Streaming...)</span>
             )}
@@ -147,7 +147,7 @@ export function ToolCall({ part }: ToolCallProps) {
             ) : (
               <ChevronRight className="size-3" />
             )}
-            <span>Tool Result</span>
+            <span>工具结果</span>
             <CheckCircle className="size-3 text-green-500" />
           </Button>
           {isOutputOpen && (
@@ -162,7 +162,7 @@ export function ToolCall({ part }: ToolCallProps) {
         <div className="mt-2 rounded border border-red-200 bg-red-50 p-2 dark:border-red-800 dark:bg-red-950/20">
           <div className="flex items-center gap-2 text-sm text-red-600 dark:text-red-400">
             <AlertCircle className="size-4" />
-            <strong>Tool Execution Error</strong>
+            <strong>工具执行错误</strong>
           </div>
           <div className="mt-1 text-xs text-red-700 dark:text-red-300">
             {"errorText" in part ? part.errorText : "Tool execution failed"}

@@ -1,13 +1,13 @@
+import { type ChildProcess, spawn } from "node:child_process";
 import fs from "node:fs";
+import { createServer as createNetServer } from "node:net";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { spawn, type ChildProcess } from "node:child_process";
-import { createServer as createNetServer } from "node:net";
 import { gzipSync } from "node:zlib";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
-import { HttpResponse, http } from "msw";
 import type { RequestHandler } from "msw";
+import { HttpResponse, http } from "msw";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -54,7 +54,7 @@ function saveDb() {
   }
 }
 
-function resetCache() {
+function _resetCache() {
   dbCache = null;
 }
 
@@ -73,7 +73,9 @@ function findFreePort(): Promise<number> {
     srv.listen(0, "127.0.0.1", () => {
       const addr = srv.address();
       const port = typeof addr === "object" && addr ? addr.port : 0;
-      srv.close(() => (port ? resolve(port) : reject(new Error("no free port"))));
+      srv.close(() =>
+        port ? resolve(port) : reject(new Error("no free port")),
+      );
     });
   });
 }
@@ -179,15 +181,21 @@ function findMcpForSubmission(
   const version = meta.version as string | undefined;
 
   // 优先按 id 精确匹配（新提交的数据通常 mcp.id === submission.id）
-  const byId = (db.mcps as Array<Record<string, unknown> & { id?: string }>).find(
-    (m) => !!submission.id && m.id === submission.id,
-  );
+  const byId = (
+    db.mcps as Array<Record<string, unknown> & { id?: string }>
+  ).find((m) => !!submission.id && m.id === submission.id);
   if (byId) return byId;
   // 兜底：历史种子数据 id 不一致，按 payload_ref / group_key+version 反查
   return (db.mcps as Array<Record<string, unknown> & { id?: string }>).find(
     (m) => {
       if (payloadRef && m.payload_ref === payloadRef) return true;
-      if (groupKey && version && m.group_key === groupKey && m.version === version) return true;
+      if (
+        groupKey &&
+        version &&
+        m.group_key === groupKey &&
+        m.version === version
+      )
+        return true;
       return false;
     },
   );
@@ -202,25 +210,26 @@ function findSubmissionForMcp(
     version: mcp.version as string | undefined,
   };
   // 优先按 id 精确匹配（新提交的数据通常 submission.id === mcp.id）
-  const byId = (db.submissions as Array<Record<string, unknown> & { id?: string }>).find(
-    (s) => s.id === mcp.id,
-  );
+  const byId = (
+    db.submissions as Array<Record<string, unknown> & { id?: string }>
+  ).find((s) => s.id === mcp.id);
   if (byId) return byId;
   // 兜底：历史种子数据 id 不一致，按 payload_ref / group_key+version 反查
-  return (db.submissions as Array<Record<string, unknown> & { id?: string }>).find(
-    (s) => {
-      if (s.payload_ref && mcp.payload_ref && s.payload_ref === mcp.payload_ref) return true;
-      const smeta = parseMetaStr(s.meta as string);
-      if (
-        mmeta.group_key &&
-        mmeta.version &&
-        smeta.group_key === mmeta.group_key &&
-        smeta.version === mmeta.version
-      )
-        return true;
-      return false;
-    },
-  );
+  return (
+    db.submissions as Array<Record<string, unknown> & { id?: string }>
+  ).find((s) => {
+    if (s.payload_ref && mcp.payload_ref && s.payload_ref === mcp.payload_ref)
+      return true;
+    const smeta = parseMetaStr(s.meta as string);
+    if (
+      mmeta.group_key &&
+      mmeta.version &&
+      smeta.group_key === mmeta.group_key &&
+      smeta.version === mmeta.version
+    )
+      return true;
+    return false;
+  });
 }
 
 // 后端启动时把 DB 中仍是 deployed 的 MCP 重新拉起（或接管尚在运行的旧进程），
@@ -378,7 +387,7 @@ function makeZip(files: { name: string; content: Buffer }[]): Buffer {
 function buildSkillPackage(skill: Record<string, unknown>): Buffer {
   const name = String(skill.name ?? "skill");
   const description = String(skill.description ?? "");
-  const group = String(skill.group_key ?? "skill");
+  const _group = String(skill.group_key ?? "skill");
   const version = String(skill.version ?? "1.0.0");
 
   const skillMd =
@@ -422,27 +431,27 @@ export const platformHandlers: RequestHandler[] = [
     // 下架(deprecated)/删除(removed)/拒绝(rejected) 的 skill 不在目录对用户可见，
     // 与 /mcp 的可见性规则保持一致
     const hidden = new Set(["deprecated", "removed", "rejected"]);
-    const visible = (db.skills as Array<Record<string, unknown> & { id?: string }>).filter(
-      (sk) => {
-        // 优先按 id 精确匹配 submission，兜底按 group_key+version 反查（种子数据 id 不一致）
-        const sub = (db.submissions as Array<Record<string, unknown> & { id?: string }>).find(
-          (s) => {
-            if (s.id === sk.id) return true;
-            const smeta = parseMetaStr(s.meta as string);
-            if (
-              sk.group_key &&
-              sk.version &&
-              smeta.group_key === sk.group_key &&
-              smeta.version === sk.version
-            )
-              return true;
-            return false;
-          },
-        );
-        if (sub && hidden.has(String(sub.status))) return false;
-        return true;
-      },
-    );
+    const visible = (
+      db.skills as Array<Record<string, unknown> & { id?: string }>
+    ).filter((sk) => {
+      // 优先按 id 精确匹配 submission，兜底按 group_key+version 反查（种子数据 id 不一致）
+      const sub = (
+        db.submissions as Array<Record<string, unknown> & { id?: string }>
+      ).find((s) => {
+        if (s.id === sk.id) return true;
+        const smeta = parseMetaStr(s.meta as string);
+        if (
+          sk.group_key &&
+          sk.version &&
+          smeta.group_key === sk.group_key &&
+          smeta.version === sk.version
+        )
+          return true;
+        return false;
+      });
+      if (sub && hidden.has(String(sub.status))) return false;
+      return true;
+    });
     return HttpResponse.json(visible);
   }),
 
@@ -466,7 +475,10 @@ export const platformHandlers: RequestHandler[] = [
     const hidden = new Set(["deprecated", "removed", "rejected"]);
     const visible = (db.mcps as Array<Record<string, unknown>>).filter((m) => {
       // 优先按 id 精确匹配 submission，避免 payload_ref 相同的多条记录互相串号
-      const sub = findSubmissionForMcp(db, m as Record<string, unknown> & { id?: string });
+      const sub = findSubmissionForMcp(
+        db,
+        m as Record<string, unknown> & { id?: string },
+      );
       if (sub && hidden.has(String(sub.status))) return false;
       return true;
     });
@@ -476,7 +488,9 @@ export const platformHandlers: RequestHandler[] = [
   http.get("/mcp/:id", ({ params }) => {
     const db = loadDb();
     const id = String(params.id);
-    const found = db.mcps.find((m: unknown) => (m as { id?: string }).id === id);
+    const found = db.mcps.find(
+      (m: unknown) => (m as { id?: string }).id === id,
+    );
     if (!found) return new HttpResponse("Not found", { status: 404 });
     return HttpResponse.json(found);
   }),
@@ -487,7 +501,7 @@ export const platformHandlers: RequestHandler[] = [
     const mcp = (db.mcps as Array<Record<string, unknown>>).find(
       (m) => m.id === id,
     );
-    if (!mcp || !mcp.endpoint) {
+    if (!mcp?.endpoint) {
       return HttpResponse.json({ tools: [], live: false });
     }
     try {
@@ -702,7 +716,8 @@ export const platformHandlers: RequestHandler[] = [
       db.skills.push(skill);
     }
     const active = db.activeVersions.find(
-      (x: unknown) => (x as { group_key?: string }).group_key === meta.group_key,
+      (x: unknown) =>
+        (x as { group_key?: string }).group_key === meta.group_key,
     ) as { active_submission_id?: string; updated_at?: string } | undefined;
     if (active) {
       active.active_submission_id = s.id;
@@ -740,7 +755,9 @@ export const platformHandlers: RequestHandler[] = [
       const meta = parseMetaStr(s.meta);
       meta.deploy_status = "failed";
       s.meta = JSON.stringify(meta);
-      const mcp = findMcpForSubmission(db, s) as { deploy_status?: string } | undefined;
+      const mcp = findMcpForSubmission(db, s) as
+        | { deploy_status?: string }
+        | undefined;
       if (mcp) mcp.deploy_status = "failed";
       saveDb();
       return HttpResponse.json(
@@ -822,7 +839,9 @@ export const platformHandlers: RequestHandler[] = [
       const meta = s.meta ? JSON.parse(s.meta) : {};
       meta.registry_synced = "published";
       s.meta = JSON.stringify(meta);
-      const mcp = findMcpForSubmission(db, s) as { registry_synced?: string } | undefined;
+      const mcp = findMcpForSubmission(db, s) as
+        | { registry_synced?: string }
+        | undefined;
       if (mcp) mcp.registry_synced = "published";
       saveDb();
     }
@@ -846,8 +865,8 @@ export const platformHandlers: RequestHandler[] = [
       .filter(
         (x: unknown) =>
           (x as { meta?: string }).meta &&
-          (JSON.parse((x as { meta: string }).meta).group_key ?? (x as { id: string }).id) ===
-            group_key,
+          (JSON.parse((x as { meta: string }).meta).group_key ??
+            (x as { id: string }).id) === group_key,
       )
       .map((x: unknown) => {
         const sx = x as {
@@ -977,7 +996,8 @@ export const platformHandlers: RequestHandler[] = [
     let list = db.issues;
     if (targetType) {
       list = list.filter(
-        (i: unknown) => (i as { target_type?: string }).target_type === targetType,
+        (i: unknown) =>
+          (i as { target_type?: string }).target_type === targetType,
       );
     }
     if (targetRef) {
@@ -1101,11 +1121,18 @@ export const platformHandlers: RequestHandler[] = [
     HttpResponse.json({ key: `artifact-${uuid()}` }, { status: 201 }),
   ),
   http.post("/upload/tar", async () =>
-    HttpResponse.json({ key: `tar-${uuid()}`, sha256: "mock", size: 0 }, { status: 201 }),
+    HttpResponse.json(
+      { key: `tar-${uuid()}`, sha256: "mock", size: 0 },
+      { status: 201 },
+    ),
   ),
 ];
 
-// 后端启动时把已部署实例重新拉起（或接管尚在运行的旧进程）
-rehydrateRuntime().catch((e) =>
-  console.error("[platform-mock] rehydrate failed:", e),
-);
+// 后端启动时把已部署实例重新拉起（或接管尚在运行的旧进程）。
+// 仅在开发服务器环境执行：单测中会真实 fetch/spawn 子进程，
+// 异步请求会随机打中某个正在运行的用例并触发 fail-on-console 判失败。
+if (!process.env.VITEST) {
+  rehydrateRuntime().catch((e) =>
+    console.error("[platform-mock] rehydrate failed:", e),
+  );
+}

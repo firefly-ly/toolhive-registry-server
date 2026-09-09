@@ -1,8 +1,9 @@
 "use client";
 
+import { Download, HelpCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
-import { Download } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,8 +15,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { cn } from "@/lib/utils";
 import type { Submission } from "@/lib/platform-backend";
+import { cn } from "@/lib/utils";
 import { approveSubmissionAction, rejectSubmissionAction } from "./actions";
 
 function parseMeta(meta?: string): Record<string, unknown> {
@@ -26,7 +27,14 @@ function parseMeta(meta?: string): Record<string, unknown> {
   }
 }
 
-type ScanStatus = "clean" | "warn" | "critical" | "alert" | "error" | "skipped" | "scanning";
+type ScanStatus =
+  | "clean"
+  | "warn"
+  | "critical"
+  | "alert"
+  | "error"
+  | "skipped"
+  | "scanning";
 
 interface TrivyResult {
   status: ScanStatus;
@@ -41,21 +49,41 @@ interface TrivyResult {
 interface PromptScanResult {
   status: ScanStatus;
   total?: number;
-  hits?: { rule_id: string; category: string; severity: string; file: string; line: number; excerpt: string }[];
+  hits?: {
+    rule_id: string;
+    category: string;
+    severity: string;
+    file: string;
+    line: number;
+    excerpt: string;
+  }[];
   scanned_at?: string;
   error?: string;
 }
 
 // 扫描三态徽章：绿=clean/低危，黄=warn/等待，红=critical/alert/出错，灰=skipped
-function ScanBadge({ label, status, extra }: { label: string; status?: ScanStatus; extra?: string }) {
+function ScanBadge({
+  label,
+  status,
+  extra,
+}: {
+  label: string;
+  status?: ScanStatus;
+  extra?: string;
+}) {
   const s = status ?? "skipped";
   const { variant, text } =
-    s === "clean" ? { variant: "default" as const, text: "通过" }
-    : s === "warn" ? { variant: "outline" as const, text: "有提示" }
-    : s === "critical" || s === "alert" ? { variant: "destructive" as const, text: "需人工确认" }
-    : s === "error" ? { variant: "destructive" as const, text: "扫描失败" }
-    : s === "scanning" ? { variant: "outline" as const, text: "扫描中" }
-    : { variant: "secondary" as const, text: "未扫描" };
+    s === "clean"
+      ? { variant: "default" as const, text: "通过" }
+      : s === "warn"
+        ? { variant: "outline" as const, text: "有提示" }
+        : s === "critical" || s === "alert"
+          ? { variant: "destructive" as const, text: "需人工确认" }
+          : s === "error"
+            ? { variant: "destructive" as const, text: "扫描失败" }
+            : s === "scanning"
+              ? { variant: "outline" as const, text: "扫描中" }
+              : { variant: "secondary" as const, text: "未扫描" };
   return (
     <span className="flex items-center gap-1.5">
       <Badge variant={variant}>{`${label}: ${text}`}</Badge>
@@ -106,7 +134,18 @@ export function ApproveDialog({ submission }: { submission: Submission }) {
     "idle",
   );
   const [error, setError] = useState("");
-  const { id, type, payload_ref, user_id, created_at, meta: metaRaw } = submission;
+  // 报错统一以 toast 弹出（自动消失、点击可关）
+  useEffect(() => {
+    if (error) toast.error(error, { duration: 6000 });
+  }, [error]);
+  const {
+    id,
+    type,
+    payload_ref,
+    user_id,
+    created_at,
+    meta: metaRaw,
+  } = submission;
   const meta = useMemo(() => parseMeta(metaRaw), [metaRaw]);
   const isMcp = type === "mcp";
   const busy = phase !== "idle";
@@ -124,6 +163,17 @@ export function ApproveDialog({ submission }: { submission: Submission }) {
   const needPromptConfirm = promptScan?.status === "alert";
   const [confirmScan, setConfirmScan] = useState(false);
   const [confirmPrompt, setConfirmPrompt] = useState(false);
+
+  // 扫描进行中自动轮询：每 5s 刷新一次服务端数据（router.refresh 重新拉取提交列表，
+  // 弹窗收到的 props 随之更新），扫描完成后状态自动由「扫描中」变为实际结果。
+  const scanPending =
+    trivy?.status === "scanning" ||
+    (!isMcp && promptScan?.status === "scanning");
+  useEffect(() => {
+    if (!open || !scanPending) return;
+    const timer = setInterval(() => router.refresh(), 5000);
+    return () => clearInterval(timer);
+  }, [open, scanPending, router]);
   // 重开弹窗时重置勾选
   const resetChecks = () => {
     setConfirmScan(false);
@@ -197,7 +247,10 @@ export function ApproveDialog({ submission }: { submission: Submission }) {
       open={open}
       onOpenChange={(o) => {
         setOpen(o);
-        if (o) { setError(""); resetChecks(); }
+        if (o) {
+          setError("");
+          resetChecks();
+        }
       }}
     >
       <DialogTrigger asChild>
@@ -205,7 +258,7 @@ export function ApproveDialog({ submission }: { submission: Submission }) {
           审批
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-6xl">
+      <DialogContent className="sm:max-w-6xl">
         <DialogHeader>
           <DialogTitle className="text-xl">审批提交</DialogTitle>
           <DialogDescription>
@@ -213,7 +266,7 @@ export function ApproveDialog({ submission }: { submission: Submission }) {
           </DialogDescription>
         </DialogHeader>
 
-        <div className="max-h-[70vh] space-y-5 overflow-y-auto pr-1">
+        <div className="max-h-[60vh] space-y-5 overflow-y-auto pr-1">
           <div className="flex items-start justify-between gap-4 rounded-xl border bg-muted/30 p-4">
             <div className="min-w-0">
               <h3 className="truncate text-xl font-semibold">{title}</h3>
@@ -305,15 +358,30 @@ export function ApproveDialog({ submission }: { submission: Submission }) {
           )}
 
           {/* 安全扫描结果（Trivy 漏洞/密钥 + SKILL.md 提示词注入规则） */}
-          <div className="space-y-3 rounded-xl border p-4">
+          <div className="space-y-3 rounded-xl border bg-muted/30 p-4">
             <div className="flex flex-wrap items-center gap-2">
               <p className="text-sm font-medium">安全扫描</p>
-              <ScanBadge label="Trivy 漏洞" status={trivy?.status} extra={trivy ? `CRITICAL ${trivy.critical} · HIGH ${trivy.high} · 密钥 ${trivy.secrets}` : undefined} />
+              <ScanBadge
+                label="Trivy 漏洞"
+                status={trivy?.status}
+                extra={
+                  trivy
+                    ? `CRITICAL ${trivy.critical} · HIGH ${trivy.high} · 密钥 ${trivy.secrets}`
+                    : undefined
+                }
+              />
               {!isMcp && (
-                <ScanBadge label="注入规则" status={promptScan?.status} extra={promptScan ? `命中 ${promptScan.total}` : undefined} />
+                <ScanBadge
+                  label="注入规则"
+                  status={promptScan?.status}
+                  extra={promptScan ? `命中 ${promptScan.total}` : undefined}
+                />
               )}
-              {(trivy?.status === "scanning" || (!isMcp && promptScan?.status === "scanning")) && (
-                <span className="text-xs text-muted-foreground">扫描进行中，稍后重开此弹窗刷新结果</span>
+              {(trivy?.status === "scanning" ||
+                (!isMcp && promptScan?.status === "scanning")) && (
+                <span className="text-xs text-muted-foreground">
+                  扫描进行中，结果将自动刷新
+                </span>
               )}
             </div>
 
@@ -330,17 +398,31 @@ export function ApproveDialog({ submission }: { submission: Submission }) {
                     </tr>
                   </thead>
                   <tbody>
-                    {(promptScan?.hits ?? []).map((h, i) => (
-                      <tr key={i} className="border-t">
+                    {(promptScan?.hits ?? []).map((h) => (
+                      <tr key={JSON.stringify(h)} className="border-t">
                         <td className="px-2 py-1.5">
-                          <span className={cn("rounded px-1.5 py-0.5 font-semibold", h.severity === "alert" ? "bg-destructive/15 text-destructive" : "bg-amber-500/15 text-amber-600")}>
+                          <span
+                            className={cn(
+                              "rounded px-1.5 py-0.5 font-semibold",
+                              h.severity === "alert"
+                                ? "bg-destructive/15 text-destructive"
+                                : "bg-amber-500/15 text-amber-600",
+                            )}
+                          >
                             {h.severity}
                           </span>
                         </td>
                         <td className="px-2 py-1.5 font-mono">{h.rule_id}</td>
                         <td className="px-2 py-1.5">{h.category}</td>
-                        <td className="px-2 py-1.5 font-mono">{h.file}:{h.line}</td>
-                        <td className="max-w-[280px] truncate px-2 py-1.5" title={h.excerpt}>{h.excerpt}</td>
+                        <td className="px-2 py-1.5 font-mono">
+                          {h.file}:{h.line}
+                        </td>
+                        <td
+                          className="max-w-[280px] truncate px-2 py-1.5"
+                          title={h.excerpt}
+                        >
+                          {h.excerpt}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -359,7 +441,8 @@ export function ApproveDialog({ submission }: { submission: Submission }) {
                       onChange={(e) => setConfirmScan(e.target.checked)}
                     />
                     <span>
-                      Trivy 发现 <b>{trivy?.critical}</b> 个 CRITICAL 漏洞 / <b>{trivy?.secrets}</b> 处明文密钥。
+                      Trivy 发现 <b>{trivy?.critical}</b> 个 CRITICAL 漏洞 /{" "}
+                      <b>{trivy?.secrets}</b> 处明文密钥。
                       我已知晓风险，坚持放行该制品（此操作将记入审计轨迹）。
                     </span>
                   </label>
@@ -373,7 +456,8 @@ export function ApproveDialog({ submission }: { submission: Submission }) {
                       onChange={(e) => setConfirmPrompt(e.target.checked)}
                     />
                     <span>
-                      注入规则命中 <b>{promptScan?.total}</b> 处。我已逐条人工审阅上述命中内容，确认无提示词注入风险（此操作将记入审计轨迹）。
+                      注入规则命中 <b>{promptScan?.total}</b>{" "}
+                      处。我已逐条人工审阅上述命中内容，确认无提示词注入风险（此操作将记入审计轨迹）。
                     </span>
                   </label>
                 )}
@@ -382,25 +466,30 @@ export function ApproveDialog({ submission }: { submission: Submission }) {
           </div>
 
           {/* 私密配置 .env：只展示键名清单，值在加密凭据库中，任何角色不可见 */}
-          {isMcp && Array.isArray(meta.env_keys) && meta.env_keys.length > 0 && (
-            <div className="space-y-2 rounded-lg border bg-muted/30 p-3">
-              <p className="text-sm font-medium">私密配置（.env）</p>
-              <p className="text-xs text-muted-foreground">
-                已配置 <b>{meta.env_keys.length}</b> 个环境变量，值经 ToolHive 加密凭据库存储，
-                平台全程不落明文；部署时经 <code className="font-mono">--secret</code> 注入容器。
-              </p>
-              <div className="flex flex-wrap gap-1.5">
-                {(meta.env_keys as string[]).map((k) => (
-                  <span
-                    key={k}
-                    className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs"
-                  >
-                    {k}
-                  </span>
-                ))}
+          {isMcp &&
+            Array.isArray(meta.env_keys) &&
+            meta.env_keys.length > 0 && (
+              <div className="space-y-2 rounded-lg border bg-muted/30 p-3">
+                <p className="text-sm font-medium">私密配置（.env）</p>
+                <div
+                  className="inline-flex items-center gap-1 text-xs text-muted-foreground"
+                  title={`已配置 ${meta.env_keys.length} 个环境变量，值经 ToolHive 加密凭据库存储，平台全程不落明文；部署时经 --secret 注入容器。`}
+                >
+                  <HelpCircle className="size-3.5 cursor-help" />
+                  <span>已配置 {meta.env_keys.length} 个环境变量</span>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {(meta.env_keys as string[]).map((k) => (
+                    <span
+                      key={k}
+                      className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs"
+                    >
+                      {k}
+                    </span>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
           <div>
             <p className="mb-1.5 text-sm font-medium text-muted-foreground">
@@ -414,15 +503,20 @@ export function ApproveDialog({ submission }: { submission: Submission }) {
           </div>
 
           <div className="border-t pt-3">
-            <p className="text-sm text-muted-foreground">
-              {isMcp
-                ? "通过后进入「已发布管理」，处于未上线状态（默认仅管理员可见）。管理员需先在该条目点「上线 / 可见范围」选择范围并保存后，才解锁「部署」；部署成功后再按可见范围对普通用户开放调用。"
-                : "通过后进入「已发布管理」，处于未上架状态（默认仅管理员可见）。管理员需在该条目点「上线 / 可见范围」选择范围并保存后，才对所选范围开放目录可见与下载。"}
-            </p>
+            <div
+              className="inline-flex items-center gap-1 text-xs text-muted-foreground"
+              title={
+                isMcp
+                  ? "通过后进入「已发布管理」，处于未上线状态（默认仅管理员可见）。管理员需先在该条目点「上线 / 可见范围」选择范围并保存后，才解锁「部署」；部署成功后再按可见范围对普通用户开放调用。"
+                  : "通过后进入「已发布管理」，处于未上架状态（默认仅管理员可见）。管理员需在该条目点「上线 / 可见范围」选择范围并保存后，才对所选范围开放目录可见与下载。"
+              }
+            >
+              <HelpCircle className="size-3.5 cursor-help" />
+              <span>通过后的上线流程说明</span>
+            </div>
           </div>
         </div>
 
-        {error && <p className="text-sm text-destructive">{error}</p>}
         <DialogFooter className="gap-2">
           <Button
             type="button"

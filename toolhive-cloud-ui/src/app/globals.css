@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@plugin "@tailwindcss/typography";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -16,20 +17,16 @@ html {
   --card-foreground: 240 10% 3.9%;
   --popover: 0 0% 100%;
   --popover-foreground: 240 10% 3.9%;
-  --primary: 240 5.9% 10%;
-  --primary-foreground: 0 0% 98%;
-  --secondary: 240 4.8% 95.9%;
-  --secondary-foreground: 240 5.9% 10%;
-  --muted: 240 4.8% 95.9%;
-  --muted-foreground: 240 3.8% 46.1%;
-  --accent: 240 4.8% 95.9%;
-  --accent-foreground: 240 5.9% 10%;
   --destructive: 0 84.2% 60.2%;
   --destructive-foreground: 0 0% 98%;
   --border: 240 5.9% 90%;
   --input: 240 5.9% 90%;
-  --ring: 240 5.9% 10%;
-  --radius: 0.5rem;
+  /* 品牌主色：与导航栏同一蓝系（nav-background ≈ oklch 216°），按钮/链接/焦点环统一
+     （下方为 :root 内唯一定义，覆盖并取代 shadcn 默认 slate 主色） */
+  --primary: 216 65% 42%;
+  --primary-foreground: 0 0% 100%;
+  --ring: 216 65% 48%;
+  --radius: 0.625rem;
   --avatar-background: oklch(0.696 0 0 / 89.8%);
   --nav-background: oklch(0.4282 0.0561 216.14);
   --nav-border: oklch(0.6031 0.0621 214.22);
@@ -50,10 +47,11 @@ html {
      拉丁字体在前命中西文，中文字符回退到雅黑（CSS 按字符逐个匹配）。
      Keeps the same CSS variable names so @theme inline / body keep working
      without a network connection to fonts.googleapis.com. */
-  --font-inter: "Times New Roman", "Microsoft YaHei", ui-sans-serif, system-ui,
+  --font-inter:
+    "Times New Roman", "Microsoft YaHei", ui-sans-serif, system-ui,
     -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --font-merriweather: "Times New Roman", "Microsoft YaHei", Georgia, Cambria,
-    serif;
+  --font-merriweather:
+    "Times New Roman", "Microsoft YaHei", Georgia, Cambria, serif;
 }
 
 .dark {
@@ -93,8 +91,11 @@ html {
 }
 
 @theme inline {
-  --font-sans: var(--font-inter);
-  --font-serif: var(--font-merriweather);
+  /* 全站字体栈：优先系统 UI 字体，中文回退微软雅黑/苹方，杜绝宋体衬线回退 */
+  --font-sans:
+    system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial,
+    "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+  --font-serif: var(--font-sans);
 
   --color-background: hsl(var(--background));
   --color-foreground: hsl(var(--foreground));
@@ -138,7 +139,7 @@ html {
 body {
   background: hsl(var(--background));
   color: hsl(var(--foreground));
-  font-family: var(--font-inter), sans-serif;
+  font-family: var(--font-sans);
 }
 
 @layer base {
@@ -147,6 +148,17 @@ body {
   }
   body {
     @apply bg-background text-foreground;
+  }
+  /* Tailwind v4 preflight 将 button/[role=button] 默认改为 cursor:default，这里统一恢复手型 */
+  button:not(:disabled),
+  [role="button"]:not(:disabled),
+  [role="menuitem"]:not([data-disabled]),
+  [role="option"]:not([data-disabled]),
+  [role="menuitemcheckbox"]:not([data-disabled]),
+  [role="menuitemradio"]:not([data-disabled]),
+  label:has(> input[type="checkbox"], > input[type="radio"]),
+  summary {
+    cursor: pointer;
   }
 }
 
@@ -164,6 +176,49 @@ body {
   --normal-bg: hsl(var(--popover));
   --normal-text: hsl(var(--popover-foreground));
   --normal-border: hsl(var(--border));
+}
+
+/* ---- 设计系统细节：滚动条 / 文字选中 / 交互反馈 ---- */
+
+::selection {
+  background: hsl(var(--primary) / 0.16);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--border)) transparent;
+}
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.45);
+  background-clip: content-box;
+}
+
+/* 可点击卡片统一悬停反馈（目录/技能/提交三类卡片共用） */
+.card-hover {
+  transition:
+    box-shadow 0.2s ease,
+    transform 0.2s ease,
+    border-color 0.2s ease;
+}
+.card-hover:hover {
+  box-shadow:
+    0 4px 12px -2px hsl(var(--primary) / 0.08),
+    0 2px 6px -2px hsl(240 5.9% 10% / 0.08);
+  border-color: hsl(var(--primary) / 0.35);
+  transform: translateY(-2px);
 }
 
 /* Light fade-in for Radix tooltips (replaces the black-on-white native title). */

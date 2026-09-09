@@ -42,6 +42,9 @@ export interface AutoAPIMockInstance<T> {
   /** Reset to default behavior. Called automatically before each test. */
   reset: () => AutoAPIMockInstance<T>;
 
+  /** True when an overrideHandler/scenario is currently active (used by custom page handlers to delegate). */
+  hasActiveOverride: () => boolean;
+
   /** The default fixture data. */
   defaultValue: T;
 }
@@ -115,6 +118,10 @@ export function AutoAPIMock<T>(defaultValue: T): AutoAPIMockInstance<T> {
     reset() {
       overrideHandlerFn = null;
       return instance;
+    },
+
+    hasActiveOverride() {
+      return overrideHandlerFn !== null;
     },
   };
 

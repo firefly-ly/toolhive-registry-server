@@ -131,11 +131,11 @@ describe("isTokenNearExpiry", () => {
 });
 
 describe("utils", () => {
-  let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
+  let _consoleErrorSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    _consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
   });
 
   afterEach(() => {
@@ -159,10 +159,8 @@ describe("utils", () => {
 
     it("returns null for invalid JWT format", () => {
       const result = getUserInfoFromIdToken("not-a-jwt");
+      // 实现已改为静默降级（不打印日志），仅断言行为
       expect(result).toBeNull();
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        "[Auth] Invalid JWT format: expected 3 parts",
-      );
     });
 
     it("extracts standard OIDC claims", () => {
@@ -203,13 +201,10 @@ describe("utils", () => {
       });
     });
 
-    it("returns null and logs error on malformed payload", () => {
+    it("returns null on malformed payload", () => {
       const result = getUserInfoFromIdToken("header.not-valid-base64.sig");
+      // 实现已改为静默降级（不打印日志），仅断言行为
       expect(result).toBeNull();
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        "[Auth] Failed to decode ID token:",
-        expect.any(Error),
-      );
     });
   });
 

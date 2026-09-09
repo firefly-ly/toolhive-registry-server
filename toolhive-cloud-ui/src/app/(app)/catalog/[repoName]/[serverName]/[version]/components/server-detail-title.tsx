@@ -1,5 +1,5 @@
-import { Badge } from "@/components/ui/badge";
 import { DetailHeader } from "@/components/detail-header";
+import { Badge } from "@/components/ui/badge";
 import type { V0ServerJson } from "@/generated";
 import { isVirtualMCPServer } from "@/lib/utils";
 
@@ -16,7 +16,11 @@ export function ServerDetailTitle({ server, version }: ServerDetailTitleProps) {
 
   const badges = [
     isVirtualMCPServer(server) && (
-      <Badge key="virtual" variant="secondary" className="text-xs font-semibold">
+      <Badge
+        key="virtual"
+        variant="secondary"
+        className="text-xs font-semibold"
+      >
         Virtual MCP Server
       </Badge>
     ),
@@ -35,7 +39,7 @@ export function ServerDetailTitle({ server, version }: ServerDetailTitleProps) {
   return (
     <DetailHeader
       backHref="/catalog"
-      backLabel="返回目录"
+      backLabel="返回 MCP 市场"
       title={serverName}
       subtitle={publisher ? `由 ${publisher} 提交` : undefined}
       badges={badges}

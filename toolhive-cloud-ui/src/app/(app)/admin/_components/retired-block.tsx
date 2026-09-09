@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useMemo, useState } from "react";
 import { buttonVariants } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Submission } from "@/lib/platform-backend";
+import { cn } from "@/lib/utils";
 import { SearchableRetiredList } from "./submission-groups";
 
 const FILTERS: { key: "all" | "mcp" | "skill"; label: string }[] = [
@@ -24,7 +24,9 @@ export function RetiredBlock({ retired }: { retired: Submission[] }) {
   return (
     <Card className="flex h-full flex-col shadow-none">
       <CardHeader className="flex flex-col gap-3 pb-3 sm:flex-row sm:items-center sm:justify-between">
-        <CardTitle className="text-xl">已删除 / 已拒绝（{retired.length}）</CardTitle>
+        <CardTitle className="text-xl">
+          已删除 / 已拒绝（{retired.length}）
+        </CardTitle>
         <div className="inline-flex rounded-lg border bg-muted p-1">
           {FILTERS.map(({ key, label }) => (
             <button
@@ -36,7 +38,7 @@ export function RetiredBlock({ retired }: { retired: Submission[] }) {
                   variant: filter === key ? "default" : "ghost",
                   size: "sm",
                 }),
-                "cursor-pointer border-none shadow-none"
+                "cursor-pointer border-none shadow-none",
               )}
             >
               {label}
@@ -46,7 +48,9 @@ export function RetiredBlock({ retired }: { retired: Submission[] }) {
       </CardHeader>
       <CardContent className="min-h-0 flex-1">
         {filtered.length === 0 ? (
-          <p className="text-base text-muted-foreground">暂无已删除或已拒绝条目</p>
+          <p className="text-base text-muted-foreground">
+            暂无已删除或已拒绝条目
+          </p>
         ) : (
           <SearchableRetiredList retired={filtered} />
         )}

@@ -28,9 +28,7 @@ export function SignInButton({ providerId }: { providerId: string }) {
       if (error) {
         setIsLoading(false);
         toast.error("登录失败", {
-          description:
-            error.message ||
-            "登录过程中发生错误，请重试。",
+          description: error.message || "登录过程中发生错误，请重试。",
         });
         return;
       }

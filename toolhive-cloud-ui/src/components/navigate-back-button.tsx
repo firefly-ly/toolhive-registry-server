@@ -34,7 +34,7 @@ export function NavigateBackButton({
       onClick={handleClick}
       className={cn(
         "group cursor-pointer gap-1.5 rounded-full border-border/40 bg-card/90 px-4 py-2 text-sm font-medium text-card-foreground shadow-sm ring-offset-background transition-all hover:bg-accent hover:text-accent-foreground hover:shadow",
-        className
+        className,
       )}
     >
       <ChevronLeft className="size-4 transition-transform group-hover:-translate-x-0.5" />

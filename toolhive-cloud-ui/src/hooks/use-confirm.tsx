@@ -61,9 +61,7 @@ export function useConfirm() {
     >
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>
-            {options.title || "确认操作？"}
-          </AlertDialogTitle>
+          <AlertDialogTitle>{options.title || "确认操作？"}</AlertDialogTitle>
           {options.description && (
             <AlertDialogDescription>
               {options.description}

@@ -3,11 +3,11 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth/auth";
+import { getAuthContext } from "@/lib/auth/context";
 import {
-  activateVersion,
   approveSubmission,
   classifyRegistry,
   createSubmission,
@@ -18,7 +18,6 @@ import {
   syncRegistry,
   undeployMcp,
 } from "@/lib/platform-backend";
-import { getAuthContext } from "@/lib/auth/context";
 
 const BACKEND_BASE =
   process.env.PLATFORM_BACKEND_URL || "http://127.0.0.1:4000";
@@ -43,7 +42,8 @@ async function uploadBufferToBackend(
       headers: {
         "Content-Type": "application/octet-stream",
         // 后端 /upload* 已加身份门（P0-2）：本函数跑在 Next 服务端，携带内部令牌通过
-        "x-internal-proxy": process.env.INTERNAL_PROXY_TOKEN || "thv-internal-proxy",
+        "x-internal-proxy":
+          process.env.INTERNAL_PROXY_TOKEN || "thv-internal-proxy",
       },
       body: buf,
       cache: "no-store",
@@ -169,22 +169,23 @@ export async function createSubmissionAction(formData: FormData): Promise<{
         display_name: name || file.name.replace(/\.(zip|tar\.gz|tgz)$/i, ""),
         version: version || "1.0.0",
       });
-      const created = await fetch(
-        `${BACKEND_BASE}/submissions/source?${qs}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/octet-stream",
-            "x-internal-proxy": process.env.INTERNAL_PROXY_TOKEN || "thv-internal-proxy",
-            "x-actor-email": actor,
-          },
-          body: await file.arrayBuffer(),
-          cache: "no-store",
+      const created = await fetch(`${BACKEND_BASE}/submissions/source?${qs}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/octet-stream",
+          "x-internal-proxy":
+            process.env.INTERNAL_PROXY_TOKEN || "thv-internal-proxy",
+          "x-actor-email": actor,
         },
-      );
+        body: await file.arrayBuffer(),
+        cache: "no-store",
+      });
       if (!created.ok) {
         const text = await created.text().catch(() => "");
-        return { ok: false, error: `源码包提交失败: ${created.status} ${text.slice(0, 200)}` };
+        return {
+          ok: false,
+          error: `源码包提交失败: ${created.status} ${text.slice(0, 200)}`,
+        };
       }
       const createdJson = (await created.json()) as { id: string };
       // 私密 .env（可选）：单独上传，值入 ToolHive 加密凭据库，平台不落明文
@@ -208,7 +209,10 @@ export async function createSubmissionAction(formData: FormData): Promise<{
         );
         if (!envRes.ok) {
           const text = await envRes.text().catch(() => "");
-          return { ok: false, error: `.env 上传失败: ${envRes.status} ${text.slice(0, 200)}` };
+          return {
+            ok: false,
+            error: `.env 上传失败: ${envRes.status} ${text.slice(0, 200)}`,
+          };
         }
       }
       revalidatePath("/submissions");
@@ -220,7 +224,11 @@ export async function createSubmissionAction(formData: FormData): Promise<{
         return { ok: false, error: "请选择要上传的镜像 tar 包" };
       }
       if (!/\.(tar|tar\.gz|tgz)$/i.test(file.name)) {
-        return { ok: false, error: "镜像包仅支持 .tar / .tar.gz / .tgz（请使用 docker save 导出）" };
+        return {
+          ok: false,
+          error:
+            "镜像包仅支持 .tar / .tar.gz / .tgz（请使用 docker save 导出）",
+        };
       }
       try {
         // 经 Server Action 内上传到 /upload/tar（流式落盘 + 体积/结构校验），返回内部 key
@@ -278,8 +286,9 @@ export async function classifyRegistryAction(
   if (!trimmed) return null;
   try {
     return await classifyRegistry(trimmed);
-  } catch {
-    // 查询失败不阻断填写，静默降级为"无提示"
+  } catch (error) {
+    // 查询失败不阻断填写，降级为"无提示"，但留痕
+    console.error(`[classifyRegistry:${trimmed}]`, error);
     return null;
   }
 }
@@ -291,7 +300,8 @@ export async function approveSubmissionAction(formData: FormData) {
   const transport = String(formData.get("transport") ?? "").trim();
   // 安全扫描人工确认（后端 422 闸门要求显式传参，勾选动作进审计轨迹）
   const override_scan = String(formData.get("override_scan") ?? "") === "true";
-  const confirm_prompt_review = String(formData.get("confirm_prompt_review") ?? "") === "true";
+  const confirm_prompt_review =
+    String(formData.get("confirm_prompt_review") ?? "") === "true";
   if (!id) return;
   await approveSubmission(id, "admin", {
     endpoint: endpoint || undefined,
@@ -343,7 +353,7 @@ export async function setLifecycleAction(formData: FormData) {
   revalidatePath("/catalog");
   revalidatePath("/skills");
   revalidatePath("/mcp/[ref]", "page");
-  redirect("/admin?tab=published");
+  // 成功后停留原地；失败才跳转携带 error 参数弹 toast
 }
 
 // P3：管理者手动触发 / 取消 ToolHive 部署（MCP）
@@ -360,14 +370,18 @@ export async function deploySubmissionAction(formData: FormData) {
   // deployMcp 内部会再次 patchMeta('deploying')，此处只是更早落盘。
   setImmediate(() => {
     deployMcp(id).catch((e) => {
-      console.error("[deploySubmissionAction] 部署失败（后台）:", id, e && e.message);
+      console.error(
+        "[deploySubmissionAction] 部署失败（后台）:",
+        id,
+        e?.message,
+      );
     });
   });
   revalidatePath("/admin");
   revalidatePath("/submissions");
   revalidatePath("/catalog");
   revalidatePath("/mcp/[ref]");
-  redirect("/admin?tab=published");
+  // 停留在原地：只刷新数据不导航，部署状态由卡片徽章（部署中…/运行中/部署失败）就地反映
 }
 
 export async function undeploySubmissionAction(formData: FormData) {
@@ -385,7 +399,7 @@ export async function undeploySubmissionAction(formData: FormData) {
   revalidatePath("/submissions");
   revalidatePath("/catalog");
   revalidatePath("/mcp/[ref]");
-  redirect("/admin?tab=published");
+  // 成功后停留原地；失败才跳转携带 error 参数弹 toast
 }
 
 // P4：重新同步到 Registry Server（同步失败后重试 / 补发布）
@@ -404,7 +418,7 @@ export async function syncRegistryAction(formData: FormData) {
   revalidatePath("/submissions");
   revalidatePath("/catalog");
   revalidatePath("/skills");
-  redirect("/admin?tab=published");
+  // 成功后停留原地；失败才跳转携带 error 参数弹 toast
 }
 
 // 管理员设置条目可见范围（方案C：发布时决定哪些成员/组可查看/下载/调用）。
@@ -418,9 +432,10 @@ export async function setVisibilityAction(formData: FormData) {
   }
   const id = String(formData.get("id") ?? "").trim();
   if (!id) return;
-  const mode = String(formData.get("mode") ?? "all") === "restricted"
-    ? "restricted"
-    : "all";
+  const mode =
+    String(formData.get("mode") ?? "all") === "restricted"
+      ? "restricted"
+      : "all";
   const users = String(formData.get("users") ?? "")
     .split(/[,;\n]/)
     .map((s) => s.trim())
@@ -441,18 +456,7 @@ export async function setVisibilityAction(formData: FormData) {
   revalidatePath("/catalog");
   revalidatePath("/mcp/[ref]", "page");
   revalidatePath("/skills");
-  redirect("/admin?tab=published");
+  // 成功后停留原地；失败才跳转携带 error 参数弹 toast
 }
-
-// P7：切换产品组当前激活版本（MCP 滚动升级/回滚、Skill 多版本切换）
-export async function activateVersionAction(formData: FormData) {
-  const group_key = String(formData.get("group_key") ?? "").trim();
-  const id = String(formData.get("id") ?? "").trim();
-  if (!group_key || !id) return;
-  await activateVersion(group_key, id);
-  revalidatePath("/admin");
-  revalidatePath("/submissions");
-  revalidatePath("/catalog");
-  revalidatePath("/mcp/[ref]");
-  revalidatePath("/skills");
-}
+// （原 activateVersionAction 已随激活指针废弃移除——用户侧版本下拉自选已上架版本，
+//  目录默认展示"最新已上架版本"，不再维护激活指针。）

@@ -33,7 +33,7 @@ export function AddMcpToClientDropdown({
           className="flex h-10 items-center justify-between gap-2 rounded-full"
           onClick={(e) => e.stopPropagation()}
         >
-          <span>Add to client</span>
+          <span>添加到客户端</span>
           <ChevronDown className="size-4" />
         </Button>
       </DropdownMenuTrigger>

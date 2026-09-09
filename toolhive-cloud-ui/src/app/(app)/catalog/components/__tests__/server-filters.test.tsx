@@ -50,7 +50,7 @@ describe("ServerFilters", () => {
 
     render(<ServerFilters {...defaultProps} onSearchChange={onSearchChange} />);
 
-    const searchInput = screen.getByPlaceholderText("Search");
+    const searchInput = screen.getByPlaceholderText("搜索");
     await user.type(searchInput, "test");
 
     expect(onSearchChange).toHaveBeenCalled();
@@ -59,7 +59,7 @@ describe("ServerFilters", () => {
   it("displays search query value", () => {
     render(<ServerFilters {...defaultProps} searchQuery="aws" />);
 
-    const searchInput = screen.getByPlaceholderText("Search");
+    const searchInput = screen.getByPlaceholderText("搜索");
     expect(searchInput).toHaveValue("aws");
   });
 
@@ -80,6 +80,6 @@ describe("ServerFilters", () => {
   it("renders registry selector", () => {
     render(<ServerFilters {...defaultProps} />);
 
-    expect(screen.getByLabelText("Select registry")).toBeVisible();
+    expect(screen.getByLabelText("选择注册表")).toBeVisible();
   });
 });

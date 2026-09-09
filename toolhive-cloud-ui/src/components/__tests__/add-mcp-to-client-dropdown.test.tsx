@@ -24,16 +24,14 @@ describe("AddMcpToClientDropdown", () => {
   it("renders the dropdown trigger button", () => {
     render(<AddMcpToClientDropdown {...defaultProps} />);
 
-    expect(
-      screen.getByRole("button", { name: /add to client/i }),
-    ).toBeVisible();
+    expect(screen.getByRole("button", { name: /添加到客户端/ })).toBeVisible();
   });
 
   it("shows all client options when opened", async () => {
     const user = userEvent.setup();
     render(<AddMcpToClientDropdown {...defaultProps} />);
 
-    await user.click(screen.getByRole("button", { name: /add to client/i }));
+    await user.click(screen.getByRole("button", { name: /添加到客户端/ }));
 
     for (const { label } of MCP_CLIENT_LIST) {
       expect(screen.getByRole("menuitem", { name: label })).toBeVisible();
@@ -44,7 +42,7 @@ describe("AddMcpToClientDropdown", () => {
     const user = userEvent.setup();
     render(<AddMcpToClientDropdown {...defaultProps} />);
 
-    await user.click(screen.getByRole("button", { name: /add to client/i }));
+    await user.click(screen.getByRole("button", { name: /添加到客户端/ }));
     await user.click(screen.getByRole("menuitem", { name: "Cursor" }));
 
     expect(mockOpenInClient).toHaveBeenCalledWith("cursor");
@@ -55,7 +53,7 @@ describe("AddMcpToClientDropdown", () => {
     const user = userEvent.setup();
     render(<AddMcpToClientDropdown {...defaultProps} />);
 
-    await user.click(screen.getByRole("button", { name: /add to client/i }));
+    await user.click(screen.getByRole("button", { name: /添加到客户端/ }));
     await user.click(screen.getByRole("menuitem", { name: "VS Code" }));
 
     expect(mockOpenInClient).toHaveBeenCalledWith("vscode");
@@ -66,7 +64,7 @@ describe("AddMcpToClientDropdown", () => {
     const user = userEvent.setup();
     render(<AddMcpToClientDropdown {...defaultProps} />);
 
-    await user.click(screen.getByRole("button", { name: /add to client/i }));
+    await user.click(screen.getByRole("button", { name: /添加到客户端/ }));
     await user.click(screen.getByRole("menuitem", { name: /claude code/i }));
 
     expect(mockCopyCommand).toHaveBeenCalledWith("claude-code");

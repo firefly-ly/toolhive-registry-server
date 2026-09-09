@@ -21,14 +21,14 @@ export function CatalogPagination({
   onNext,
 }: CatalogPaginationProps) {
   return (
-    <div className="flex items-center justify-center rounded-md border bg-card px-4 py-3">
+    <div className="mx-auto mt-4 flex w-fit items-center rounded-full border bg-card px-4 py-2 shadow-sm">
       <div className="flex items-center gap-1">
         <Button
           variant="ghost"
           onClick={onFirstPage}
           disabled={isFirstPage}
           size="sm"
-          aria-label="First page"
+          aria-label="第一页"
           className="cursor-pointer"
         >
           <ChevronFirst className="size-4" />
@@ -38,18 +38,18 @@ export function CatalogPagination({
           onClick={onPrev}
           disabled={isFirstPage}
           size="sm"
-          aria-label="Previous page"
+          aria-label="上一页"
           className="cursor-pointer"
         >
           <ChevronLeft className="size-4" />
         </Button>
-        <span className="px-3 text-sm font-medium">Page {pageNumber}</span>
+        <span className="px-3 text-sm font-medium">第 {pageNumber} 页</span>
         <Button
           variant="ghost"
           onClick={() => nextCursor && onNext(nextCursor)}
           disabled={!nextCursor}
           size="sm"
-          aria-label="Next page"
+          aria-label="下一页"
           className="cursor-pointer"
         >
           <ChevronRight className="size-4" />

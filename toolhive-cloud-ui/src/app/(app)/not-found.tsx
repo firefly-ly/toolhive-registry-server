@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { AlertCircle } from "lucide-react";
+import Link from "next/link";
 import { PageHeader } from "@/components/header-page";
 import { Button } from "@/components/ui/button";
 import {
@@ -28,7 +28,7 @@ export default function NotFound() {
             </CardHeader>
             <CardFooter className="flex justify-center gap-3">
               <Button variant="outline" size="sm" asChild>
-                <Link href="/catalog">返回目录</Link>
+                <Link href="/catalog">返回 MCP 市场</Link>
               </Button>
               <Button variant="outline" size="sm" asChild>
                 <Link href="/skills">返回技能市场</Link>

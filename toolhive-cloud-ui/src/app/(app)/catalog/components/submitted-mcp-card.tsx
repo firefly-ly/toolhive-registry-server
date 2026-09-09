@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { ChevronDown, CircleSlash, Star } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { CircleSlash, ChevronDown, Star } from "lucide-react";
+import { useState } from "react";
 import { CopyMcpConfigDialog } from "@/components/copy-mcp-config-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,14 +13,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import type { McpServer } from "@/lib/platform-backend";
 import { toggleFavoriteAction } from "@/lib/platform-actions";
+import type { McpServer } from "@/lib/platform-backend";
 
 interface SubmittedMcpCardProps {
   mcp: McpServer;
   favorited?: boolean;
   callCount?: number;
-  /** 同 group 的完整卡片数据（含激活版 mcp 与其已上架版本）。长度>1 时标题右显示版本下拉，可就地切换。 */
+  /** 同 group 的完整卡片数据（含默认版 mcp 与其已上架版本）。长度>1 时标题右显示版本下拉，可就地切换。 */
   siblingCards?: McpServer[];
 }
 
@@ -41,7 +41,8 @@ export function SubmittedMcpCard({
 }: SubmittedMcpCardProps) {
   const router = useRouter();
   // 就地切换的当前版本：有同 group 其它版本数据时使用；否则恒为 mcp
-  const versions = siblingCards && siblingCards.length > 1 ? siblingCards : [mcp];
+  const versions =
+    siblingCards && siblingCards.length > 1 ? siblingCards : [mcp];
   const [curId, setCurId] = useState<string>(mcp.id);
   const cur = versions.find((v) => v.id === curId) || mcp;
 
@@ -52,7 +53,7 @@ export function SubmittedMcpCard({
   const versionLabel = (m: McpServer) => (m.version ? `v${m.version}` : m.name);
 
   return (
-    <Card className="flex h-full w-full flex-col shadow-none rounded-md gap-4 py-4">
+    <Card className="card-hover flex h-full w-full flex-col gap-4 py-4">
       <CardHeader className="gap-1">
         <div className="flex items-center justify-between gap-2">
           <CardTitle
@@ -63,6 +64,8 @@ export function SubmittedMcpCard({
           </CardTitle>
           {/* 多版本：版本下拉放在标题右侧，就地切换（不跳详情） */}
           {canSwitch && (
+            /* biome-ignore lint/a11y/useKeyWithClickEvents: 仅阻止点击冒泡到卡片，非交互元素 */
+            /* biome-ignore lint/a11y/noStaticElementInteractions: 仅阻止点击冒泡到卡片，非交互元素 */
             <div
               className="relative shrink-0"
               onClick={(e) => e.stopPropagation()}
@@ -139,7 +142,12 @@ export function SubmittedMcpCard({
                 未运行
               </Badge>
             )}
-            <Button type="button" variant="outline" size="sm" onClick={goDetail}>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={goDetail}
+            >
               查看
             </Button>
           </div>

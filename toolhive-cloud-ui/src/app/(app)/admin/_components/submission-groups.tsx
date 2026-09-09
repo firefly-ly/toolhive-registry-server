@@ -1,17 +1,16 @@
 "use client";
 
-import { useMemo, useState } from "react";
 import { Eye } from "lucide-react";
 import Link from "next/link";
+import { useMemo, useState } from "react";
+import { ConfirmForm } from "@/components/confirm-form";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ConfirmForm } from "@/components/confirm-form";
 import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
 import type { Submission } from "@/lib/platform-backend";
+import { cn } from "@/lib/utils";
 import {
-  activateVersionAction,
   deploySubmissionAction,
   setLifecycleAction,
   syncRegistryAction,
@@ -103,13 +102,12 @@ export function buildGroups(published: Submission[]) {
 export function GroupRow({
   group_key,
   items,
-  activeId,
 }: {
   group_key: string;
   items: Submission[];
-  activeId?: string;
 }) {
-  const activeItem = items.find((s) => s.id === activeId) || items[0];
+  // 组内最新一条作为卡片基础版本（列表已按创建时间倒序）；用户侧版本由下拉自选
+  const activeItem = items[0];
   const isMcp = activeItem.type === "mcp";
   const meta = parseMeta(activeItem.meta);
   const title = meta.name || activeItem.payload_ref;
@@ -125,7 +123,7 @@ export function GroupRow({
                 {isMcp ? "MCP" : "Skill"}
               </Badge>
               <Badge variant="default" className="text-xs">
-                激活：{versionOf(activeItem)}
+                最新版：{versionOf(activeItem)}
               </Badge>
               {activeItem.status === "deprecated" && (
                 <Badge variant="secondary" className="text-xs">
@@ -163,12 +161,7 @@ export function GroupRow({
           </summary>
           <div className="mt-3 space-y-2 border-t pt-3">
             {items.map((s) => (
-              <VersionRow
-                key={s.id}
-                s={s}
-                active={s.id === activeId}
-                group_key={group_key}
-              />
+              <VersionRow key={s.id} s={s} />
             ))}
           </div>
         </details>
@@ -177,15 +170,7 @@ export function GroupRow({
   );
 }
 
-export function VersionRow({
-  s,
-  active,
-  group_key,
-}: {
-  s: Submission;
-  active: boolean;
-  group_key: string;
-}) {
+export function VersionRow({ s }: { s: Submission }) {
   const meta = parseMeta(s.meta);
   const isMcp = s.type === "mcp";
   const deploy = meta.deploy_status || "unborn";
@@ -204,11 +189,6 @@ export function VersionRow({
       <div className="min-w-0">
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium">{versionOf(s)}</span>
-          {active && (
-            <Badge variant="default" className="text-xs">
-              当前激活
-            </Badge>
-          )}
           {isMcp && (
             <Badge
               variant={deployTone as "default" | "destructive" | "secondary"}
@@ -250,21 +230,8 @@ export function VersionRow({
         )}
       </div>
       <div className="flex shrink-0 flex-wrap gap-2">
-        {/*
-          仅 Skill 提供「设为默认版本」：Skill 下载是按 group 的激活版本派发的，
-          指针切换即生效。MCP 是运行中的服务，其对外版本由实际部署（部署/下线）决定，
-          仅靠改 DB 指针不会真正切换运行实例，反而可能把正在运行的版本从目录藏起来、
-          展示一个未部署的版本。因此 MCP 不暴露此按钮，版本切换请用「部署/下线」。
-        */}
-        {!active && s.status === "approved" && !isMcp && (
-          <form action={activateVersionAction}>
-            <input type="hidden" name="group_key" value={group_key} />
-            <input type="hidden" name="id" value={s.id} />
-            <Button type="submit" variant="outline" size="sm">
-              设为默认版本
-            </Button>
-          </form>
-        )}
+        {/* 2026-09-08：激活指针已废弃（用户侧版本下拉自选已上架版本，目录默认展示最新已上架），
+            原 Skill「设为默认版本」按钮一并移除。 */}
         {/* 该条目的审计轨迹：跳到审计 tab 并按对象 ID 预过滤 */}
         <Link
           href={`/admin?tab=audit&target_id=${encodeURIComponent(s.id)}`}
@@ -297,14 +264,16 @@ export function VersionActions({ s }: { s: Submission }) {
   return (
     <>
       {/* 「部署」(首次/失败重试)单独放在最前，独立于「下线/恢复上线」运行态切换 */}
-      {isMcp && (deploy === "unborn" || deploy === "failed") && canToggleRun && (
-        <form action={deploySubmissionAction}>
-          <input type="hidden" name="id" value={s.id} />
-          <Button type="submit" variant="outline" size="sm">
-            部署
-          </Button>
-        </form>
-      )}
+      {isMcp &&
+        (deploy === "unborn" || deploy === "failed") &&
+        canToggleRun && (
+          <form action={deploySubmissionAction}>
+            <input type="hidden" name="id" value={s.id} />
+            <Button type="submit" variant="outline" size="sm">
+              部署
+            </Button>
+          </form>
+        )}
       {isMcp && (deploy === "unborn" || deploy === "failed") && !onShelf && (
         <span className="inline-flex items-center gap-1 text-xs text-amber-600">
           待配置可见范围后
@@ -439,7 +408,11 @@ export function RetiredRow({ s }: { s: Submission }) {
   const deploy = meta.deploy_status || "unborn";
   // 此区域当前仅展示 removed / rejected；deprecated 已迁移到「已发布」区域管理
   const statusLabel =
-    s.status === "removed" ? "已删除" : s.status === "rejected" ? "已拒绝" : s.status;
+    s.status === "removed"
+      ? "已删除"
+      : s.status === "rejected"
+        ? "已拒绝"
+        : s.status;
   return (
     <Card>
       <CardContent className="flex items-center justify-between gap-4 py-4">
@@ -465,19 +438,15 @@ export function RetiredRow({ s }: { s: Submission }) {
   );
 }
 
-function groupSearchText(
-  group_key: string,
-  items: Submission[],
-  activeId?: string,
-): string {
-  const activeItem = items.find((s) => s.id === activeId) || items[0];
-  const meta = parseMeta(activeItem.meta);
-  const title = meta.name || activeItem.payload_ref;
+function groupSearchText(group_key: string, items: Submission[]): string {
+  const base = items[0];
+  const meta = parseMeta(base.meta);
+  const title = meta.name || base.payload_ref;
   const parts = [
     group_key,
     title,
-    activeItem.payload_ref,
-    activeItem.user_id,
+    base.payload_ref,
+    base.user_id,
     ...items.map((s) => {
       const m = parseMeta(s.meta);
       return [m.name || "", m.version || "", s.payload_ref, s.user_id].join(
@@ -490,11 +459,9 @@ function groupSearchText(
 
 export function SearchableGroupList({
   groups,
-  activeMap,
   placeholder = "搜索分组、版本、提交者…",
 }: {
   groups: [string, Submission[]][];
-  activeMap: Record<string, string>;
   placeholder?: string;
 }) {
   const [query, setQuery] = useState("");
@@ -502,9 +469,9 @@ export function SearchableGroupList({
     const q = query.trim().toLowerCase();
     if (!q) return groups;
     return groups.filter(([gk, items]) =>
-      groupSearchText(gk, items, activeMap[gk]).includes(q),
+      groupSearchText(gk, items).includes(q),
     );
-  }, [groups, query, activeMap]);
+  }, [groups, query]);
 
   return (
     <div className="flex h-full flex-col">
@@ -522,12 +489,7 @@ export function SearchableGroupList({
           <p className="text-base text-muted-foreground">没有匹配的分组</p>
         )}
         {filtered.map(([gk, items]) => (
-          <GroupRow
-            key={gk}
-            group_key={gk}
-            items={items}
-            activeId={activeMap[gk]}
-          />
+          <GroupRow key={gk} group_key={gk} items={items} />
         ))}
       </div>
     </div>

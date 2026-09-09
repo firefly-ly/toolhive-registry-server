@@ -16,16 +16,12 @@ describe("CatalogPagination", () => {
   describe("First page button", () => {
     it("is disabled on the first page", () => {
       render(<CatalogPagination {...defaultProps} isFirstPage={true} />);
-      expect(
-        screen.getByRole("button", { name: /first page/i }),
-      ).toBeDisabled();
+      expect(screen.getByRole("button", { name: /第一页/ })).toBeDisabled();
     });
 
     it("is enabled when not on the first page", () => {
       render(<CatalogPagination {...defaultProps} isFirstPage={false} />);
-      expect(
-        screen.getByRole("button", { name: /first page/i }),
-      ).not.toBeDisabled();
+      expect(screen.getByRole("button", { name: /第一页/ })).not.toBeDisabled();
     });
 
     it("calls onFirstPage when clicked", async () => {
@@ -39,7 +35,7 @@ describe("CatalogPagination", () => {
         />,
       );
 
-      await user.click(screen.getByRole("button", { name: /first page/i }));
+      await user.click(screen.getByRole("button", { name: /第一页/ }));
       expect(onFirstPage).toHaveBeenCalledTimes(1);
     });
   });
@@ -47,16 +43,12 @@ describe("CatalogPagination", () => {
   describe("Previous button", () => {
     it("is disabled on the first page", () => {
       render(<CatalogPagination {...defaultProps} isFirstPage={true} />);
-      expect(
-        screen.getByRole("button", { name: /previous page/i }),
-      ).toBeDisabled();
+      expect(screen.getByRole("button", { name: /上一页/ })).toBeDisabled();
     });
 
     it("is enabled when not on the first page", () => {
       render(<CatalogPagination {...defaultProps} isFirstPage={false} />);
-      expect(
-        screen.getByRole("button", { name: /previous page/i }),
-      ).not.toBeDisabled();
+      expect(screen.getByRole("button", { name: /上一页/ })).not.toBeDisabled();
     });
 
     it("calls onPrev when clicked", async () => {
@@ -70,7 +62,7 @@ describe("CatalogPagination", () => {
         />,
       );
 
-      await user.click(screen.getByRole("button", { name: /previous page/i }));
+      await user.click(screen.getByRole("button", { name: /上一页/ }));
       expect(onPrev).toHaveBeenCalledTimes(1);
     });
   });
@@ -78,14 +70,12 @@ describe("CatalogPagination", () => {
   describe("Next button", () => {
     it("is disabled when there is no nextCursor", () => {
       render(<CatalogPagination {...defaultProps} nextCursor={undefined} />);
-      expect(screen.getByRole("button", { name: /next page/i })).toBeDisabled();
+      expect(screen.getByRole("button", { name: /下一页/ })).toBeDisabled();
     });
 
     it("is enabled when nextCursor is provided", () => {
       render(<CatalogPagination {...defaultProps} nextCursor="cursor-abc" />);
-      expect(
-        screen.getByRole("button", { name: /next page/i }),
-      ).not.toBeDisabled();
+      expect(screen.getByRole("button", { name: /下一页/ })).not.toBeDisabled();
     });
 
     it("calls onNext with the cursor when clicked", async () => {
@@ -99,7 +89,7 @@ describe("CatalogPagination", () => {
         />,
       );
 
-      await user.click(screen.getByRole("button", { name: /next page/i }));
+      await user.click(screen.getByRole("button", { name: /下一页/ }));
       expect(onNext).toHaveBeenCalledWith("cursor-abc");
     });
   });
@@ -107,7 +97,7 @@ describe("CatalogPagination", () => {
   describe("Page number", () => {
     it("displays the current page number", () => {
       render(<CatalogPagination {...defaultProps} pageNumber={4} />);
-      expect(screen.getByText("Page 4")).toBeVisible();
+      expect(screen.getByText("第 4 页")).toBeVisible();
     });
   });
 });

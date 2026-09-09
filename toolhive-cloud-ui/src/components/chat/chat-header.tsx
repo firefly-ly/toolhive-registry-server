@@ -66,7 +66,7 @@ export function ChatHeader({
         <Popover open={isOpen} onOpenChange={setIsOpen}>
           <PopoverTrigger asChild>
             <Button variant="outline" size="sm" className="rounded-full">
-              <span className="text-sm font-medium">Chat history</span>
+              <span className="text-sm font-medium">聊天历史</span>
               <ChevronDown className="size-4" />
             </Button>
           </PopoverTrigger>

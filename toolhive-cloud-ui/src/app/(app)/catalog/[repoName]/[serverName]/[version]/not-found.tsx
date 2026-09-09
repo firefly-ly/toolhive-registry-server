@@ -14,15 +14,14 @@ export default function NotFound() {
       />
 
       <ErrorPageLayout
-        title="Server Not Found"
+        title="未找到该服务"
         actions={
           <Button asChild variant="action">
-            <Link href="/catalog">Browse Catalog</Link>
+            <Link href="/catalog">浏览 MCP 市场</Link>
           </Button>
         }
       >
-        The MCP server you're looking for doesn't exist or has been removed from
-        the catalog.
+        你要找的 MCP 服务不存在，或已从 MCP 市场中移除。
       </ErrorPageLayout>
     </div>
   );

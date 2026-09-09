@@ -21,7 +21,7 @@ describe("ServerDetail", () => {
     it("displays default description when not provided", () => {
       render(<ServerDetail serverUrl={mockProps.serverUrl} />);
 
-      expect(screen.getByText("No description available")).toBeVisible();
+      expect(screen.getByText("暂无描述")).toBeVisible();
     });
   });
 
@@ -29,7 +29,7 @@ describe("ServerDetail", () => {
     it("displays repository link when URL is provided", () => {
       render(<ServerDetail {...mockProps} />);
 
-      const repoLink = screen.getByRole("link", { name: /view repository/i });
+      const repoLink = screen.getByRole("link", { name: /查看仓库/ });
       expect(repoLink).toBeVisible();
       expect(repoLink).toHaveAttribute("href", mockProps.repositoryUrl);
       expect(repoLink).toHaveAttribute("target", "_blank");
@@ -45,7 +45,7 @@ describe("ServerDetail", () => {
       );
 
       expect(
-        screen.queryByRole("link", { name: /view repository/i }),
+        screen.queryByRole("link", { name: /查看仓库/ }),
       ).not.toBeInTheDocument();
     });
   });
@@ -54,19 +54,13 @@ describe("ServerDetail", () => {
     it("displays getting started heading", () => {
       render(<ServerDetail {...mockProps} />);
 
-      expect(
-        screen.getByRole("heading", { name: /getting started/i }),
-      ).toBeVisible();
+      expect(screen.getByRole("heading", { name: "使用方式" })).toBeVisible();
     });
 
     it("displays getting started description", () => {
       render(<ServerDetail {...mockProps} />);
 
-      expect(
-        screen.getByText(
-          /copy the endpoint url below and use it within your application/i,
-        ),
-      ).toBeVisible();
+      expect(screen.getByText(/复制下方接入端点 URL/)).toBeVisible();
     });
 
     it("displays server URL input when provided", () => {
@@ -80,7 +74,10 @@ describe("ServerDetail", () => {
     it("displays copy URL button when server URL is provided", () => {
       render(<ServerDetail {...mockProps} />);
 
-      expect(screen.getByRole("button", { name: /copy url/i })).toBeVisible();
+      // 复制行含 CopyUrlButton 与 复制配置 弹窗按钮，用 getAllByRole 容忍多个匹配
+      const copyButtons = screen.getAllByRole("button", { name: /copy url/i });
+      expect(copyButtons.length).toBeGreaterThan(0);
+      expect(copyButtons[0]).toBeVisible();
     });
 
     it("does not display input or copy button when server URL is not provided", () => {
@@ -100,20 +97,19 @@ describe("ServerDetail", () => {
       render(<ServerDetail {...mockProps} />);
 
       expect(screen.getByText(mockProps.description)).toBeVisible();
-      expect(
-        screen.getByRole("link", { name: /view repository/i }),
-      ).toBeVisible();
+      expect(screen.getByRole("link", { name: /查看仓库/ })).toBeVisible();
       expect(screen.getByDisplayValue(mockProps.serverUrl)).toBeVisible();
-      expect(screen.getByRole("button", { name: /copy url/i })).toBeVisible();
+      const copyButtons = screen.getAllByRole("button", { name: /copy url/i });
+      expect(copyButtons.length).toBeGreaterThan(0);
     });
 
     it("renders correctly with minimal props (only serverUrl)", () => {
       render(<ServerDetail serverUrl="https://example.com" />);
 
-      expect(screen.getByText("No description available")).toBeVisible();
+      expect(screen.getByText("暂无描述")).toBeVisible();
       expect(screen.getByDisplayValue("https://example.com")).toBeVisible();
       expect(
-        screen.queryByRole("link", { name: /view repository/i }),
+        screen.queryByRole("link", { name: /查看仓库/ }),
       ).not.toBeInTheDocument();
     });
 
@@ -128,7 +124,7 @@ describe("ServerDetail", () => {
       expect(screen.getByText("Custom description")).toBeVisible();
       expect(screen.getByDisplayValue("https://example.com")).toBeVisible();
       expect(
-        screen.queryByRole("link", { name: /view repository/i }),
+        screen.queryByRole("link", { name: /查看仓库/ }),
       ).not.toBeInTheDocument();
     });
   });

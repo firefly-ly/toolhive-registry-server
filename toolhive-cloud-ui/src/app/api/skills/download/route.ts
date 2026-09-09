@@ -1,4 +1,4 @@
-import { NextRequest } from "next/server";
+import type { NextRequest } from "next/server";
 
 const BACKEND_BASE =
   process.env.PLATFORM_BACKEND_URL || "http://127.0.0.1:4000";
@@ -34,7 +34,8 @@ export async function GET(req: NextRequest) {
   const contentType = upstream.headers.get("Content-Type");
   if (contentType) headers.set("Content-Type", contentType);
   const contentDisposition = upstream.headers.get("Content-Disposition");
-  if (contentDisposition) headers.set("Content-Disposition", contentDisposition);
+  if (contentDisposition)
+    headers.set("Content-Disposition", contentDisposition);
   const sha256 = upstream.headers.get("X-Content-Sha256");
   if (sha256) headers.set("X-Content-Sha256", sha256);
 

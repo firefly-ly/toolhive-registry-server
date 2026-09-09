@@ -65,9 +65,11 @@ export function ServerFilters({
       <Select value={selectedRegistry} onValueChange={onRegistryChange}>
         <SelectTrigger
           className="w-38 h-9 bg-white dark:bg-card"
-          aria-label="Select registry"
+          aria-label="选择注册表"
         >
-          <SelectValue placeholder="Select registry" />
+          <SelectValue placeholder="选择注册表">
+            {selectedRegistry || undefined}
+          </SelectValue>
         </SelectTrigger>
         <SelectContent>
           {registries
@@ -87,7 +89,7 @@ export function ServerFilters({
         <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           type="text"
-          placeholder="Search"
+          placeholder="搜索"
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
           className="h-9 px-9 bg-white dark:bg-card"

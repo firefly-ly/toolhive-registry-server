@@ -80,7 +80,7 @@ export function AttachmentPreview({
                 href={fileUrl}
                 download={fileName}
                 className="text-primary mt-1 flex text-sm hover:underline"
-                title="Download"
+                title="下载"
               >
                 <span className="w-auto truncate text-sm font-medium">
                   Download

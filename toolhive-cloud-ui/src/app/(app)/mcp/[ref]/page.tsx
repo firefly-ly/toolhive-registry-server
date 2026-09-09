@@ -1,20 +1,9 @@
-import Link from "next/link";
 import { AlertCircle } from "lucide-react";
 import { headers } from "next/headers";
-import { auth } from "@/lib/auth/auth";
-import {
-  getMcpById,
-  listFavorites,
-  getItemCounts,
-  getFavoriteCounts,
-  getMcpTools,
-  getIssues,
-  listGroupVersions,
-} from "@/lib/platform-backend";
+import Link from "next/link";
 import { getServers } from "@/app/(app)/catalog/actions";
-import { getAuthContext } from "@/lib/auth/context";
-import type { V0ServerJson } from "@/generated/types.gen";
 import { PageHeader } from "@/components/header-page";
+import { NavigateBackButton } from "@/components/navigate-back-button";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -23,10 +12,22 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { McpDetailActions } from "./mcp-detail-actions";
-import { McpServerDetail } from "./components/mcp-server-detail";
-import { NavigateBackButton } from "@/components/navigate-back-button";
 import { VersionSwitcher } from "@/components/version-switcher";
+import type { V0ServerJson } from "@/generated/types.gen";
+import { auth } from "@/lib/auth/auth";
+import { getAuthContext } from "@/lib/auth/context";
+import {
+  getFavoriteCounts,
+  getIssues,
+  getItemCounts,
+  getMcpById,
+  getMcpTools,
+  listFavorites,
+  listGroupVersions,
+} from "@/lib/platform-backend";
+import { safe } from "@/lib/safe-async";
+import { McpServerDetail } from "./components/mcp-server-detail";
+import { McpDetailActions } from "./mcp-detail-actions";
 
 interface McpDetailPageProps {
   params: Promise<{ ref: string }>;
@@ -40,16 +41,20 @@ export default async function McpDetailPage({
   const { ref } = await params;
   const { from, call } = await searchParams;
   const backHref =
-    from === "stats" ? "/stats" : from === "favorites" ? "/favorites" : "/catalog";
+    from === "stats"
+      ? "/stats"
+      : from === "favorites"
+        ? "/favorites"
+        : "/catalog";
   const backLabel =
     from === "stats"
       ? "返回统计"
       : from === "favorites"
         ? "返回收藏"
-        : "返回目录";
+        : "返回 MCP 市场";
 
-  // 1) 先尝试用户提交的已审批 MCP（按 id）
-  const submitted = await getMcpById(ref).catch(() => null);
+  // 1) 先尝试用户提交的已审批 MCP（按 id）；null 会走"当作 registry 服务器名"回退
+  const submitted = await safe(getMcpById(ref), null, "mcpDetail.getById");
 
   // 当前用户收藏状态（用于高亮星标）
   let favorited = false;
@@ -59,16 +64,22 @@ export default async function McpDetailPage({
     if (actor) {
       const favorites = await listFavorites();
       favorited = favorites.some(
-        (f) => f.user_id === actor && f.item_type === "mcp" && f.item_ref === ref,
+        (f) =>
+          f.user_id === actor && f.item_type === "mcp" && f.item_ref === ref,
       );
     }
-  } catch (_) {
-    // 后端不可用时按未收藏处理
+  } catch (error) {
+    // 后端不可用时按未收藏处理，但留痕
+    console.error("[mcpDetail.favorites]", error);
   }
 
   // 2) 否则当作 registry 服务器名处理
   if (!submitted) {
-    const serversResult = await getServers().catch(() => ({ servers: [] }));
+    const serversResult = await safe(
+      getServers(),
+      { servers: [] },
+      "mcpDetail.getServers",
+    );
     const server = (serversResult.servers ?? []).find((s) => s.name === ref);
     if (!server) {
       return (
@@ -83,13 +94,14 @@ export default async function McpDetailPage({
                   </div>
                   <CardTitle className="text-xl">MCP 当前不可用</CardTitle>
                   <CardDescription className="text-base">
-                    该 MCP 当前不在目录中（可能已下线或未运行），无法查看详情。
+                    该 MCP 当前不在 MCP
+                    市场中（可能已下线或未运行），无法查看详情。
                   </CardDescription>
                 </CardHeader>
                 <CardFooter className="flex justify-center gap-3">
                   <NavigateBackButton href={backHref} label={backLabel} />
                   <Button variant="outline" size="sm" asChild>
-                    <Link href="/catalog">返回目录</Link>
+                    <Link href="/catalog">返回 MCP 市场</Link>
                   </Button>
                 </CardFooter>
               </Card>
@@ -100,8 +112,16 @@ export default async function McpDetailPage({
     }
 
     const [calls, favs] = await Promise.all([
-      getItemCounts("mcp", "call").catch(() => ({}) as Record<string, number>),
-      getFavoriteCounts("mcp").catch(() => ({}) as Record<string, number>),
+      safe(
+        getItemCounts("mcp", "call"),
+        {} as Record<string, number>,
+        "mcpDetail.callCounts",
+      ),
+      safe(
+        getFavoriteCounts("mcp"),
+        {} as Record<string, number>,
+        "mcpDetail.favCounts",
+      ),
     ]);
     const callCount = calls[ref] ?? 0;
     const favoriteCount = favs[ref] ?? 0;
@@ -110,7 +130,8 @@ export default async function McpDetailPage({
       <div className="flex h-full flex-col">
         <PageHeader title={server.title ?? server.name ?? ref} />
         <div className="flex-1 overflow-auto">
-          <div className="mx-auto max-w-3xl space-y-6 py-4">
+          {/* 详情页统一口径：全宽靠左，不做居中限宽 */}
+          <div className="space-y-6 py-4">
             <NavigateBackButton href={backHref} label={backLabel} />
             <p className="whitespace-pre-line text-base leading-7 text-muted-foreground">
               {server.description || "暂无描述"}
@@ -121,15 +142,12 @@ export default async function McpDetailPage({
               favorited={favorited}
               callCount={callCount}
               favoriteCount={favoriteCount}
-              endpoint={(server as V0ServerJson & { endpoint?: string }).endpoint}
+              endpoint={
+                (server as V0ServerJson & { endpoint?: string }).endpoint
+              }
               publicEndpoint={
                 (server as V0ServerJson & { public_endpoint?: string })
                   .public_endpoint
-              }
-              mcpHeaders={
-                (server as V0ServerJson & {
-                  mcp_headers?: Record<string, string>;
-                }).mcp_headers
               }
               healthy={(server as V0ServerJson & { healthy?: boolean }).healthy}
               autoCall={call === "1"}
@@ -146,7 +164,8 @@ export default async function McpDetailPage({
   }
 
   // 同 group 的多版本：仅已上架(on_shelf)版本出现于版本下拉
-  const mGroup = submitted.group_key || String(submitted.payload_ref || "").split(":")[0];
+  const mGroup =
+    submitted.group_key || String(submitted.payload_ref || "").split(":")[0];
   let mVersionOptions: { id: string; label: string }[] = [];
   if (mGroup) {
     try {
@@ -154,21 +173,28 @@ export default async function McpDetailPage({
       mVersionOptions = (gv.versions || [])
         .filter((v) => v.on_shelf !== false && v.id)
         .map((v) => ({ id: v.id, label: `v${v.version || "1.0.0"}` }));
-    } catch (_) {
-      /* ignore */
+    } catch (error) {
+      // 版本下拉取数失败只影响下拉项，详情主体仍可渲染，但留痕
+      console.error("[mcpDetail.groupVersions]", error);
     }
   }
 
   const [{ isAdmin }, toolsResult, issues] = await Promise.all([
     getAuthContext(),
-    getMcpTools(submitted.id).catch(() => ({ tools: [], live: false })),
-    getIssues("mcp", submitted.payload_ref).catch(() => []),
+    // 取数失败带 failed 标记：工具 tab 明确提示可刷新重试（失败留痕）
+    safe(
+      getMcpTools(submitted.id),
+      { tools: [], live: false, failed: true },
+      "mcpDetail.getTools",
+    ),
+    safe(getIssues("mcp", submitted.payload_ref), [], "mcpDetail.getIssues"),
   ]);
 
   return (
     <div className="flex h-full flex-col">
       <div className="flex-1 overflow-auto">
-        <div className="mx-auto max-w-3xl py-4">
+        {/* 详情页统一口径：全宽靠左，不做居中限宽 */}
+        <div className="py-4">
           <McpServerDetail
             mcp={submitted}
             favorited={favorited}
@@ -176,6 +202,7 @@ export default async function McpDetailPage({
             favoriteCount={submitted.favorite_count}
             tools={toolsResult.tools}
             toolsLive={toolsResult.live}
+            toolsFailed={toolsResult.failed === true}
             issues={issues}
             isAdmin={isAdmin}
             backHref={backHref}

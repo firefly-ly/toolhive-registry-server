@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useEffect, useMemo, useState } from "react";
 import { buttonVariants } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Submission } from "@/lib/platform-backend";
+import { cn } from "@/lib/utils";
 import { SearchableGroupList } from "./submission-groups";
 
 const FILTERS: { key: "all" | "mcp" | "skill"; label: string }[] = [
@@ -14,13 +14,9 @@ const FILTERS: { key: "all" | "mcp" | "skill"; label: string }[] = [
   { key: "skill", label: "Skill" },
 ];
 
-function activeType(
-  items: Submission[],
-  gk: string,
-  activeMap: Record<string, string>,
-): "mcp" | "skill" {
-  const active = items.find((s) => s.id === activeMap[gk]) || items[0];
-  return (active.type === "mcp" ? "mcp" : "skill") as "mcp" | "skill";
+// 组的类型按组内首条判断（组内同属一个产品，类型一致）
+function groupType(items: Submission[]): "mcp" | "skill" {
+  return (items[0]?.type === "mcp" ? "mcp" : "skill") as "mcp" | "skill";
 }
 
 // 检查任一组内是否存在正处于「部署中」的 MCP（用于触发自动刷新）
@@ -29,7 +25,9 @@ function hasDeploying(groups: [string, Submission[]][]): boolean {
     items.some((s) => {
       if (s.type !== "mcp") return false;
       try {
-        const m = s.meta ? (JSON.parse(s.meta) as { deploy_status?: string }) : {};
+        const m = s.meta
+          ? (JSON.parse(s.meta) as { deploy_status?: string })
+          : {};
         return m.deploy_status === "deploying";
       } catch {
         return false;
@@ -41,12 +39,10 @@ function hasDeploying(groups: [string, Submission[]][]): boolean {
 export function PublishedBlock({
   mcpGroups,
   skillGroups,
-  activeMap,
   count,
 }: {
   mcpGroups: [string, Submission[]][];
   skillGroups: [string, Submission[]][];
-  activeMap: Record<string, string>;
   count: number;
 }) {
   const [filter, setFilter] = useState<"all" | "mcp" | "skill">("all");
@@ -59,10 +55,8 @@ export function PublishedBlock({
 
   const filtered = useMemo(() => {
     if (filter === "all") return allGroups;
-    return allGroups.filter(
-      ([gk, items]) => activeType(items, gk, activeMap) === filter,
-    );
-  }, [allGroups, filter, activeMap]);
+    return allGroups.filter(([, items]) => groupType(items) === filter);
+  }, [allGroups, filter]);
 
   // 存在「部署中」的 MCP 时自动刷新页面数据，直到部署完成/失败，
   // 避免「点部署/恢复上线」后界面一直停留在『部署中』需要手动刷新。
@@ -80,9 +74,7 @@ export function PublishedBlock({
       <CardHeader className="flex flex-col gap-3 pb-3 sm:flex-row sm:items-center sm:justify-between">
         <CardTitle className="text-xl">已发布（{count}）</CardTitle>
         <div className="inline-flex items-center gap-2">
-          {hasBusy && (
-            <span className="text-xs text-amber-600">部署中…</span>
-          )}
+          {hasBusy && <span className="text-xs text-amber-600">部署中…</span>}
           <div className="inline-flex rounded-lg border bg-muted p-1">
             {FILTERS.map(({ key, label }) => (
               <button
@@ -94,7 +86,7 @@ export function PublishedBlock({
                     variant: filter === key ? "default" : "ghost",
                     size: "sm",
                   }),
-                  "cursor-pointer border-none shadow-none"
+                  "cursor-pointer border-none shadow-none",
                 )}
               >
                 {label}
@@ -109,7 +101,6 @@ export function PublishedBlock({
         ) : (
           <SearchableGroupList
             groups={filtered}
-            activeMap={activeMap}
             placeholder="搜索分组、版本、提交者…"
           />
         )}

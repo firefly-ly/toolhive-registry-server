@@ -1,7 +1,7 @@
 import { headers } from "next/headers";
 import { auth } from "./auth";
 import { ADMIN_EMAILS } from "./constants";
-import { getUserClaimsFromDatabase, claimAsStringArray } from "./utils";
+import { claimAsStringArray, getUserClaimsFromDatabase } from "./utils";
 
 export interface AuthUser {
   id?: string;
@@ -71,8 +71,7 @@ export async function getAuthContext(): Promise<AuthContext> {
     finalGroups = groups.length > 0 ? groups : derived.groups;
   }
 
-  const email =
-    typeof u.email === "string" ? u.email.toLowerCase().trim() : "";
+  const email = typeof u.email === "string" ? u.email.toLowerCase().trim() : "";
   const isAdmin =
     finalRoles.includes("admin") ||
     (email ? ADMIN_EMAILS.includes(email) : false);

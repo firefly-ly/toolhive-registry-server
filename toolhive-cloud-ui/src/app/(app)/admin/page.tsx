@@ -1,16 +1,16 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { ErrorToast } from "@/components/error-toast";
 import { PageHeader } from "@/components/header-page";
 import { buttonVariants } from "@/components/ui/button";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { cn } from "@/lib/utils";
 import { getAuthContext } from "@/lib/auth/context";
 import type { Submission } from "@/lib/platform-backend";
-import { listActiveVersions, listSubmissions } from "@/lib/platform-backend";
-import { ReviewBlock } from "./_components/review-block";
+import { listSubmissions } from "@/lib/platform-backend";
+import { cn } from "@/lib/utils";
+import { AuditBlock } from "./_components/audit-block";
 import { PublishedBlock } from "./_components/published-block";
 import { RetiredBlock } from "./_components/retired-block";
-import { AuditBlock } from "./_components/audit-block";
+import { ReviewBlock } from "./_components/review-block";
 
 function parseMeta(meta?: string): Record<string, string> {
   try {
@@ -54,16 +54,17 @@ export default async function AdminPage({
   const { isAdmin } = await getAuthContext();
   if (!isAdmin) redirect("/catalog");
 
-  const { tab = "reviews", error, actor, action, target_id, from, to } = await searchParams;
+  const {
+    tab = "reviews",
+    error,
+    actor,
+    action,
+    target_id,
+    from,
+    to,
+  } = await searchParams;
 
-  const [submissions, activeVersions] = await Promise.all([
-    listSubmissions(),
-    listActiveVersions(),
-  ]);
-
-  const activeMap: Record<string, string> = Object.fromEntries(
-    activeVersions.map((a) => [a.group_key, a.active_submission_id]),
-  );
+  const submissions = await listSubmissions();
 
   const pending = submissions.filter((s) => s.status === "pending");
 
@@ -87,7 +88,7 @@ export default async function AdminPage({
       <PageHeader title="管理后台" />
 
       {/* 顶部 Tab 切换：直接用 Link 渲染为按钮，整块可点（Button 未实现 asChild，套 Link 会导致只有文字能点） */}
-      <div className="px-[3cm] pt-2">
+      <div className="px-8 pt-2">
         <div className="inline-flex gap-2 rounded-lg border bg-muted p-1">
           <Link
             href="/admin?tab=reviews"
@@ -141,15 +142,10 @@ export default async function AdminPage({
       </div>
 
       {error && (
-        <div className="px-[3cm] pt-2">
-          <Alert variant="destructive">
-            <AlertTitle>操作失败</AlertTitle>
-            <AlertDescription>{decodeURIComponent(error)}</AlertDescription>
-          </Alert>
-        </div>
+        <ErrorToast message={`操作失败：${decodeURIComponent(error)}`} />
       )}
 
-      <div className="flex-1 overflow-auto px-[3cm] pb-[3cm] pt-2">
+      <div className="flex-1 overflow-auto px-8 pb-10 pt-4">
         {tab === "reviews" ? (
           <ReviewBlock pending={pending} />
         ) : tab === "retired" ? (
@@ -160,7 +156,6 @@ export default async function AdminPage({
           <PublishedBlock
             mcpGroups={mcpGroups}
             skillGroups={skillGroups}
-            activeMap={activeMap}
             count={published.length}
           />
         )}

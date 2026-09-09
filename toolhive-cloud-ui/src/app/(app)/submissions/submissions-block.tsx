@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Submission } from "@/lib/platform-backend";
+import { cn } from "@/lib/utils";
 import { SubmissionList } from "./submission-list";
 
 const FILTERS: { key: "all" | "mcp" | "skill"; label: string }[] = [
@@ -39,7 +39,7 @@ export function SubmissionsBlock({
                     variant: filter === key ? "default" : "ghost",
                     size: "sm",
                   }),
-                  "cursor-pointer border-none shadow-none"
+                  "cursor-pointer border-none shadow-none",
                 )}
               >
                 {label}

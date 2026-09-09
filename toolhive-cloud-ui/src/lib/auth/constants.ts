@@ -33,7 +33,8 @@ export const OIDC_AUTHORIZATION_URL =
   process.env.OIDC_AUTHORIZATION_URL ||
   `${OIDC_ISSUER_URL}/login/oauth/authorize`;
 export const OIDC_TOKEN_URL =
-  process.env.OIDC_TOKEN_URL || `${OIDC_ISSUER_URL}/api/login/oauth/access_token`;
+  process.env.OIDC_TOKEN_URL ||
+  `${OIDC_ISSUER_URL}/api/login/oauth/access_token`;
 export const OIDC_USERINFO_URL =
   process.env.OIDC_USERINFO_URL || `${OIDC_ISSUER_URL}/api/userinfo`;
 export const OIDC_JWKS_URL =
@@ -94,7 +95,10 @@ const trustedOriginsFromEnv = process.env.TRUSTED_ORIGINS
  *
  * Example: ADMIN_EMAILS=alice@corp.com,bob@corp.com
  */
-console.log("[debug] ADMIN_EMAILS raw env:", JSON.stringify(process.env.ADMIN_EMAILS));
+console.log(
+  "[debug] ADMIN_EMAILS raw env:",
+  JSON.stringify(process.env.ADMIN_EMAILS),
+);
 export const ADMIN_EMAILS = process.env.ADMIN_EMAILS
   ? process.env.ADMIN_EMAILS.split(",")
       .map((s) => s.trim().toLowerCase())

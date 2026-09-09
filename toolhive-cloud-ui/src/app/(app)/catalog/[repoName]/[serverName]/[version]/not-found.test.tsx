@@ -6,23 +6,19 @@ describe("NotFound", () => {
   it("displays the server not found heading", () => {
     render(<NotFound />);
 
-    expect(
-      screen.getByRole("heading", { name: /server not found/i }),
-    ).toBeVisible();
+    expect(screen.getByRole("heading", { name: /未找到该服务/ })).toBeVisible();
   });
 
   it("displays a descriptive message", () => {
     render(<NotFound />);
 
-    expect(
-      screen.getByText(/doesn't exist or has been removed/i),
-    ).toBeVisible();
+    expect(screen.getByText(/不存在，或已从 MCP 市场中移除/)).toBeVisible();
   });
 
   it("has a link to browse the catalog", () => {
     render(<NotFound />);
 
-    const link = screen.getByRole("link", { name: /browse catalog/i });
+    const link = screen.getByRole("link", { name: /浏览 MCP 市场/ });
     expect(link).toHaveAttribute("href", "/catalog");
   });
 

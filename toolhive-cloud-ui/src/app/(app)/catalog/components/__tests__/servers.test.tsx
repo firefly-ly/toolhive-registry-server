@@ -89,8 +89,8 @@ describe("Servers", () => {
         />,
       );
 
-      expect(screen.getByText("Server")).toBeVisible();
-      expect(screen.getByText("About")).toBeVisible();
+      expect(screen.getByText("名称")).toBeVisible();
+      expect(screen.getByText("描述")).toBeVisible();
     });
   });
 
@@ -106,9 +106,9 @@ describe("Servers", () => {
         />,
       );
 
-      expect(screen.getByText("No results found")).toBeVisible();
+      expect(screen.getByText("未找到匹配结果")).toBeVisible();
       expect(
-        screen.getByText(/couldn't find any servers matching "nonexistent"/),
+        screen.getByText(/没有找到与"nonexistent"匹配的服务/),
       ).toBeVisible();
     });
 
@@ -127,7 +127,7 @@ describe("Servers", () => {
       );
 
       const clearButton = screen.getByRole("button", {
-        name: /clear search/i,
+        name: /清除搜索/,
       });
       expect(clearButton).toBeVisible();
 
@@ -148,10 +148,8 @@ describe("Servers", () => {
         />,
       );
 
-      expect(screen.getByText("No servers available")).toBeVisible();
-      expect(
-        screen.getByText(/no MCP servers in the catalog yet/i),
-      ).toBeVisible();
+      expect(screen.getByText("暂无可用服务")).toBeVisible();
+      expect(screen.getByText(/目录中还没有 MCP 服务/i)).toBeVisible();
     });
 
     it("shows no servers message in list mode", () => {
@@ -165,7 +163,7 @@ describe("Servers", () => {
         />,
       );
 
-      expect(screen.getByText("No servers available")).toBeVisible();
+      expect(screen.getByText("暂无可用服务")).toBeVisible();
     });
 
     it("displays illustration in empty state", () => {
@@ -194,7 +192,7 @@ describe("Servers", () => {
       );
 
       expect(
-        screen.queryByRole("button", { name: /clear search/i }),
+        screen.queryByRole("button", { name: /清除搜索/ }),
       ).not.toBeInTheDocument();
     });
   });
