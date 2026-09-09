@@ -57,7 +57,6 @@ export function SkillsWrapper({
     safePage * SKILLS_PAGE_SIZE,
     safePage * SKILLS_PAGE_SIZE + SKILLS_PAGE_SIZE,
   );
-  const hasMore = safePage + 1 < totalPages;
 
   return (
     <div className="flex h-full flex-col">
@@ -140,12 +139,9 @@ export function SkillsWrapper({
 
       {filtered.length > SKILLS_PAGE_SIZE && (
         <CatalogPagination
-          isFirstPage={safePage === 0}
-          nextCursor={hasMore ? String(safePage + 1) : undefined}
-          pageNumber={safePage + 1}
-          onFirstPage={() => setPage(0)}
-          onPrev={() => setPage((p) => Math.max(0, p - 1))}
-          onNext={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+          page={safePage}
+          totalPages={totalPages}
+          onPageChange={setPage}
         />
       )}
     </div>

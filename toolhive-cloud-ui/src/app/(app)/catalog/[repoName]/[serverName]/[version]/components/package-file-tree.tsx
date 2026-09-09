@@ -1,12 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
 import {
   ChevronRight,
   File as FileIcon,
   FolderClosed,
   FolderOpen,
 } from "lucide-react";
+import { useMemo, useState } from "react";
 import { getPackageFileAction } from "@/lib/platform-actions";
 
 interface TreeNode {

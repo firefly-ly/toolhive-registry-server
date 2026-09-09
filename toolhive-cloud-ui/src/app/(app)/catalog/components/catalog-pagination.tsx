@@ -4,29 +4,24 @@ import { ChevronFirst, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface CatalogPaginationProps {
-  isFirstPage: boolean;
-  nextCursor: string | undefined;
-  pageNumber: number;
-  onFirstPage: () => void;
-  onPrev: () => void;
-  onNext: (nextCursor: string) => void;
+  /** 当前页（0 起） */
+  page: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
 }
 
 export function CatalogPagination({
-  isFirstPage,
-  nextCursor,
-  pageNumber,
-  onFirstPage,
-  onPrev,
-  onNext,
+  page,
+  totalPages,
+  onPageChange,
 }: CatalogPaginationProps) {
   return (
     <div className="mx-auto mt-4 flex w-fit items-center rounded-full border bg-card px-4 py-2 shadow-sm">
       <div className="flex items-center gap-1">
         <Button
           variant="ghost"
-          onClick={onFirstPage}
-          disabled={isFirstPage}
+          onClick={() => onPageChange(0)}
+          disabled={page === 0}
           size="sm"
           aria-label="第一页"
           className="cursor-pointer"
@@ -35,19 +30,21 @@ export function CatalogPagination({
         </Button>
         <Button
           variant="ghost"
-          onClick={onPrev}
-          disabled={isFirstPage}
+          onClick={() => onPageChange(page - 1)}
+          disabled={page === 0}
           size="sm"
           aria-label="上一页"
           className="cursor-pointer"
         >
           <ChevronLeft className="size-4" />
         </Button>
-        <span className="px-3 text-sm font-medium">第 {pageNumber} 页</span>
+        <span className="px-3 text-sm font-medium">
+          第 {page + 1} 页{totalPages > 1 ? ` / ${totalPages}` : ""}
+        </span>
         <Button
           variant="ghost"
-          onClick={() => nextCursor && onNext(nextCursor)}
-          disabled={!nextCursor}
+          onClick={() => onPageChange(page + 1)}
+          disabled={page >= totalPages - 1}
           size="sm"
           aria-label="下一页"
           className="cursor-pointer"

@@ -1,24 +1,24 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { describe, expect, it } from "vitest";
 import type {
   GithubComStacklokToolhiveRegistryServerInternalServiceRegistryInfo,
   V0ServerJson,
 } from "@/generated/types.gen";
+import { CATALOG_PAGE_SIZE } from "../../constants";
 import { ServersWrapper } from "../servers-wrapper";
-
-function renderWithNuqs(
-  ui: React.ReactElement,
-  searchParams?: URLSearchParams,
-) {
-  return render(
-    <NuqsTestingAdapter searchParams={searchParams}>{ui}</NuqsTestingAdapter>,
-  );
-}
 
 const mockRegistries: GithubComStacklokToolhiveRegistryServerInternalServiceRegistryInfo[] =
   [{ name: "default-registry" }, { name: "custom-registry" }];
+
+function makeServer(name: string, description: string): V0ServerJson {
+  return {
+    name,
+    title: name,
+    description,
+    websiteUrl: `https://github.com/example/${name}`,
+  };
+}
 
 const mockServers: V0ServerJson[] = [
   {
@@ -35,9 +35,19 @@ const mockServers: V0ServerJson[] = [
   },
 ];
 
+// 超过一页容量（CATALOG_PAGE_SIZE=15）的数据集，用于翻页测试
+const pagedServers: V0ServerJson[] = Array.from(
+  { length: CATALOG_PAGE_SIZE + 3 },
+  (_, i) =>
+    makeServer(
+      `server-${String(i + 1).padStart(2, "0")}`,
+      `test server ${i + 1}`,
+    ),
+);
+
 describe("ServersWrapper", () => {
   it("has header with title", () => {
-    renderWithNuqs(
+    render(
       <ServersWrapper servers={mockServers} registries={mockRegistries} />,
     );
 
@@ -45,18 +55,30 @@ describe("ServersWrapper", () => {
   });
 
   it("has catalog filters", () => {
-    renderWithNuqs(
+    render(
       <ServersWrapper servers={mockServers} registries={mockRegistries} />,
     );
 
     expect(screen.getByLabelText("List view")).toBeVisible();
     expect(screen.getByLabelText("Grid view")).toBeVisible();
+    // 两个注册表时显示切换器
     expect(screen.getByLabelText("选择注册表")).toBeVisible();
     expect(screen.getByPlaceholderText("搜索")).toBeVisible();
   });
 
+  it("hides registry selector when only one registry exists", () => {
+    render(
+      <ServersWrapper
+        servers={mockServers}
+        registries={[{ name: "default" }]}
+      />,
+    );
+
+    expect(screen.queryByLabelText("选择注册表")).not.toBeInTheDocument();
+  });
+
   it("displays servers in grid mode by default", () => {
-    renderWithNuqs(
+    render(
       <ServersWrapper servers={mockServers} registries={mockRegistries} />,
     );
 
@@ -66,7 +88,7 @@ describe("ServersWrapper", () => {
 
   it("switches to list mode when list button is clicked", async () => {
     const user = userEvent.setup();
-    renderWithNuqs(
+    render(
       <ServersWrapper servers={mockServers} registries={mockRegistries} />,
     );
 
@@ -81,7 +103,7 @@ describe("ServersWrapper", () => {
 
   it("switches back to grid mode when grid button is clicked", async () => {
     const user = userEvent.setup();
-    renderWithNuqs(
+    render(
       <ServersWrapper servers={mockServers} registries={mockRegistries} />,
     );
 
@@ -94,22 +116,23 @@ describe("ServersWrapper", () => {
     });
   });
 
-  it("updates search input when typing", async () => {
+  it("filters servers client-side while typing (instant, no server round trip)", async () => {
     const user = userEvent.setup();
-    renderWithNuqs(
+    render(
       <ServersWrapper servers={mockServers} registries={mockRegistries} />,
     );
 
     const searchInput = screen.getByPlaceholderText("搜索") as HTMLInputElement;
     await user.type(searchInput, "aws");
 
-    // Search is server-side — the input value updates immediately (nuqs buffers URL updates)
     expect(searchInput.value).toBe("aws");
+    expect(screen.getByText("AWS Nova Canvas")).toBeVisible();
+    expect(screen.queryByText("Google Applications")).not.toBeInTheDocument();
   });
 
   it("maintains search value when switching view modes", async () => {
     const user = userEvent.setup();
-    renderWithNuqs(
+    render(
       <ServersWrapper servers={mockServers} registries={mockRegistries} />,
     );
 
@@ -127,7 +150,7 @@ describe("ServersWrapper", () => {
   });
 
   it("renders pagination controls", () => {
-    renderWithNuqs(
+    render(
       <ServersWrapper servers={mockServers} registries={mockRegistries} />,
     );
 
@@ -137,30 +160,31 @@ describe("ServersWrapper", () => {
   });
 
   it("disables previous button on first page", () => {
-    renderWithNuqs(
+    render(
       <ServersWrapper servers={mockServers} registries={mockRegistries} />,
     );
 
     expect(screen.getByRole("button", { name: /上一页/ })).toBeDisabled();
   });
 
-  it("disables next button when there is no nextCursor", () => {
-    renderWithNuqs(
+  it("disables next button when all items fit on one page", () => {
+    render(
       <ServersWrapper servers={mockServers} registries={mockRegistries} />,
     );
 
     expect(screen.getByRole("button", { name: /下一页/ })).toBeDisabled();
   });
 
-  it("enables next button when nextCursor is provided", () => {
-    renderWithNuqs(
-      <ServersWrapper
-        servers={mockServers}
-        registries={mockRegistries}
-        nextCursor="cursor-abc"
-      />,
+  it("enables next button when items exceed one page", async () => {
+    const user = userEvent.setup();
+    render(
+      <ServersWrapper servers={pagedServers} registries={mockRegistries} />,
     );
 
-    expect(screen.getByRole("button", { name: /下一页/ })).not.toBeDisabled();
+    const next = screen.getByRole("button", { name: /下一页/ });
+    expect(next).not.toBeDisabled();
+
+    await user.click(next);
+    expect(screen.getByText(`第 2 页 / ${2}`)).toBeVisible();
   });
 });

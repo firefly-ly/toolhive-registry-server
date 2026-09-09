@@ -35,6 +35,7 @@ vi.mock("next/navigation", () => ({
     forward: vi.fn(),
     prefetch: vi.fn(),
   })),
+  useSearchParams: vi.fn(() => new URLSearchParams()),
 }));
 
 // Global auth server mock with default authenticated session

@@ -1,101 +1,40 @@
-import {
-  debounce,
-  parseAsString,
-  parseAsStringLiteral,
-  useQueryStates,
-} from "nuqs";
-import { useTransition } from "react";
-import { CATALOG_PAGE_SIZE, CATALOG_VIEW_MODES } from "../constants";
+"use client";
+
+import { useState } from "react";
 
 /**
- * Manages catalog filter state persisted in URL query parameters.
- * prevCursors is stored in sessionStorage (per-tab, survives refresh)
- * rather than the URL since it's local navigation history, not shareable state.
+ * 目录页筛选状态（方案 C：数据全量下发后客户端过滤）。
+ * 搜索 / 视图 / 页码都是本地 state——零网络往返，体感即时；
+ * 仅注册表切换仍走 URL（需要服务端换数据源），由 ServersWrapper 处理。
  */
 export function useCatalogFilters() {
-  const [isPending, startTransition] = useTransition();
-
-  const [{ viewMode, search, registryName, cursor }, setFilters] =
-    useQueryStates(
-      {
-        viewMode: parseAsStringLiteral(CATALOG_VIEW_MODES).withDefault("grid"),
-        search: parseAsString.withDefault(""),
-        registryName: parseAsString.withDefault(""),
-        cursor: parseAsString.withDefault(""),
-      },
-      {
-        shallow: false,
-      },
-    );
-
-  // 页码完全由 cursor（offset）推导，不依赖导航历史栈，避免「数字越翻越大」
-  const offset = Number(cursor) || 0;
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(0);
 
   const handleViewModeChange = (newViewMode: "grid" | "list") => {
-    setFilters((prev) => ({ ...prev, viewMode: newViewMode }));
+    setViewMode(newViewMode);
   };
 
+  // 搜索词变化时回到第一页，避免停留在已不存在的页码
   const handleSearchChange = (newSearch: string) => {
-    setFilters((prev) => ({ ...prev, search: newSearch, cursor: "" }), {
-      limitUrlUpdates: debounce(500),
-      startTransition,
-    });
+    setSearch(newSearch);
+    setPage(0);
   };
 
   const handleClearSearch = () => {
-    setFilters((prev) => ({ ...prev, search: "", cursor: "" }), {
-      startTransition,
-    });
+    setSearch("");
+    setPage(0);
   };
-
-  const handleRegistryChange = (value: string) => {
-    setFilters(
-      (prev) => ({
-        ...prev,
-        registryName: value,
-        cursor: "",
-      }),
-      { startTransition },
-    );
-  };
-
-  const handleNextPage = (nextCursor: string) => {
-    setFilters((prev) => ({ ...prev, cursor: nextCursor }), {
-      startTransition,
-    });
-  };
-
-  const handlePrevPage = () => {
-    const prevOffset = Math.max(0, offset - CATALOG_PAGE_SIZE);
-    setFilters(
-      (prev) => ({
-        ...prev,
-        cursor: prevOffset === 0 ? "" : String(prevOffset),
-      }),
-      { startTransition },
-    );
-  };
-
-  const handleFirstPage = () => {
-    setFilters((prev) => ({ ...prev, cursor: "" }), { startTransition });
-  };
-
-  const isFirstPage = offset === 0;
 
   return {
     viewMode,
     search,
-    selectedRegistry: registryName,
-    cursor,
-    isFirstPage,
-    isPending,
-    pageNumber: Math.floor(offset / CATALOG_PAGE_SIZE) + 1,
+    page,
+    pageNumber: page + 1,
     handleViewModeChange,
     handleSearchChange,
     handleClearSearch,
-    handleRegistryChange,
-    handleNextPage,
-    handlePrevPage,
-    handleFirstPage,
+    setPage,
   };
 }
