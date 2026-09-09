@@ -44,18 +44,26 @@ export function isStdioConfig(
 /**
  * Normalizes an MCP server name for use in client configurations.
  *
- * Valid characters are alphanumeric, dots, hyphens, and underscores.
+ * Valid characters are alphanumeric, CJK, dots, hyphens, and underscores.
  * This handles:
  * - Kubernetes reverse DNS names (e.g. "com.toolhive.k8s/github-proxy")
  * - Human-readable titles (e.g. "MCP GitHub" → "MCP-GitHub")
+ * - CJK display names are preserved（客户端配置的 key 只是本地标签，
+ *   主流客户端均接受中文；历史上"新零售"这类纯中文名会被裁成空串，
+ *   导致生成的调用 JSON 键名为 ""）
  * - Any other characters replaced with "-", consecutive hyphens collapsed,
  *   and leading/trailing hyphens stripped.
  */
 export function normalizeServerName(name: string): string {
-  return name
-    .replace(/[^a-zA-Z0-9_-]/g, "-")
+  const normalized = name
+    .replace(
+      /[^a-zA-Z0-9\u3400-\u4dbf\u4e00-\u9fff\u3040-\u30ff\uac00-\ud7af_-]/g,
+      "-",
+    )
     .replace(/-{2,}/g, "-")
     .replace(/^-+|-+$/g, "");
+  // 全部字符都被剔除时（纯符号/emoji），兜底为通用名，避免生成空键名
+  return normalized || "mcp-server";
 }
 
 /**

@@ -45,6 +45,17 @@ describe("normalizeServerName", () => {
     expect(normalizeServerName("mcp@github!server")).toBe("mcp-github-server");
     expect(normalizeServerName("io.github.myorg")).toBe("io-github-myorg");
   });
+
+  it("preserves CJK display names instead of stripping them", () => {
+    // 回归：纯中文名曾被裁成空串，导致调用 JSON 的键名为 ""
+    expect(normalizeServerName("新零售")).toBe("新零售");
+    expect(normalizeServerName("钉钉通知 MCP")).toBe("钉钉通知-MCP");
+  });
+
+  it("falls back to a generic name when every character is stripped", () => {
+    expect(normalizeServerName("🚀🔥")).toBe("mcp-server");
+    expect(normalizeServerName("***")).toBe("mcp-server");
+  });
 });
 
 describe("client-configs", () => {
