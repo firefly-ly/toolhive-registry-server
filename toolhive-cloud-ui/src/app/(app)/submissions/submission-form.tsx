@@ -301,7 +301,8 @@ export function SubmissionForm({ action }: SubmissionFormProps) {
           className={inputClass}
         />
         <p className="text-xs text-muted-foreground">
-          填写后详情页可外链到源码仓库查看 README / Code / Issues。
+          可选：开源上游仓库地址。填写后详情页展示仓库入口（最新代码 /
+          最新 README）；不填则以上传的源码包为准。
         </p>
       </div>
 
