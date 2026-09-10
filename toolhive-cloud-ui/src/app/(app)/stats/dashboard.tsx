@@ -1046,10 +1046,10 @@ function Quadrant({ items }: { items: ItemStat[] }) {
                     (a, ch) => a + (ch.charCodeAt(0) > 255 ? fs : fs * 0.55),
                     0,
                   );
-                const dotW = 6 + 5; // 圆点直径 + 与文字间距
+                const dotW = 5 + 4; // 圆点直径 + 与文字间距
                 const w =
-                  Math.max(tw(nameTxt, 9.5), tw(metaTxt, 8.5)) + dotW + 20;
-                const h = 32;
+                  Math.max(tw(nameTxt, 8), tw(metaTxt, 7.5)) + dotW + 18;
+                const h = 28;
                 const gap = 8; // 名牌与气泡的间距（容纳三角指针）
                 const tipX = cap(px, x0 + w / 2 + 2, x1 - w / 2 - 2);
                 // 名牌默认在气泡上方，太靠顶时翻到下方
@@ -1063,7 +1063,7 @@ function Quadrant({ items }: { items: ItemStat[] }) {
                 const tip = cap(px, tipX - w / 2 + 10, tipX + w / 2 - 10);
                 const seamY = below ? top : top + h;
                 const dir = below ? 1 : -1;
-                const textX = tipX - w / 2 + 10 + dotW;
+                const textX = tipX - w / 2 + 9 + dotW;
                 return (
                   <g style={{ pointerEvents: "none" }}>
                     <rect
@@ -1094,15 +1094,15 @@ function Quadrant({ items }: { items: ItemStat[] }) {
                     />
                     {/* 第一行：评级色圆点 + 名称 */}
                     <circle
-                      cx={tipX - w / 2 + 10 + 3}
-                      cy={top + 10.5}
-                      r={3}
+                      cx={tipX - w / 2 + 9 + 2.5}
+                      cy={top + 9.5}
+                      r={2.5}
                       fill={dotFill}
                     />
                     <text
                       x={textX}
-                      y={top + 10.5}
-                      fontSize="9.5"
+                      y={top + 9.5}
+                      fontSize="8"
                       fontWeight="700"
                       fill="#111827"
                       dominantBaseline="middle"
@@ -1112,8 +1112,8 @@ function Quadrant({ items }: { items: ItemStat[] }) {
                     {/* 第二行：类型化指标 + 评分 */}
                     <text
                       x={textX}
-                      y={top + 22.5}
-                      fontSize="8.5"
+                      y={top + 20}
+                      fontSize="7.5"
                       fill="#6b7280"
                       dominantBaseline="middle"
                     >
