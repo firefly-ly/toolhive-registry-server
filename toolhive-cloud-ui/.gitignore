@@ -63,3 +63,7 @@ certificates
 # 本地运行日志与工具数据
 *.run.log
 .workbuddy/
+
+# 临时文件
+_tmp_*
+*.corrupt/
