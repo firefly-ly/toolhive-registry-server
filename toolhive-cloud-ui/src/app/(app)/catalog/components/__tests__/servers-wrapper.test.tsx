@@ -149,33 +149,35 @@ describe("ServersWrapper", () => {
     expect(searchInput.value).toBe("aws");
   });
 
-  it("renders pagination controls", () => {
+  it("hides pagination controls when all items fit on one page", () => {
     render(
       <ServersWrapper servers={mockServers} registries={mockRegistries} />,
     );
 
+    expect(screen.queryByRole("button", { name: /上一页/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /下一页/ })).toBeNull();
+  });
+
+  it("renders pagination controls when items exceed one page", () => {
+    render(
+      <ServersWrapper servers={pagedServers} registries={mockRegistries} />,
+    );
+
     expect(screen.getByRole("button", { name: /上一页/ })).toBeVisible();
     expect(screen.getByRole("button", { name: /下一页/ })).toBeVisible();
-    expect(screen.getByText(/第 \d+ 页/)).toBeVisible();
+    expect(screen.getByRole("button", { name: "第 1 页" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "第 2 页" })).toBeVisible();
   });
 
   it("disables previous button on first page", () => {
     render(
-      <ServersWrapper servers={mockServers} registries={mockRegistries} />,
+      <ServersWrapper servers={pagedServers} registries={mockRegistries} />,
     );
 
     expect(screen.getByRole("button", { name: /上一页/ })).toBeDisabled();
   });
 
-  it("disables next button when all items fit on one page", () => {
-    render(
-      <ServersWrapper servers={mockServers} registries={mockRegistries} />,
-    );
-
-    expect(screen.getByRole("button", { name: /下一页/ })).toBeDisabled();
-  });
-
-  it("enables next button when items exceed one page", async () => {
+  it("moves to the second page when next is clicked", async () => {
     const user = userEvent.setup();
     render(
       <ServersWrapper servers={pagedServers} registries={mockRegistries} />,
@@ -185,6 +187,9 @@ describe("ServersWrapper", () => {
     expect(next).not.toBeDisabled();
 
     await user.click(next);
-    expect(screen.getByText(`第 2 页 / ${2}`)).toBeVisible();
+    expect(screen.getByRole("button", { name: "第 2 页" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
   });
 });
