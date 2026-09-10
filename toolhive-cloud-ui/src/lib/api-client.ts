@@ -29,6 +29,13 @@ const MOCK_SCENARIO_HEADER = "X-Mock-Scenario";
 // 兼容：Node 的 fetch 不支持相对 URL，基址缺失时会抛出难排查的 "Invalid URL"。
 const API_BASE_URL = process.env.API_BASE_URL || "http://127.0.0.1:8080";
 
+// 静默回退会掩盖"部署时忘配 API_BASE_URL"的配置缺失（/catalog 500 的教训），启动时提示一次。
+if (!process.env.API_BASE_URL) {
+  console.warn(
+    "[api-client] API_BASE_URL 未设置，回退使用 http://127.0.0.1:8080。若 registry 不在该地址请显式配置。",
+  );
+}
+
 /**
  * Gets an authenticated API client with OIDC access token.
  * Automatically refreshes the token if expired.
@@ -54,9 +61,8 @@ export async function getAuthenticatedClient(accessToken?: string) {
   // DEMO_MODE: 跳过 OIDC 鉴权，直接以无 token 客户端访问 Registry（本地 Registry 不强制鉴权）。
   // 仅当 DEMO_MODE=1 时生效，生产路径不受影响。
   if (process.env.DEMO_MODE === "1") {
-    const base = process.env.API_BASE_URL || "http://127.0.0.1:8080";
     const demoClient = createClient(
-      createConfig({ baseUrl: base, headers: {} }),
+      createConfig({ baseUrl: API_BASE_URL, headers: {} }),
     );
     return { ...apiServices, client: demoClient };
   }

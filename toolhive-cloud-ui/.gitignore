@@ -55,14 +55,15 @@ helm/*.lock
 .codex/
 .cursor/
 .opencode/
-_tmp_*/
+.workbuddy/
+
+# 本地运行日志
 frontend.log
 frontend.err.log
-
-certificates
-# 本地运行日志与工具数据
 *.run.log
-.workbuddy/
+
+# dev HTTPS 证书
+certificates
 
 # 临时文件
 _tmp_*
