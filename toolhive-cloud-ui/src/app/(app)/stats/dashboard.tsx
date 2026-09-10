@@ -716,7 +716,7 @@ function TrendChart({ days, lines }: { days: string[]; lines: TrendItem[] }) {
             : "-50%";
         return (
           <div
-            className="pointer-events-none absolute z-20 rounded-md border-border bg-popover px-2.5 py-1.5 text-base font-semibold text-popover-foreground shadow-md"
+            className="pointer-events-none absolute z-20 whitespace-nowrap rounded-md border-border bg-popover px-2.5 py-1.5 text-base font-semibold text-popover-foreground shadow-md"
             style={{
               left: `${(mousePx.x / Wd) * 100}%`,
               top: `${(mousePx.y / Ht) * 100}%`,
