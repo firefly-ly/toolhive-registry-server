@@ -19,7 +19,7 @@ interface FavoriteRow {
   item_type: "mcp" | "skill";
   item_ref: string;
   title: string;
-  subtitle: string;
+  metric: string;
   description: string;
   href: string;
 }
@@ -46,7 +46,7 @@ export default async function FavoritesPage() {
         item_type: "skill",
         item_ref: f.item_ref,
         title: s?.name ?? f.item_ref,
-        subtitle: s?.owner ?? "",
+        metric: s ? `${s.download_count} 次下载` : "",
         description: s?.description ?? "",
         href: `/skills/${encodeURIComponent(f.item_ref)}?from=favorites`,
       };
@@ -57,7 +57,8 @@ export default async function FavoritesPage() {
       item_type: "mcp",
       item_ref: f.item_ref,
       title: registryServer?.title ?? submitted?.name ?? f.item_ref,
-      subtitle: "MCP Server",
+      metric:
+        submitted !== undefined ? `调用 ${submitted.call_count} 次` : "",
       description: registryServer?.description ?? submitted?.description ?? "",
       href: `/mcp/${encodeURIComponent(f.item_ref)}?from=favorites`,
     };

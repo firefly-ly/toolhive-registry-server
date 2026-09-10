@@ -26,7 +26,8 @@ export interface FavRow {
   item_type: "mcp" | "skill";
   item_ref: string;
   title: string;
-  subtitle: string;
+  /** 热度指标：MCP 显示调用次数，Skill 显示下载次数；无数据为空串 */
+  metric: string;
   description: string;
   href: string;
 }
@@ -40,7 +41,6 @@ const FILTERS: { key: "all" | "mcp" | "skill"; label: string }[] = [
 function searchFn(item: FavRow, q: string) {
   return (
     item.title.toLowerCase().includes(q) ||
-    item.subtitle.toLowerCase().includes(q) ||
     item.description.toLowerCase().includes(q) ||
     item.item_ref.toLowerCase().includes(q)
   );
@@ -97,7 +97,7 @@ export function FavsBlock({
           </div>
           <Input
             type="text"
-            placeholder="搜索名称、所有者、描述…"
+            placeholder="搜索名称、描述…"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             className="h-10 text-base"
@@ -111,7 +111,7 @@ export function FavsBlock({
               <TableRow>
                 <TableHead className="text-base">名称</TableHead>
                 <TableHead className="text-base">类型</TableHead>
-                <TableHead className="text-base">所有者</TableHead>
+                <TableHead className="text-base">调用/下载</TableHead>
                 <TableHead className="text-base">描述</TableHead>
                 <TableHead className="text-right text-base">操作</TableHead>
               </TableRow>
@@ -151,8 +151,8 @@ export function FavsBlock({
                         {r.item_type === "mcp" ? "MCP" : "Skill"}
                       </span>
                     </TableCell>
-                    <TableCell className="text-base text-muted-foreground">
-                      {r.subtitle || "—"}
+                    <TableCell className="text-base tabular-nums text-muted-foreground">
+                      {r.metric || "—"}
                     </TableCell>
                     <TableCell className="max-w-md text-base text-muted-foreground">
                       <Tooltip>
