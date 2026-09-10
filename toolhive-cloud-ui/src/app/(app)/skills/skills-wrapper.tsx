@@ -60,7 +60,7 @@ export function SkillsWrapper({
 
   return (
     <div className="flex h-full flex-col">
-      <PageHeader title="技能">
+      <PageHeader title="Skill 目录">
         {/* 与 Catalog 的 ServerFilters 保持一致的从左到右顺序：视图切换 -> 搜索 */}
         <div className="flex items-center gap-4">
           <Button
