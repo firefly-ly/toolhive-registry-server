@@ -25,8 +25,9 @@ import { isTokenNearExpiry } from "./auth/utils";
 const MOCK_SCENARIO_COOKIE = "mock-scenario";
 const MOCK_SCENARIO_HEADER = "X-Mock-Scenario";
 
-// Validate required environment variables at module load time (fail-fast)
-const API_BASE_URL = process.env.API_BASE_URL;
+// Registry API 基址。缺省回退 8080（Docker registry 映射端口），与服务端 fetch
+// 兼容：Node 的 fetch 不支持相对 URL，基址缺失时会抛出难排查的 "Invalid URL"。
+const API_BASE_URL = process.env.API_BASE_URL || "http://127.0.0.1:8080";
 
 /**
  * Gets an authenticated API client with OIDC access token.
