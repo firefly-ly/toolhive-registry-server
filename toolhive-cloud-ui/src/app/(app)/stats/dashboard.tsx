@@ -708,7 +708,7 @@ function TrendChart({ days, lines }: { days: string[]; lines: TrendItem[] }) {
       {/* 鼠标位置处显示对应名称（跟随鼠标小卡片） */}
       {hitName && mousePx && (
         <div
-          className="pointer-events-none absolute z-20 -translate-x-1/2 -translate-y-full rounded-md border-border bg-popover px-2 py-1 text-xs font-semibold text-popover-foreground shadow-md"
+          className="pointer-events-none absolute z-20 -translate-x-1/2 -translate-y-full rounded-md border-border bg-popover px-2.5 py-1.5 text-base font-semibold text-popover-foreground shadow-md"
           style={{
             left: `${(mousePx.x / Wd) * 100}%`,
             top: `${(mousePx.y / Ht) * 100}%`,
@@ -716,7 +716,7 @@ function TrendChart({ days, lines }: { days: string[]; lines: TrendItem[] }) {
           }}
         >
           <span
-            className="mr-1.5 inline-block h-2 w-2 rounded-sm align-middle"
+            className="mr-1.5 inline-block h-2.5 w-2.5 rounded-sm align-middle"
             style={{ background: hitColor || "#111" }}
           />
           {hitName}
