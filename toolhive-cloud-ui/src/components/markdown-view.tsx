@@ -31,7 +31,13 @@ export function MarkdownView({ content }: { content: string }) {
                 {children}
               </pre>
             ),
-            code: ({ className, children }) => {
+            code: ({
+              className,
+              children,
+            }: {
+              className?: string;
+              children?: React.ReactNode;
+            }) => {
               const isBlock = /language-/.test(className ?? "");
               if (isBlock) {
                 return (
