@@ -53,33 +53,21 @@ export default async function McpDetailPage({
         ? "返回收藏"
         : "返回 MCP 市场";
 
-  // 1) 先尝试用户提交的已审批 MCP（按 id）；null 会走"当作 registry 服务器名"回退
-  const submitted = await safe(getMcpById(ref), null, "mcpDetail.getById");
+  // 并行第一轮：主体、会话、收藏、registry 服务器四路同时发起（原先为 4 段串行）
+  const [submitted, session, favorites, serversResult] = await Promise.all([
+    safe(getMcpById(ref), null, "mcpDetail.getById"),
+    auth.api.getSession({ headers: await headers() }).catch(() => null),
+    safe(listFavorites(), [], "mcpDetail.favorites"),
+    safe(getServers(), { servers: [] }, "mcpDetail.getServers"),
+  ]);
 
-  // 当前用户收藏状态（用于高亮星标）
-  let favorited = false;
-  try {
-    const session = await auth.api.getSession({ headers: await headers() });
-    const actor = session?.user?.email ?? session?.user?.name ?? "";
-    if (actor) {
-      const favorites = await listFavorites();
-      favorited = favorites.some(
-        (f) =>
-          f.user_id === actor && f.item_type === "mcp" && f.item_ref === ref,
-      );
-    }
-  } catch (error) {
-    // 后端不可用时按未收藏处理，但留痕
-    console.error("[mcpDetail.favorites]", error);
-  }
+  const actor = session?.user?.email ?? session?.user?.name ?? "";
+  const favorited = !!actor && favorites.some(
+    (f) => f.user_id === actor && f.item_type === "mcp" && f.item_ref === ref,
+  );
 
   // 2) 否则当作 registry 服务器名处理
   if (!submitted) {
-    const serversResult = await safe(
-      getServers(),
-      { servers: [] },
-      "mcpDetail.getServers",
-    );
     const server = (serversResult.servers ?? []).find((s) => s.name === ref);
     if (!server) {
       return (
@@ -166,20 +154,12 @@ export default async function McpDetailPage({
   // 同 group 的多版本：仅已上架(on_shelf)版本出现于版本下拉
   const mGroup =
     submitted.group_key || String(submitted.payload_ref || "").split(":")[0];
-  let mVersionOptions: { id: string; label: string }[] = [];
-  if (mGroup) {
-    try {
-      const gv = await listGroupVersions(mGroup);
-      mVersionOptions = (gv.versions || [])
-        .filter((v) => v.on_shelf !== false && v.id)
-        .map((v) => ({ id: v.id, label: `v${v.version || "1.0.0"}` }));
-    } catch (error) {
-      // 版本下拉取数失败只影响下拉项，详情主体仍可渲染，但留痕
-      console.error("[mcpDetail.groupVersions]", error);
-    }
-  }
 
-  const [{ isAdmin }, toolsResult, issues] = await Promise.all([
+  // 并行第二轮：依赖 submitted 的四路同时发起（原先版本聚合先串行、tools 再排在其后）
+  const [gvRes, authCtxRes, toolsResult, issues] = await Promise.all([
+    mGroup
+      ? safe(listGroupVersions(mGroup), null, "mcpDetail.groupVersions")
+      : Promise.resolve(null),
     getAuthContext(),
     // 取数失败带 failed 标记：工具 tab 明确提示可刷新重试（失败留痕）
     safe(
@@ -189,6 +169,11 @@ export default async function McpDetailPage({
     ),
     safe(getIssues("mcp", submitted.payload_ref), [], "mcpDetail.getIssues"),
   ]);
+  const mVersionOptions = (gvRes?.versions || [])
+    .filter((v) => v.on_shelf !== false && v.id)
+    .map((v) => ({ id: v.id, label: `v${v.version || "1.0.0"}` }));
+
+  const isAdmin = authCtxRes.isAdmin;
 
   return (
     <div className="flex h-full flex-col">
