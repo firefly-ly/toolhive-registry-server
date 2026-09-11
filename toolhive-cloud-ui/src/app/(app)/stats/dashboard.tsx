@@ -64,14 +64,14 @@ function Seg({ on, onChange }: { on: Filt; onChange: (f: Filt) => void }) {
     { k: "skill", l: "Skill" },
   ];
   return (
-    <div className="inline-flex shrink-0 rounded-lg border border-border bg-muted/50 p-0.5">
+    <div className="inline-flex shrink-0 rounded-lg border border-border bg-muted/50 p-1">
       {opts.map((o) => (
         <button
           key={o.k}
           type="button"
           onClick={() => onChange(o.k)}
           className={cn(
-            "rounded-md px-3 py-0.5 text-xs transition-colors cursor-pointer",
+            "rounded-md px-4 py-1 text-base transition-colors cursor-pointer",
             on === o.k
               ? "bg-primary text-primary-foreground"
               : "text-muted-foreground hover:text-foreground",
