@@ -98,7 +98,7 @@ function CardHead({
   return (
     <div className="mb-3 flex items-center justify-between gap-3">
       <div className="min-w-0">
-        <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+        <h3 className="text-lg font-semibold text-foreground">{title}</h3>
         {sub && <p className="text-xs text-muted-foreground">{sub}</p>}
       </div>
       {filt && onFilt && <Seg on={filt} onChange={onFilt} />}
