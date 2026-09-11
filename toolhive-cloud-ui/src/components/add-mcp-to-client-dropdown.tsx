@@ -13,15 +13,18 @@ import { MCP_CLIENT_LIST, normalizeServerName } from "@/lib/mcp/client-configs";
 interface AddMcpClientDropdownProps {
   serverName: string;
   serverUrl: string;
+  // 平台提交型 MCP 的代理调用凭证（restricted/对外口调用必需），registry 服务器无此字段
+  serverHeaders?: Record<string, string>;
 }
 
 export function AddMcpToClientDropdown({
   serverName: rawServerName,
   serverUrl,
+  serverHeaders,
 }: AddMcpClientDropdownProps) {
   const { openInClient, copyCommand } = useAddMcpToClient({
     serverName: normalizeServerName(rawServerName),
-    config: { url: serverUrl },
+    config: { url: serverUrl, headers: serverHeaders },
   });
 
   return (

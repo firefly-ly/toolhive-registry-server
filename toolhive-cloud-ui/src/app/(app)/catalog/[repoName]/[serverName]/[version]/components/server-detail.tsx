@@ -24,9 +24,11 @@ function ServerDescription({ description }: { description?: string }) {
 function GettingStarted({
   serverName,
   serverUrl,
+  serverHeaders,
 }: {
   serverName?: string;
   serverUrl?: string;
+  serverHeaders?: Record<string, string>;
 }) {
   return (
     <div className="space-y-3 rounded-lg border bg-muted/30 p-4">
@@ -49,7 +51,7 @@ function GettingStarted({
           />
           <CopyMcpConfigDialog
             serverName={serverName ?? ""}
-            config={{ url: serverUrl }}
+            config={{ url: serverUrl, headers: serverHeaders }}
             variant="outline"
             size="lg"
             className="gap-2"
@@ -58,6 +60,7 @@ function GettingStarted({
             <AddMcpToClientDropdown
               serverName={serverName}
               serverUrl={serverUrl}
+              serverHeaders={serverHeaders}
             />
           )}
         </div>
@@ -70,6 +73,9 @@ interface ServerDetailProps {
   description?: string;
   serverName?: string;
   serverUrl?: string;
+  // 平台提交型 MCP 的代理调用凭证（Authorization: Bearer <mcp_token>），
+  // 由后端在探活可达时随详情下发；registry 服务器无此字段（undefined，行为不变）。
+  serverHeaders?: Record<string, string>;
   repositoryUrl?: string;
   publisher?: string;
   type?: string;
@@ -80,6 +86,7 @@ export function ServerDetail({
   description,
   serverName,
   serverUrl,
+  serverHeaders,
   repositoryUrl,
   publisher,
   type,
@@ -127,7 +134,11 @@ export function ServerDetail({
         </a>
       )}
 
-      <GettingStarted serverName={serverName} serverUrl={serverUrl} />
+      <GettingStarted
+        serverName={serverName}
+        serverUrl={serverUrl}
+        serverHeaders={serverHeaders}
+      />
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {meta.map((m) => (
