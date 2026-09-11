@@ -460,6 +460,14 @@ export async function undeployMcp(
   );
 }
 
+// 轮换代理访问令牌（仅管理员）：旧 Token 立即作废，已复制配置需重新复制
+export async function rotateMcpToken(id: string): Promise<{ ok: boolean }> {
+  return request<{ ok: boolean }>(`/submissions/${id}/rotate-token`, {
+    method: "POST",
+    body: JSON.stringify({}),
+  });
+}
+
 // 重新同步到 Registry Server（同步失败后重试 / 补发布）
 export async function syncRegistry(
   id: string,

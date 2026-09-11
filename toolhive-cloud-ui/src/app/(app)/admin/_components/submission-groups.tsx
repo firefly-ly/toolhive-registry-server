@@ -12,6 +12,7 @@ import type { Submission } from "@/lib/platform-backend";
 import { cn } from "@/lib/utils";
 import {
   deploySubmissionAction,
+  rotateMcpTokenAction,
   setLifecycleAction,
   syncRegistryAction,
   undeploySubmissionAction,
@@ -279,8 +280,19 @@ export function VersionActions({ s }: { s: Submission }) {
           待配置可见范围后
         </span>
       )}
-      {/* 按钮顺序：可见范围 → 下架/恢复上架 → 下线/恢复上线 → 重新同步 → 删除(固定在最后) */}
+      {/* 按钮顺序：可见范围 → 轮换 Token(仅MCP) → 下架/恢复上架 → 下线/恢复上线 → 重新同步 → 删除(固定在最后) */}
       <VisibilityDialog s={s} />
+      {isMcp && (
+        <ConfirmForm
+          action={rotateMcpTokenAction}
+          fields={{ id: s.id }}
+          title="确认轮换 Token？"
+          description="将生成新的代理访问令牌，旧 Token 立即作废——所有已复制到客户端的接入配置会立刻失效（401），需要重新复制配置。仅影响该 MCP，其他条目不受影响。"
+          confirmText="确认轮换"
+        >
+          轮换 Token
+        </ConfirmForm>
+      )}
       {!deprecated && (
         <ConfirmForm
           action={setLifecycleAction}

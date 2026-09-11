@@ -13,6 +13,7 @@ import {
   createSubmission,
   deployMcp,
   type RegistryClassify,
+  rotateMcpToken,
   setSubmissionStatus,
   setSubmissionVisibility,
   syncRegistry,
@@ -400,6 +401,23 @@ export async function undeploySubmissionAction(formData: FormData) {
   revalidatePath("/catalog");
   revalidatePath("/mcp/[ref]");
   // 成功后停留原地；失败才跳转携带 error 参数弹 toast
+}
+
+// P5：轮换代理访问令牌（仅管理员，仅 MCP）。旧 Token 立即作废，已复制配置需重新复制。
+export async function rotateMcpTokenAction(formData: FormData) {
+  const id = String(formData.get("id") ?? "").trim();
+  if (!id) return;
+  try {
+    await rotateMcpToken(id);
+  } catch (e) {
+    const message = e instanceof Error ? e.message : String(e);
+    redirect(
+      `/admin?tab=published&error=${encodeURIComponent(`Token 轮换失败：${message}`)}`,
+    );
+  }
+  revalidatePath("/admin");
+  revalidatePath("/mcp/[ref]");
+  // 成功后停留原地；用户需在各客户端重新复制接入配置
 }
 
 // P4：重新同步到 Registry Server（同步失败后重试 / 补发布）
