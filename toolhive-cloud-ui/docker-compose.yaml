@@ -41,7 +41,8 @@ services:
     volumes:
       # Mount parent dir (NOT /data) so Postgres 18+ can place data under
       # /var/lib/postgresql/<major-version>/data and support pg_upgrade --link.
-      - auth-db-data:/var/lib/postgresql
+      # 2026-09-11: 由具名卷 auth-db-data 迁移为 D 盘 bind mount，随平台目录自包含
+      - D:/MCP和skill平台/toolhive-registry-server/data/auth-db:/var/lib/postgresql
       # Initialize Better Auth schema on first startup
       - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     networks:
@@ -105,5 +106,4 @@ services:
       - registry-network
     restart: unless-stopped
 
-volumes:
-  auth-db-data:
+volumes: {}
