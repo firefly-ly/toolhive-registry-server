@@ -165,7 +165,7 @@ export function McpSourceSection({
 
           <div className="space-y-3">
             <span className="block text-sm font-medium">
-              私密配置 .env（可选，强烈推荐）
+              私密配置 .env（可选）
             </span>
             <FilePickerField
               id="mcp-env-file"
