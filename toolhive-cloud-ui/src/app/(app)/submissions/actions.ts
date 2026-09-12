@@ -168,7 +168,9 @@ export async function createSubmissionAction(formData: FormData): Promise<{
       const qs = new URLSearchParams({
         name: file.name,
         display_name: name || file.name.replace(/\.(zip|tar\.gz|tgz)$/i, ""),
-        version: version || "1.0.0",
+        // version 不做 1.0.0 兜底：缺省时交由后端从 payload_ref（产品名:版本号）自动提取
+        ...(version ? { version } : {}),
+        ...(payload_ref ? { payload_ref } : {}),
       });
       const created = await fetch(`${BACKEND_BASE}/submissions/source?${qs}`, {
         method: "POST",
