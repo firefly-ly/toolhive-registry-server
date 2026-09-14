@@ -62,9 +62,11 @@ export default async function McpDetailPage({
   ]);
 
   const actor = session?.user?.email ?? session?.user?.name ?? "";
-  const favorited = !!actor && favorites.some(
-    (f) => f.user_id === actor && f.item_type === "mcp" && f.item_ref === ref,
-  );
+  const favorited =
+    !!actor &&
+    favorites.some(
+      (f) => f.user_id === actor && f.item_type === "mcp" && f.item_ref === ref,
+    );
 
   // 2) 否则当作 registry 服务器名处理
   if (!submitted) {

@@ -16,11 +16,7 @@ export function MarkdownView({ content }: { content: string }) {
           remarkPlugins={[remarkGfm]}
           components={{
             a: ({ href, children }) => (
-              <a
-                href={href}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
+              <a href={href} target="_blank" rel="noopener noreferrer">
                 {children}
               </a>
             ),

@@ -46,9 +46,7 @@ describe("CatalogPagination", () => {
 
   describe("Next button", () => {
     it("is disabled on the last page", () => {
-      render(
-        <CatalogPagination {...defaultProps} page={4} totalPages={5} />,
-      );
+      render(<CatalogPagination {...defaultProps} page={4} totalPages={5} />);
       expect(screen.getByRole("button", { name: /下一页/ })).toBeDisabled();
     });
 
