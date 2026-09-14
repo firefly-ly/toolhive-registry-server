@@ -28,9 +28,12 @@ function buildTree(paths: string[]): TreeNode {
     let cur = root;
     for (let i = 0; i < parts.length - 1; i++) {
       const seg = parts[i];
-      if (!cur.dirs.has(seg))
-        cur.dirs.set(seg, emptyNode(seg, parts.slice(0, i + 1).join("/")));
-      cur = cur.dirs.get(seg)!;
+      let next = cur.dirs.get(seg);
+      if (!next) {
+        next = emptyNode(seg, parts.slice(0, i + 1).join("/"));
+        cur.dirs.set(seg, next);
+      }
+      cur = next;
     }
     cur.files.push(p);
   }
@@ -85,10 +88,9 @@ function DirNode({
               />
             ))}
           {node.files
-            .map((p) => p.split("/").pop()!)
-            .sort((a, b) => a.localeCompare(b))
-            .map((name) => {
-              const path = node.files.find((p) => p.split("/").pop() === name)!;
+            .map((p) => ({ path: p, name: p.split("/").pop() ?? "" }))
+            .sort((a, b) => a.name.localeCompare(b.name))
+            .map(({ path, name }) => {
               const active = selected === path;
               return (
                 <button
@@ -138,6 +140,7 @@ function CodePreview({ path, content }: { path: string; content: string }) {
             className="select-none border-r bg-muted/30 px-3 py-3 text-right text-muted-foreground/50"
           >
             {lines.map((_, i) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: 行号列表静态有序且与索引恒等，索引即身份
               <div key={i}>{i + 1}</div>
             ))}
           </div>

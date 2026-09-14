@@ -65,7 +65,7 @@ export function CatalogPagination({
       {items.map((item, i) =>
         item === "ellipsis" ? (
           <span
-            key={`ellipsis-${i}`}
+            key={`ellipsis-${items.slice(0, i).filter((x) => x === "ellipsis").length}`}
             aria-hidden
             className="flex size-8 items-center justify-center text-sm text-muted-foreground select-none"
           >

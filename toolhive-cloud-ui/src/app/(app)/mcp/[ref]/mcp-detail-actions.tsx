@@ -91,7 +91,6 @@ export function McpDetailActions({
   favoriteCount,
   endpoint,
   publicEndpoint,
-  name,
   autoCall,
 }: McpDetailActionsProps) {
   const toggleFav = toggleFavoriteAction.bind(null, "mcp", itemRef, favorited);
