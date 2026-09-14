@@ -639,3 +639,91 @@ export async function deleteIssue(
     method: "DELETE",
   });
 }
+
+// ===== Server 端内部调用（上传 / 源码提交 / env 提交）——2026-09-14 自 server actions 收编 =====
+// 目标：后端 HTTP 全部集中在 lib 层，server actions 只处理业务结果与错误文案。
+
+/** 内部令牌头（P0-2 身份门）：跑在 Next 服务端的调用用它和后端互信 */
+export function internalProxyHeaders(
+  extra: Record<string, string> = {},
+): Record<string, string> {
+  return {
+    "x-internal-proxy":
+      process.env.INTERNAL_PROXY_TOKEN || "thv-internal-proxy",
+    ...extra,
+  };
+}
+
+/** 上传二进制制品到平台后端 ObjectStore，返回 artifact_key（供 server actions 复用） */
+export async function uploadBufferToBackend(
+  buf: ArrayBuffer,
+  filename: string,
+  endpoint = "/upload",
+): Promise<string> {
+  const res = await fetch(
+    `${BASE}${endpoint}?name=${encodeURIComponent(filename)}`,
+    {
+      method: "POST",
+      headers: internalProxyHeaders({
+        "Content-Type": "application/octet-stream",
+      }),
+      body: buf,
+      cache: "no-store",
+    },
+  );
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`制品上传失败: ${res.status} ${text}`);
+  }
+  const data = (await res.json()) as { key: string };
+  return data.key;
+}
+
+/** 源码包提交：POST /submissions/source（上传 + 建档一次完成），返回 { id } */
+export async function createSourceSubmission(p: {
+  buf: ArrayBuffer;
+  name: string;
+  displayName: string;
+  version?: string;
+  payloadRef?: string;
+  actor: string;
+}): Promise<{ id: string }> {
+  const qs = new URLSearchParams({
+    name: p.name,
+    display_name: p.displayName,
+    ...(p.version ? { version: p.version } : {}),
+    ...(p.payloadRef ? { payload_ref: p.payloadRef } : {}),
+  });
+  const created = await fetch(`${BASE}/submissions/source?${qs}`, {
+    method: "POST",
+    headers: internalProxyHeaders({
+      "Content-Type": "application/octet-stream",
+      "x-actor-email": p.actor,
+    }),
+    body: p.buf,
+    cache: "no-store",
+  });
+  if (!created.ok) {
+    const text = await created.text().catch(() => "");
+    throw new Error(`源码包提交失败: ${created.status} ${text.slice(0, 200)}`);
+  }
+  return (await created.json()) as { id: string };
+}
+
+/** .env 私密配置提交：POST /submissions/:id/env（值进 ToolHive 加密凭据库，平台不落明文） */
+export async function submitSubmissionEnv(
+  id: string,
+  envText: string,
+  actor: string,
+): Promise<void> {
+  const envRes = await fetch(`${BASE}/submissions/${id}/env`, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain", "x-actor-email": actor },
+    body: envText,
+    cache: "no-store",
+  });
+  if (!envRes.ok) {
+    const text = await envRes.text().catch(() => "");
+    throw new Error(`.env 上传失败: ${envRes.status} ${text.slice(0, 200)}`);
+  }
+}

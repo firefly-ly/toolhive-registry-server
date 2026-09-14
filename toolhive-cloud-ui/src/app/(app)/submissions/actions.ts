@@ -10,53 +10,25 @@ import { getAuthContext } from "@/lib/auth/context";
 import {
   approveSubmission,
   classifyRegistry,
+  createSourceSubmission,
   createSubmission,
   deployMcp,
   type RegistryClassify,
   rotateMcpToken,
   setSubmissionStatus,
   setSubmissionVisibility,
+  submitSubmissionEnv,
   syncRegistry,
   undeployMcp,
+  uploadBufferToBackend,
 } from "@/lib/platform-backend";
-
-const BACKEND_BASE =
-  process.env.PLATFORM_BACKEND_URL || "http://127.0.0.1:4000";
 
 // 从当前 Casdoor 会话解析提交人标识（email 优先，回退 name）
 async function currentActor(): Promise<string> {
   const session = await auth.api.getSession({ headers: await headers() });
   return session?.user?.email ?? session?.user?.name ?? "anonymous";
 }
-
-// 把二进制制品上传到平台后端 ObjectStore，返回内部 artifact_key。
-// Server Action 内完成上传，避免浏览器直连 127.0.0.1:4000 被本地代理/环回重置。
-async function uploadBufferToBackend(
-  buf: ArrayBuffer,
-  filename: string,
-  endpoint = "/upload",
-): Promise<string> {
-  const res = await fetch(
-    `${BACKEND_BASE}${endpoint}?name=${encodeURIComponent(filename)}`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/octet-stream",
-        // 后端 /upload* 已加身份门（P0-2）：本函数跑在 Next 服务端，携带内部令牌通过
-        "x-internal-proxy":
-          process.env.INTERNAL_PROXY_TOKEN || "thv-internal-proxy",
-      },
-      body: buf,
-      cache: "no-store",
-    },
-  );
-  if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new Error(`制品上传失败: ${res.status} ${text}`);
-  }
-  const data = (await res.json()) as { key: string };
-  return data.key;
-}
+// 后端 HTTP（上传 / 源码提交 / env）已收编至 lib/platform-backend.ts 统一管理（2026-09-14）
 
 // 从用户填写的"文件位置"拉取制品：支持 http/https URL 或本地绝对路径（含 UNC）。
 async function fetchFileFromLocation(
@@ -165,32 +137,15 @@ export async function createSubmissionAction(formData: FormData): Promise<{
       if (file.size > 20 * 1024 * 1024) {
         return { ok: false, error: "源码包上限 20MB" };
       }
-      const qs = new URLSearchParams({
+      const createdJson = await createSourceSubmission({
+        buf: await file.arrayBuffer(),
         name: file.name,
-        display_name: name || file.name.replace(/\.(zip|tar\.gz|tgz)$/i, ""),
+        displayName: name || file.name.replace(/\.(zip|tar\.gz|tgz)$/i, ""),
         // version 不做 1.0.0 兜底：缺省时交由后端从 payload_ref（产品名:版本号）自动提取
-        ...(version ? { version } : {}),
-        ...(payload_ref ? { payload_ref } : {}),
+        version: version || undefined,
+        payloadRef: payload_ref || undefined,
+        actor,
       });
-      const created = await fetch(`${BACKEND_BASE}/submissions/source?${qs}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/octet-stream",
-          "x-internal-proxy":
-            process.env.INTERNAL_PROXY_TOKEN || "thv-internal-proxy",
-          "x-actor-email": actor,
-        },
-        body: await file.arrayBuffer(),
-        cache: "no-store",
-      });
-      if (!created.ok) {
-        const text = await created.text().catch(() => "");
-        return {
-          ok: false,
-          error: `源码包提交失败: ${created.status} ${text.slice(0, 200)}`,
-        };
-      }
-      const createdJson = (await created.json()) as { id: string };
       // 私密 .env（可选）：单独上传，值入 ToolHive 加密凭据库，平台不落明文
       const envFile = formData.get("env_file") as File | null;
       if (envFile && envFile.size > 0) {
@@ -198,23 +153,12 @@ export async function createSubmissionAction(formData: FormData): Promise<{
           return { ok: false, error: ".env 文件过大（上限 256KB）" };
         }
         const envText = new TextDecoder().decode(await envFile.arrayBuffer());
-        const envRes = await fetch(
-          `${BACKEND_BASE}/submissions/${createdJson.id}/env`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "text/plain",
-              "x-actor-email": actor,
-            },
-            body: envText,
-            cache: "no-store",
-          },
-        );
-        if (!envRes.ok) {
-          const text = await envRes.text().catch(() => "");
+        try {
+          await submitSubmissionEnv(createdJson.id, envText, actor);
+        } catch (e) {
           return {
             ok: false,
-            error: `.env 上传失败: ${envRes.status} ${text.slice(0, 200)}`,
+            error: e instanceof Error ? e.message : String(e),
           };
         }
       }
