@@ -3,8 +3,8 @@
 import { useState } from "react";
 import type { ItemStat } from "./dashboard-shared";
 
-export /* ---------------- 四象限 ---------------- */
-function Quadrant({ items }: { items: ItemStat[] }) {
+/* ---------------- 四象限 ---------------- */
+export function Quadrant({ items }: { items: ItemStat[] }) {
   const [hover, setHover] = useState<string | null>(null);
   const Wq = 470,
     Hq = 320;

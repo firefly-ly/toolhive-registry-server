@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { TrendItem } from "./dashboard-shared";
 
+/* ---------------- 趋势 SVG ---------------- */
 export function TrendChart({
   days,
   lines,
