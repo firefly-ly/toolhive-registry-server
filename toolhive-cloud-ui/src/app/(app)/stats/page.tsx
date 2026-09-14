@@ -7,7 +7,8 @@ import {
   getUniqueUsers,
 } from "@/lib/platform-backend";
 import { safe } from "@/lib/safe-async";
-import { type ItemStat, StatsDashboard, type TrendItem } from "./dashboard";
+import { StatsDashboard } from "./dashboard";
+import type { ItemStat, TrendItem } from "./dashboard-shared";
 
 export const revalidate = 60;
 
