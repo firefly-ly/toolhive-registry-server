@@ -22,12 +22,12 @@ export function isVirtualMCPServer(server: V0ServerJson): boolean {
 
 /**
  * Extracts MCP tools from a server's publisher-provided metadata.
- * Tools are stored alongside `metadata` in the stacklok transport entries.
+ * Tools are stored alongside `metadata` in the transport entries.
  *
  * Two shapes are tolerated:
  *  - `tool_definitions: [{ name, description? }, ...]` (canonical object form)
- *  - `tools: ["tool_a", "tool_b", ...]` (string-array form found in the
- *    upstream `upstream-registry.json` fixture shipped with toolhive-registry-server)
+ *  - `tools: ["tool_a", "tool_b", ...]` (string-array form, kept for
+ *    legacy/compat entries imported from older registry data)
  * The string form is mapped to `{ name, description: undefined }` so the
  * detail page renders tool names even when no descriptions are provided.
  */

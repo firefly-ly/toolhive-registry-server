@@ -2,7 +2,8 @@
  * Database Utilities for Better Auth
  *
  * PostgreSQL connection pool and account query helpers.
- * Used by auth.ts and token.ts for database operations.
+ * Used by auth/auth.ts (session storage), auth/utils.ts (token queries)
+ * and lib/api-client.ts (mode detection).
  */
 
 import { Pool } from "pg";
