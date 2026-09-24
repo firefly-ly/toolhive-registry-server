@@ -25,14 +25,15 @@ import { isTokenNearExpiry } from "./auth/utils";
 const MOCK_SCENARIO_COOKIE = "mock-scenario";
 const MOCK_SCENARIO_HEADER = "X-Mock-Scenario";
 
-// Registry API 基址。缺省回退 8080（Docker registry 映射端口），与服务端 fetch
+// Registry API 基址。缺省回退 3000（Docker registry 宿主映射端口，2026-09-24
+// 端口对调：宿主 8080 让位给本前端；容器内部仍为 8080），与服务端 fetch
 // 兼容：Node 的 fetch 不支持相对 URL，基址缺失时会抛出难排查的 "Invalid URL"。
-const API_BASE_URL = process.env.API_BASE_URL || "http://127.0.0.1:8080";
+const API_BASE_URL = process.env.API_BASE_URL || "http://127.0.0.1:3000";
 
 // 静默回退会掩盖"部署时忘配 API_BASE_URL"的配置缺失（/catalog 500 的教训），启动时提示一次。
 if (!process.env.API_BASE_URL) {
   console.warn(
-    "[api-client] API_BASE_URL 未设置，回退使用 http://127.0.0.1:8080。若 registry 不在该地址请显式配置。",
+    "[api-client] API_BASE_URL 未设置，回退使用 http://127.0.0.1:3000。若 registry 不在该地址请显式配置。",
   );
 }
 

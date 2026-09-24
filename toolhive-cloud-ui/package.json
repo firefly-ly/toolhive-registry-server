@@ -8,7 +8,7 @@
     "dev:next": "node scripts/dev-next.mjs",
     "dev:mock-oidc": "concurrently -n \"OIDC,Next\" -c \"blue,green\" \"pnpm oidc\" \"pnpm dev:next\"",
     "build": "next build",
-    "start": "next start",
+    "start": "next start -p 8080",
     "lint": "biome check",
     "format": "biome format --write",
     "test": "vitest",
