@@ -56,8 +56,10 @@ export function SubmittedMcpCard({
     <Card className="card-hover flex h-full w-full flex-col gap-4 py-4">
       <CardHeader className="gap-1">
         <div className="flex items-center justify-between gap-2">
+          {/* min-w-0：flex 子项默认 min-width:auto，长名称会顶开右侧版本下拉撑破卡片；
+              加 min-w-0 + flex-1 后标题 truncate 生效，下拉始终留在卡内 */}
           <CardTitle
-            className="truncate text-xl font-semibold leading-7 tracking-tight"
+            className="min-w-0 flex-1 truncate text-xl font-semibold leading-7 tracking-tight"
             title={cur.name}
           >
             {cur.name}
