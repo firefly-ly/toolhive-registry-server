@@ -84,6 +84,7 @@ export async function createSubmissionAction(formData: FormData): Promise<{
   const payload_ref = String(formData.get("payload_ref") ?? "").trim();
   if (!type || !payload_ref) return { ok: false, error: "类型与引用为必填项" };
   const name = String(formData.get("name") ?? "").trim();
+  if (!name) return { ok: false, error: "名称为必填项" };
   const description = String(formData.get("description") ?? "").trim();
   const group_key = String(formData.get("group_key") ?? "").trim();
   const version = String(formData.get("version") ?? "").trim();
@@ -140,7 +141,8 @@ export async function createSubmissionAction(formData: FormData): Promise<{
       const createdJson = await createSourceSubmission({
         buf: await file.arrayBuffer(),
         name: file.name,
-        displayName: name || file.name.replace(/\.(zip|tar\.gz|tgz)$/i, ""),
+        // 名称已强制必填（2026-09-30 起），不再回退文件名——避免文件名里的日期/版本号原样变成显示名
+        displayName: name,
         // version 不做 1.0.0 兜底：缺省时交由后端从 payload_ref（产品名:版本号）自动提取
         version: version || undefined,
         payloadRef: payload_ref || undefined,

@@ -253,14 +253,14 @@ export function SubmissionForm({ action }: SubmissionFormProps) {
 
         <div className="space-y-2">
           <label htmlFor="name" className="block text-sm font-medium">
-            名称{isMcp ? "（可选）" : "（必填）"}
+            名称（必填）
           </label>
           <input
             id="name"
             name="name"
             placeholder="DWS 数据探查器"
             className={inputClass}
-            required={!isMcp}
+            required
           />
         </div>
       </div>
