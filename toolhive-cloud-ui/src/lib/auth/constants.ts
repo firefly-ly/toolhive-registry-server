@@ -40,6 +40,37 @@ export const OIDC_USERINFO_URL =
 export const OIDC_JWKS_URL =
   process.env.OIDC_JWKS_URL || `${OIDC_ISSUER_URL}/.well-known/jwks`;
 
+// ============================================================================
+// 公司 SSO（OAuth2.0 Code 模式）——第二个登录入口，与 Casdoor 并存灰度。
+//
+// 端点布局来自《OAuth2.0认证Code模式接口》文档（iamtest 测试环境已核实），
+// 生产环境只需替换 SSO_BASE_URL，三个端点路径不变（均可单独覆盖）。
+// 注意：SSO_BASE_URL 不设默认值——避免把测试环境地址静默带进生产。
+// 仅当 SSO_CLIENT_ID / SSO_CLIENT_SECRET / SSO_BASE_URL 三者齐备时启用该入口。
+// ============================================================================
+
+// Better Auth provider 标识，同时决定回调路径
+// (/api/auth/oauth2/callback/sso) 并写入 account 表的 providerId。
+// 与 SSO 侧登记的回调地址必须严格一致，一经使用不可更改。
+export const SSO_PROVIDER_ID = "sso";
+export const SSO_CLIENT_ID = process.env.SSO_CLIENT_ID || "";
+export const SSO_CLIENT_SECRET = process.env.SSO_CLIENT_SECRET || "";
+export const SSO_BASE_URL = process.env.SSO_BASE_URL || "";
+// SSO 不下发 email，用 <账号ID>@<SSO_EMAIL_DOMAIN> 合成（Better Auth 要求邮箱非空）
+export const SSO_EMAIL_DOMAIN = process.env.SSO_EMAIL_DOMAIN || "dongpeng.net";
+export const SSO_AUTHORIZATION_URL =
+  process.env.SSO_AUTHORIZATION_URL ||
+  (SSO_BASE_URL ? `${SSO_BASE_URL}/esc-sso/oauth2.0/authorize` : "");
+export const SSO_TOKEN_URL =
+  process.env.SSO_TOKEN_URL ||
+  (SSO_BASE_URL ? `${SSO_BASE_URL}/esc-sso/oauth2.0/accessToken` : "");
+export const SSO_PROFILE_URL =
+  process.env.SSO_PROFILE_URL ||
+  (SSO_BASE_URL ? `${SSO_BASE_URL}/esc-sso/oauth2.0/profile` : "");
+export const SSO_ENABLED = Boolean(
+  SSO_CLIENT_ID && SSO_CLIENT_SECRET && SSO_BASE_URL,
+);
+
 // Token expiration constants (in milliseconds and seconds)
 export const TOKEN_ONE_HOUR_MS = 60 * 60 * 1000; // 3,600,000 ms (1 hour)
 export const TOKEN_SEVEN_DAYS_SECONDS = 7 * 24 * 60 * 60; // 604,800 seconds (7 days)

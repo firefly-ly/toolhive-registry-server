@@ -18,7 +18,7 @@ import { redirect } from "next/navigation";
 import { createClient, createConfig } from "@/generated/client";
 import * as apiServices from "@/generated/sdk.gen";
 import { auth } from "./auth/auth";
-import { OIDC_PROVIDER_ID } from "./auth/constants";
+import { OIDC_PROVIDER_ID, SSO_PROVIDER_ID } from "./auth/constants";
 import { isDatabaseMode } from "./auth/db";
 import { isTokenNearExpiry } from "./auth/utils";
 
@@ -114,10 +114,19 @@ export async function getAuthenticatedClient(accessToken?: string) {
       accessTokenExpiresAt?: string;
     } | null = null;
     try {
+      // 双 provider 回退：Casdoor(oidc) 优先，公司 SSO(sso) 兜底——
+      // SSO 用户的账号挂在 sso provider 下，只查 oidc 会拿到 null 被
+      // 重定向回 /signin 造成登录死循环。
       tokenData = (await auth.api.getAccessToken({
         headers: requestHeaders,
         body: { providerId: OIDC_PROVIDER_ID },
       })) as { accessToken?: string; accessTokenExpiresAt?: string };
+      if (!tokenData?.accessToken) {
+        tokenData = (await auth.api.getAccessToken({
+          headers: requestHeaders,
+          body: { providerId: SSO_PROVIDER_ID },
+        })) as { accessToken?: string; accessTokenExpiresAt?: string };
+      }
     } catch (err) {
       console.error("[API Client] getAccessToken threw:", err);
       redirect("/signin");

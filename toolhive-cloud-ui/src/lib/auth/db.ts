@@ -46,19 +46,21 @@ export interface AccountRow {
 
 /**
  * Retrieves the access token for a user from the database.
+ * Defaults to the Casdoor (oidc) provider; pass SSO_PROVIDER_ID for SSO accounts.
  * Returns null if not found or expired.
  */
 export async function getTokenFromDatabase(
   userId: string,
+  providerId: string = OIDC_PROVIDER_ID,
 ): Promise<string | null> {
   if (!pool) return null;
 
   try {
     const result = await pool.query<AccountRow>(
-      `SELECT "accessToken", "accessTokenExpiresAt" 
-       FROM account 
+      `SELECT "accessToken", "accessTokenExpiresAt"
+       FROM account
        WHERE "userId" = $1 AND "providerId" = $2`,
-      [userId, OIDC_PROVIDER_ID],
+      [userId, providerId],
     );
 
     if (result.rows.length === 0) {
@@ -94,13 +96,14 @@ export async function getTokenFromDatabase(
  */
 export async function getIdTokenFromDatabase(
   userId: string,
+  providerId: string = OIDC_PROVIDER_ID,
 ): Promise<string | null> {
   if (!pool) return null;
 
   try {
     const result = await pool.query<AccountRow>(
       `SELECT "idToken" FROM account WHERE "userId" = $1 AND "providerId" = $2`,
-      [userId, OIDC_PROVIDER_ID],
+      [userId, providerId],
     );
 
     if (result.rows.length === 0) {
@@ -139,6 +142,36 @@ export async function getAccountForRefresh(
     return result.rows[0];
   } catch (error) {
     console.error("[DB] Error getting account for refresh:", error);
+    return null;
+  }
+}
+
+/**
+ * Resolves which OAuth provider ("oidc" | "sso" | ...) holds the user's account.
+ * Prefers "oidc" (Casdoor) when the user has accounts from both providers.
+ * Returns null when database mode is off or no account exists.
+ * Used by the token-refresh route to refresh against the right provider.
+ */
+export async function getProviderIdForUser(
+  userId: string,
+): Promise<string | null> {
+  if (!pool) return null;
+
+  try {
+    const result = await pool.query<{ providerId: string }>(
+      `SELECT "providerId" FROM account WHERE "userId" = $1 ORDER BY "createdAt" DESC`,
+      [userId],
+    );
+
+    if (result.rows.length === 0) {
+      return null;
+    }
+
+    // 同一用户多账号时优先 Casdoor（现有主链路），否则取最新一条
+    const oidcRow = result.rows.find((r) => r.providerId === OIDC_PROVIDER_ID);
+    return oidcRow?.providerId ?? result.rows[0].providerId;
+  } catch (error) {
+    console.error("[DB] Error resolving provider for user:", error);
     return null;
   }
 }

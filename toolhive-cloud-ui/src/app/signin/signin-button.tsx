@@ -5,7 +5,13 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth/auth-client";
 
-export function SignInButton({ providerId }: { providerId: string }) {
+export function SignInButton({
+  providerId,
+  label = "登录",
+}: {
+  providerId: string;
+  label?: string;
+}) {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleOIDCSignIn = async () => {
@@ -54,7 +60,7 @@ export function SignInButton({ providerId }: { providerId: string }) {
       {isLoading ? (
         <Loader2 className="text-muted-foreground size-4 animate-spin" />
       ) : (
-        "登录"
+        label
       )}
     </Button>
   );

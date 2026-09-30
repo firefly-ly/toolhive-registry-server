@@ -14,12 +14,18 @@ import {
   OIDC_SCOPES,
   OIDC_TOKEN_URL,
   OIDC_USERINFO_URL,
+  SSO_AUTHORIZATION_URL,
+  SSO_CLIENT_ID,
+  SSO_CLIENT_SECRET,
+  SSO_ENABLED,
+  SSO_PROVIDER_ID,
+  SSO_TOKEN_URL,
   TOKEN_SEVEN_DAYS_SECONDS,
   TRUSTED_ORIGINS,
 } from "./constants";
 import { pool } from "./db";
 import type { OidcDiscovery, OidcDiscoveryResponse } from "./types";
-import { getUserInfoFromTokens } from "./utils";
+import { getUserInfoFromSsoTokens, getUserInfoFromTokens } from "./utils";
 
 /**
  * Cached OIDC discovery endpoints.
@@ -91,13 +97,13 @@ export const auth = betterAuth({
     storeStateStrategy: pool ? "database" : "cookie",
     storeAccountCookie: !pool,
   },
-  // 允许同一邮箱在"已存在 user、但 oidc 账号未关联"时自动关联。
+  // 允许同一邮箱在"已存在 user、但 oidc/sso 账号未关联"时自动关联。
   // 场景：本机曾用 mock OIDC（subject=test-user）登录，切回真实 Casdoor（subject=真实 UUID）
   // 后邮箱相同但 accountId 不匹配，Better Auth 默认抛 account_not_linked。
-  // 将 oidc 列入 trustedProviders，按验证过的邮箱自动补链，避免反复清库。
+  // 将 oidc/sso 列入 trustedProviders，按验证过的邮箱自动补链，避免反复清库。
   accountLinking: {
     enabled: true,
-    trustedProviders: [OIDC_PROVIDER_ID],
+    trustedProviders: [OIDC_PROVIDER_ID, SSO_PROVIDER_ID],
   },
   trustedOrigins: TRUSTED_ORIGINS,
   session: {
@@ -137,6 +143,28 @@ export const auth = betterAuth({
             return getUserInfoFromTokens(tokens, OIDC_DISCOVERY_URL);
           },
         },
+        // 公司 SSO（OAuth2.0 Code 模式）——仅在环境变量配置齐备时注册，
+        // 未配置时不出现登录入口，保证部署向后兼容。
+        ...(SSO_ENABLED
+          ? [
+              {
+                providerId: SSO_PROVIDER_ID,
+                // 端点来自《OAuth2.0认证Code模式接口》文档：
+                // /esc-sso/oauth2.0/ 下 authorize / accessToken / profile。
+                // SSO 不支持 PKCE（文档无此机制），scope 也不需要。
+                authorizationUrl: SSO_AUTHORIZATION_URL,
+                tokenUrl: SSO_TOKEN_URL,
+                redirectURI: `${BASE_URL}/api/auth/oauth2/callback/${SSO_PROVIDER_ID}`,
+                clientId: SSO_CLIENT_ID,
+                clientSecret: SSO_CLIENT_SECRET,
+                scopes: [] as string[],
+                getUserInfo: (tokens: {
+                  accessToken?: string;
+                  idToken?: string;
+                }) => getUserInfoFromSsoTokens(tokens),
+              },
+            ]
+          : []),
       ],
     }),
   ],

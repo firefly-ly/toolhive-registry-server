@@ -4,7 +4,12 @@
 
 import { symmetricDecodeJWT } from "better-auth/crypto";
 import { cookies } from "next/headers";
-import { BETTER_AUTH_SECRET } from "./constants";
+import {
+  BETTER_AUTH_SECRET,
+  SSO_EMAIL_DOMAIN,
+  SSO_PROFILE_URL,
+  SSO_PROVIDER_ID,
+} from "./constants";
 import { getIdTokenFromDatabase, getTokenFromDatabase } from "./db";
 import type { OidcUserInfo } from "./types";
 
@@ -294,6 +299,83 @@ export async function getUserInfoFromTokens(
 }
 
 // ============================================================================
+// 公司 SSO（OAuth2.0 Code 模式）用户信息解析
+// ============================================================================
+
+/**
+ * Fetches user info from the company SSO profile endpoint.
+ *
+ * 与标准 OIDC 的差异（来自《OAuth2.0认证Code模式接口》文档）：
+ * - access_token 是不透明串（非 JWT），身份信息只能从 profile 接口获取；
+ * - profile 返回 { id, account_no, user_detail_info: { orgs, jobs, userTypes } }；
+ * - 无 email —— 用 <id>@<SSO_EMAIL_DOMAIN> 合成（Better Auth 要求邮箱非空且唯一，
+ *   id 在 SSO 内唯一，合成邮箱天然唯一，且与 ADMIN_EMAILS 白名单兼容）。
+ *
+ * profile 接口传递 token 的方式文档未定死（POST/GET 两处不一致），因此
+ * 先试 Authorization: Bearer 头，失败再退回 access_token 查询参数。
+ */
+export async function getUserInfoFromSsoTokens(tokens: {
+  accessToken?: string;
+}): Promise<OidcUserInfo | null> {
+  if (!tokens.accessToken) {
+    console.error("[Auth] SSO: no access token to fetch profile");
+    return null;
+  }
+  if (!SSO_PROFILE_URL) {
+    console.error("[Auth] SSO: SSO_PROFILE_URL not configured");
+    return null;
+  }
+
+  try {
+    let response = await fetch(SSO_PROFILE_URL, {
+      headers: { Authorization: `Bearer ${tokens.accessToken}` },
+    });
+    if (!response.ok) {
+      const url = new URL(SSO_PROFILE_URL);
+      url.searchParams.set("access_token", tokens.accessToken);
+      response = await fetch(url);
+    }
+
+    if (!response.ok) {
+      console.error("[Auth] SSO profile endpoint failed:", response.status);
+      return null;
+    }
+
+    const data = (await response.json()) as Record<string, unknown>;
+    const detail = (data.user_detail_info ?? {}) as Record<string, unknown>;
+
+    const id =
+      (typeof data.id === "string" && data.id) ||
+      (typeof data.account_no === "string" && data.account_no) ||
+      "";
+    if (!id) {
+      console.error(
+        "[Auth] SSO profile missing id/account_no:",
+        JSON.stringify(data).slice(0, 300),
+      );
+      return null;
+    }
+
+    return {
+      id,
+      email: `${id}@${SSO_EMAIL_DOMAIN}`,
+      name:
+        (typeof detail.userName === "string" && detail.userName) ||
+        (typeof detail.realName === "string" && detail.realName) ||
+        (typeof detail.name === "string" && detail.name) ||
+        id,
+      image: undefined,
+      emailVerified: true, // 来源是公司 SSO，视为已验证
+      roles: claimAsStringArray(detail.userTypes ?? detail.roles),
+      groups: claimAsStringArray(detail.orgs),
+    };
+  } catch (error) {
+    console.error("[Auth] Failed to fetch SSO profile:", error);
+    return null;
+  }
+}
+
+// ============================================================================
 // Claims derived from the stored OIDC token (group/role propagation)
 // ============================================================================
 
@@ -320,14 +402,23 @@ export async function getUserClaimsFromDatabase(
   try {
     let claims: Record<string, unknown> | null = null;
 
-    const idToken = await getIdTokenFromDatabase(userId);
+    // 双 provider 回读：Casdoor(oidc) 优先，公司 SSO(sso) 兜底。
+    // 注：SSO 的 access_token 是不透明串，decodeJwtClaims 会返回 null，
+    // 因此 SSO 用户的 claims 主要依赖登录时 getUserInfo 的解析结果。
+    let idToken = await getIdTokenFromDatabase(userId);
+    if (!idToken) {
+      idToken = await getIdTokenFromDatabase(userId, SSO_PROVIDER_ID);
+    }
     if (idToken) {
       claims = decodeJwtClaims(idToken);
     }
 
     // If the id_token didn't carry the claims, fall back to the access_token.
     if (!claims || (!claims.roles && !claims.groups)) {
-      const accessToken = await getTokenFromDatabase(userId);
+      let accessToken = await getTokenFromDatabase(userId);
+      if (!accessToken) {
+        accessToken = await getTokenFromDatabase(userId, SSO_PROVIDER_ID);
+      }
       const atClaims = accessToken ? decodeJwtClaims(accessToken) : null;
       if (atClaims) {
         claims = claims ? { ...claims, ...atClaims } : atClaims;

@@ -1,5 +1,9 @@
 import Image from "next/image";
-import { OIDC_PROVIDER_ID } from "@/lib/auth/constants";
+import {
+  OIDC_PROVIDER_ID,
+  SSO_ENABLED,
+  SSO_PROVIDER_ID,
+} from "@/lib/auth/constants";
 import { SignInButton } from "./signin-button";
 
 export default function SignInPage() {
@@ -57,7 +61,22 @@ export default function SignInPage() {
             </p>
           </div>
 
-          <SignInButton providerId={OIDC_PROVIDER_ID} />
+          {/* 公司 SSO 主入口（灰度）——环境变量配置齐备才渲染 */}
+          {SSO_ENABLED && (
+            <div className="w-full space-y-2">
+              <SignInButton
+                providerId={SSO_PROVIDER_ID}
+                label="公司 SSO 登录"
+              />
+              <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                <span className="h-px flex-1 bg-border" />
+                或
+                <span className="h-px flex-1 bg-border" />
+              </div>
+            </div>
+          )}
+          {/* Casdoor 过渡入口，SSO 灰度稳定后下线 */}
+          <SignInButton providerId={OIDC_PROVIDER_ID} label="登录" />
         </div>
       </div>
     </div>

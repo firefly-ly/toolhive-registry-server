@@ -1,7 +1,11 @@
 import { headers } from "next/headers";
 import { type NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth/auth";
-import { BASE_URL, OIDC_PROVIDER_ID } from "@/lib/auth/constants";
+import {
+  BASE_URL,
+  OIDC_PROVIDER_ID,
+  SSO_PROVIDER_ID,
+} from "@/lib/auth/constants";
 
 const BASE_ORIGIN = new URL(BASE_URL).origin;
 
@@ -53,11 +57,22 @@ async function handler(request: NextRequest) {
   const requestHeaders = await headers();
 
   try {
-    const tokenResponse = await auth.api.refreshToken({
+    // 双 provider 依次尝试刷新：Casdoor(oidc) 优先，失败（如用户账号挂在
+    // 公司 SSO 下）再试 sso。写死 oidc 会导致 SSO 用户 token 临期时刷新
+    // 失败 → 被强制登出。两个都失败才走登出清理。
+    let tokenResponse = await auth.api.refreshToken({
       headers: requestHeaders,
       body: { providerId: OIDC_PROVIDER_ID },
       asResponse: true,
     });
+
+    if (!tokenResponse.ok) {
+      tokenResponse = await auth.api.refreshToken({
+        headers: requestHeaders,
+        body: { providerId: SSO_PROVIDER_ID },
+        asResponse: true,
+      });
+    }
 
     if (!tokenResponse.ok) {
       console.warn("[TokenRefresh] refreshToken failed:", tokenResponse.status);
