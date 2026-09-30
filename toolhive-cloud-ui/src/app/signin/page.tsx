@@ -6,6 +6,11 @@ import {
 } from "@/lib/auth/constants";
 import { SignInButton } from "./signin-button";
 
+// 强制动态渲染：SSO_ENABLED 来自运行时环境变量（systemd EnvironmentFile），
+// 若静态预渲染会在 build 时固化——构建环境没有 SSO_* 变量会导致
+// 服务器上永远不出现"公司 SSO 登录"按钮。
+export const dynamic = "force-dynamic";
+
 export default function SignInPage() {
   return (
     <div className="relative flex h-screen w-full bg-nav-background md:bg-transparent">
