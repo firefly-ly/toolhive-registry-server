@@ -96,6 +96,12 @@ export const auth = betterAuth({
   account: {
     storeStateStrategy: pool ? "database" : "cookie",
     storeAccountCookie: !pool,
+    // OAuth state 双重校验中关闭浏览器 cookie 侧，仅保留数据库侧。
+    // 原因：公司 SSO 回调时 state cookie 校验失败（"State not persisted correctly"），
+    // 而数据库校验（state 参数必须匹配发起时写入的记录 + 过期检查）一直正常工作。
+    // CSRF 防护由数据库校验承担；该开关是 Better Auth 全局配置（parseState 无
+    // per-provider 入口），Casdoor 流程同样走数据库校验，行为不受影响。
+    skipStateCookieCheck: true,
   },
   // 允许同一邮箱在"已存在 user、但 oidc/sso 账号未关联"时自动关联。
   // 场景：本机曾用 mock OIDC（subject=test-user）登录，切回真实 Casdoor（subject=真实 UUID）
