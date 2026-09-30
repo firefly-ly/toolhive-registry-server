@@ -113,23 +113,29 @@ export async function getAuthenticatedClient(accessToken?: string) {
       accessToken?: string;
       accessTokenExpiresAt?: string;
     } | null = null;
-    try {
-      // 双 provider 回退：Casdoor(oidc) 优先，公司 SSO(sso) 兜底——
-      // SSO 用户的账号挂在 sso provider 下，只查 oidc 会拿到 null 被
-      // 重定向回 /signin 造成登录死循环。
-      tokenData = (await auth.api.getAccessToken({
-        headers: requestHeaders,
-        body: { providerId: OIDC_PROVIDER_ID },
-      })) as { accessToken?: string; accessTokenExpiresAt?: string };
-      if (!tokenData?.accessToken) {
-        tokenData = (await auth.api.getAccessToken({
+    // 双 provider 回退：Casdoor(oidc) 优先，公司 SSO(sso) 兜底。
+    // 注意：getAccessToken 对"该 provider 下无账号"是抛 APIError（Account not
+    // found）而非返回 null，所以必须逐个 try/catch——若合并在一个 try 里，
+    // oidc 探测抛错会直接跳到 catch 重定向，sso 兜底永远执行不到，
+    // SSO 用户会被弹回登录页形成死循环。
+    for (const providerId of [OIDC_PROVIDER_ID, SSO_PROVIDER_ID]) {
+      try {
+        const data = (await auth.api.getAccessToken({
           headers: requestHeaders,
-          body: { providerId: SSO_PROVIDER_ID },
+          body: { providerId },
         })) as { accessToken?: string; accessTokenExpiresAt?: string };
+        if (data?.accessToken) {
+          tokenData = data;
+          break;
+        }
+      } catch (err) {
+        // 账号不在该 provider 下属预期（SSO 用户查 oidc / Casdoor 用户查 sso），
+        // 静默试下一个；其余错误也一并兜住，最终由下方统一处理。
+        console.log(
+          `[API Client] getAccessToken(${providerId}) unavailable:`,
+          err instanceof Error ? err.message : err,
+        );
       }
-    } catch (err) {
-      console.error("[API Client] getAccessToken threw:", err);
-      redirect("/signin");
     }
 
     if (!tokenData?.accessToken) {
