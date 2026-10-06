@@ -471,6 +471,16 @@ type OAuthProviderConfig struct {
 	// Required when the OAuth provider (e.g., Kubernetes API server) is running on a private network
 	// Example: Set to true when using https://kubernetes.default.svc as the issuer URL
 	AllowPrivateIP bool `yaml:"allowPrivateIP,omitempty"`
+
+	// SsoCheckURL enables company-SSO style opaque-token validation for this
+	// provider via the non-standard checkAccessToken interface:
+	//   GET <ssoCheckUrl> with the token in the "accesstoken" request header
+	//   success: {"errorCode":"0", "data":"<uid>"}
+	// When set, the standard OIDC/JWKS flow is skipped for this provider:
+	// audience is not required, and issuerUrl is only used as the claims
+	// issuer identifier (not fetched from, so HTTPS is not enforced on it —
+	// prefer https in production anyway).
+	SsoCheckURL string `yaml:"ssoCheckUrl,omitempty"`
 }
 
 // GetClientSecret returns the client secret by reading from the file specified in ClientSecretFile.
@@ -505,8 +515,19 @@ func (p *OAuthProviderConfig) validateProvider(index int, insecureAllowHTTP bool
 		return fmt.Errorf("auth.oauth.providers[%d].issuerUrl must be an absolute URL with host", index)
 	}
 
+	// Company-SSO providers (ssoCheckUrl set) do not perform OIDC discovery
+	// or JWKS fetching: issuerUrl is a pure identifier, so HTTPS is not
+	// enforced on it and there is no audience to match.
+	isSSO := p.SsoCheckURL != ""
+	if isSSO {
+		checkURL, err := url.Parse(p.SsoCheckURL)
+		if err != nil || !checkURL.IsAbs() || checkURL.Host == "" {
+			return fmt.Errorf("auth.oauth.providers[%d].ssoCheckUrl must be an absolute URL with host", index)
+		}
+	}
+
 	// Enforce HTTPS unless THV_REGISTRY_INSECURE_URL=true or localhost
-	if issuerURL.Scheme != "https" && !insecureAllowHTTP {
+	if !isSSO && issuerURL.Scheme != "https" && !insecureAllowHTTP {
 		host := issuerURL.Hostname()
 		if !isLoopbackHost(host) {
 			const msg = "must use HTTPS (set THV_REGISTRY_INSECURE_URL=true to allow HTTP)"
@@ -514,7 +535,7 @@ func (p *OAuthProviderConfig) validateProvider(index int, insecureAllowHTTP bool
 		}
 	}
 
-	if p.Audience == "" {
+	if !isSSO && p.Audience == "" {
 		return fmt.Errorf("auth.oauth.providers[%d].audience is required", index)
 	}
 

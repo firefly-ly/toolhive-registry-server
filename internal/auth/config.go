@@ -17,6 +17,12 @@ type providerConfig struct {
 
 	// ValidatorConfig is the ToolHive TokenValidator configuration
 	ValidatorConfig auth.TokenValidatorConfig
+
+	// Validator, when set, is used directly instead of building one from
+	// ValidatorConfig via the factory. Required for non-standard providers
+	// (e.g. company SSO opaque-token check) that the stock OIDC/JWKS
+	// validator cannot handle.
+	Validator tokenValidatorInterface
 }
 
 // IsPublicPath checks if a path should bypass authentication.

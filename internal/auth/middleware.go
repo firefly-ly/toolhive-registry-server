@@ -100,9 +100,17 @@ func newMultiProviderMiddleware(
 	}
 
 	for _, pc := range providers {
-		validator, err := factory(ctx, pc.ValidatorConfig)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create validator for provider %q: %w", pc.Name, err)
+		var validator tokenValidatorInterface
+		if pc.Validator != nil {
+			// Pre-built validator (non-standard provider, e.g. company SSO
+			// opaque-token check) — bypass the factory entirely.
+			validator = pc.Validator
+		} else {
+			var err error
+			validator, err = factory(ctx, pc.ValidatorConfig)
+			if err != nil {
+				return nil, fmt.Errorf("failed to create validator for provider %q: %w", pc.Name, err)
+			}
 		}
 
 		nv := namedValidator{

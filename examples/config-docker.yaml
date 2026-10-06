@@ -42,7 +42,23 @@ registries:
     sources: ["local-file"]
 
 auth:
+  # 当前为 anonymous（无鉴权）。
+  # 切换 oauth：注释掉下行，取消下方 oauth 段注释，然后 docker compose up -d 重建容器。
   mode: anonymous
+  # ---- 鉴权切换模板（2026-09-30：registry 支持 Casdoor JWT + 公司 SSO 不透明 token 双 provider）----
+  # 切换前先重建镜像（需包含 SSO validator 代码）：docker compose build registry-api
+  # oauth:
+  #   providers:
+  #     - name: casdoor
+  #       issuerUrl: https://mcplogin.dongpeng.net
+  #       audience: <OIDC_CLIENT_ID，即前端 .env.local 里 OIDC_CLIENT_ID 的值>
+  #       # issuer 解析到内网 IP，必须放行私网 JWKS 拉取
+  #       allowPrivateIP: true
+  #     - name: company-sso
+  #       # issuerUrl 仅作为 claims 里的 iss 标识（该 provider 不做 discovery/JWKS）
+  #       issuerUrl: http://<SSO生产域名>
+  #       ssoCheckUrl: http://<SSO生产域名>/esc-sso/api/v1/loginLog/checkAccessToken
+  #   # 切换后验证：无 token 应 401；带 Casdoor / SSO 有效 token 各应 200。
 
 # PostgreSQL database configuration
 # Uses two-user security model: separate users for operations and migrations

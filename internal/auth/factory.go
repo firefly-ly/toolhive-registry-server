@@ -70,7 +70,7 @@ func createOAuthMiddleware(
 			clientSecret = secret
 		}
 
-		providers[i] = providerConfig{
+		pc := providerConfig{
 			Name:      p.Name,
 			IssuerURL: p.IssuerURL,
 			ValidatorConfig: thvauth.TokenValidatorConfig{
@@ -86,6 +86,16 @@ func createOAuthMiddleware(
 				InsecureAllowHTTP: cfg.InsecureAllowHTTP,
 			},
 		}
+
+		// Company-SSO style providers validate opaque tokens via the
+		// non-standard checkAccessToken endpoint (GET + "accesstoken"
+		// header). The stock OIDC/JWKS validator cannot handle those
+		// tokens, so build the dedicated validator instead.
+		if p.SsoCheckURL != "" {
+			pc.Validator = newSSOValidator(p.SsoCheckURL, p.IssuerURL)
+		}
+
+		providers[i] = pc
 		issuerURLs[i] = p.IssuerURL
 	}
 
