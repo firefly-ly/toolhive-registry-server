@@ -45,6 +45,12 @@ const nextConfig: NextConfig = {
   experimental: {
     serverActions: {
       bodySizeLimit: "2gb",
+      // 公司反代（mcp.dongpeng.net → 192.168.18.248:8080）转发时未透传 Host/x-forwarded-host，
+      // Next 的 Server Actions CSRF 校验比较 Origin 与 Host 不一致即拦截，
+      // 报 "Invalid Server Actions request"（digest 尾缀 E80）——下架/部署等按钮全部失效。
+      // allowedOrigins 是官方给反代场景的白名单出口：填 host 形态（无协议无端口），
+      // 同源请求 origin===host 不会走到这里，不影响安全性。改完需 npm run build + 重启生效。
+      allowedOrigins: ["mcp.dongpeng.net"],
     },
     proxyClientMaxBodySize: "2gb",
   },
