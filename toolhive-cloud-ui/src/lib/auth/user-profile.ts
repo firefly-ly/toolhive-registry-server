@@ -55,15 +55,22 @@ export async function saveUserProfileByEmail(
 ): Promise<void> {
   if (!(await ensureTable())) return;
   try {
-    await pool!.query(
-      `INSERT INTO user_profile (email, orgs, jobs, user_types, raw, updated_at)
-       VALUES ($1, $2::jsonb, $3::jsonb, $4::jsonb, $5::jsonb, NOW())
-       ON CONFLICT (email) DO UPDATE SET
-         orgs = EXCLUDED.orgs,
-         jobs = EXCLUDED.jobs,
-         user_types = EXCLUDED.user_types,
-         raw = EXCLUDED.raw,
-         updated_at = NOW()`,
+      await pool!.query(
+        `INSERT INTO user_profile (email, orgs, jobs, user_types, raw, updated_at)
+         VALUES ($1, $2::jsonb, $3::jsonb, $4::jsonb, $5::jsonb, NOW())
+         ON CONFLICT (email) DO UPDATE SET
+           -- 防覆盖：SSO profile 当前不下发组织数据（detail 为空对象），
+           -- 登录 upsert 若无条件覆盖，会把 IDM 同步写入的部门/岗位抹掉。
+           -- 因此新值为空时保留旧值，非空才更新——两个数据源互不踩踏。
+           orgs = CASE WHEN EXCLUDED.orgs = '[]'::jsonb
+                       THEN user_profile.orgs ELSE EXCLUDED.orgs END,
+           jobs = CASE WHEN EXCLUDED.jobs = '[]'::jsonb
+                       THEN user_profile.jobs ELSE EXCLUDED.jobs END,
+           user_types = CASE WHEN EXCLUDED.user_types = '[]'::jsonb
+                       THEN user_profile.user_types ELSE EXCLUDED.user_types END,
+           raw = CASE WHEN EXCLUDED.raw = '{}'::jsonb
+                       THEN user_profile.raw ELSE EXCLUDED.raw END,
+           updated_at = NOW()`,
       [
         email,
         JSON.stringify(detail.orgs ?? []),
