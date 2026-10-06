@@ -67,6 +67,9 @@ const CONFIG = {
   gatewayUrl: process.env.IAM_GATEWAY_URL || "https://dmp.dongpeng.net/v1/api/iam/general",
   hwId: process.env.X_HW_ID || "",
   hwAppKey: process.env.X_HW_APPKEY || "",
+  // 华为 APIG 简易认证：X-HW-AppKey = HMAC-SHA256(AppSecret, X-HW-ID) hex。
+  // 若拿到的是裸 AppSecret，填 X_HW_APP_SECRET，脚本代算签名。
+  hwAppSecret: process.env.X_HW_APP_SECRET || "",
   // AuthToken = 自签 JWT：{iss: AppID, iat: now, jti: uuid}，HMAC256(AppSecret)。
   // 二选一：直接给现成 token（IDM_AUTH_TOKEN），或给签发材料（IDM_APP_ID/IDM_APP_SECRET）。
   authToken: process.env.IDM_AUTH_TOKEN || "",
@@ -85,7 +88,10 @@ function requireConfig() {
   const missing = [];
   if (!CONFIG.databaseUrl) missing.push("DATABASE_URL");
   if (!CONFIG.hwId) missing.push("X_HW_ID");
-  if (!CONFIG.hwAppKey) missing.push("X_HW_APPKEY");
+  // 网关凭证：现成 X-HW-AppKey 或 裸 AppSecret（代算签名）二选一
+  if (!CONFIG.hwAppKey && !CONFIG.hwAppSecret) {
+    missing.push("X_HW_APPKEY 或 X_HW_APP_SECRET");
+  }
   // AuthToken：现成 token 或 签发材料（AppID+AppSecret）二选一
   if (!CONFIG.authToken && !(CONFIG.appId && CONFIG.appSecret)) {
     missing.push("IDM_AUTH_TOKEN 或 IDM_APP_ID+IDM_APP_SECRET");
@@ -126,6 +132,12 @@ function makeAuthToken() {
 
 // ---------- 接口中台调用 ----------
 
+/** 网关凭证头：优先现成 X_HW_APPKEY；否则按 APIG 简易认证代算 HMAC-SHA256(secret, id) */
+function gatewayAppKeyHeader() {
+  if (CONFIG.hwAppKey) return CONFIG.hwAppKey;
+  return crypto.createHmac("sha256", CONFIG.hwAppSecret).update(CONFIG.hwId).digest("hex");
+}
+
 async function fetchViaGateway(targetUrl, params = {}) {
   const url = new URL(CONFIG.gatewayUrl);
   for (const [k, v] of Object.entries(params)) {
@@ -136,7 +148,7 @@ async function fetchViaGateway(targetUrl, params = {}) {
     headers: {
       "Content-Type": "application/json",
       "X-HW-ID": CONFIG.hwId,
-      "X-HW-AppKey": CONFIG.hwAppKey,
+      "X-HW-AppKey": gatewayAppKeyHeader(),
       url: targetUrl,
       AuthToken: makeAuthToken(),
     },
