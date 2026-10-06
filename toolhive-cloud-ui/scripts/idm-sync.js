@@ -284,6 +284,25 @@ async function sync() {
   }
 }
 
+// ---------- token 自检：打印签出 JWT 的 header/payload（不含签名，可安全贴出） ----------
+
+function showToken() {
+  requireConfig();
+  const header = b64url(JSON.stringify({ alg: "HS256", typ: "JWT" }));
+  const payload = b64url(
+    JSON.stringify({
+      iss: CONFIG.appId,
+      iat: Math.floor(Date.now() / 1000),
+      jti: crypto.randomUUID(),
+    }),
+  );
+  const decode = (s) => Buffer.from(s, "base64").toString();
+  console.log("header :", decode(header));
+  console.log("payload:", decode(payload));
+  console.log("secret 来源:", CONFIG.authToken ? "IDM_AUTH_TOKEN(现成)" : `IDM_APP_SECRET(自签, 长度=${CONFIG.appSecret.length})`);
+  console.log("scheme :", CONFIG.tokenScheme);
+}
+
 // ---------- 入口 ----------
 
 (async () => {
@@ -297,8 +316,10 @@ async function sync() {
       await probe(kind, Number(a1) || 1, Number(a2) || 5);
     } else if (cmd === "sync") {
       await sync();
+    } else if (cmd === "token") {
+      showToken();
     } else {
-      console.error("用法: node scripts/idm-sync.js probe account|org|job [page] [size] | sync");
+      console.error("用法: node scripts/idm-sync.js probe account|org|job [page] [size] | sync | token");
       process.exit(1);
     }
   } catch (error) {
