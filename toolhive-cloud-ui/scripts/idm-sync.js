@@ -303,6 +303,28 @@ function showToken() {
   console.log("scheme :", CONFIG.tokenScheme);
 }
 
+// ---------- direct 模式：绕过接口中台直连 IDM——用于区分"网关剥头"与"凭证/签名错" ----------
+
+async function probeDirect(page = 1, size = 3) {
+  requireConfig();
+  const jwt = makeAuthToken();
+  const url = new URL(APPSYNC_BASE);
+  url.searchParams.set("page", String(page));
+  url.searchParams.set("size", String(size));
+  console.error(`[idm-sync] direct → ${url.toString()}（不经接口中台）`);
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: jwt,
+      AuthToken: jwt,
+    },
+    body: JSON.stringify({}),
+  });
+  const text = await response.text();
+  console.log(`HTTP ${response.status}: ${text}`);
+}
+
 // ---------- 入口 ----------
 
 (async () => {
@@ -318,8 +340,10 @@ function showToken() {
       await sync();
     } else if (cmd === "token") {
       showToken();
+    } else if (cmd === "direct") {
+      await probeDirect(Number(a1) || 1, Number(a2) || 3);
     } else {
-      console.error("用法: node scripts/idm-sync.js probe account|org|job [page] [size] | sync | token");
+      console.error("用法: node scripts/idm-sync.js probe account|org|job [page] [size] | sync | token | direct [page] [size]");
       process.exit(1);
     }
   } catch (error) {
