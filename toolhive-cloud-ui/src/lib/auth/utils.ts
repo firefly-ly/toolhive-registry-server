@@ -11,6 +11,7 @@ import {
   SSO_PROVIDER_ID,
 } from "./constants";
 import { getIdTokenFromDatabase, getTokenFromDatabase } from "./db";
+import { saveUserProfileByEmail } from "./user-profile";
 import type { OidcUserInfo } from "./types";
 
 // ============================================================================
@@ -356,9 +357,16 @@ export async function getUserInfoFromSsoTokens(tokens: {
       return null;
     }
 
+    const email = `${id}@${SSO_EMAIL_DOMAIN}`;
+
+    // 员工部门/岗位快照落库（upsert）：供会话解析时取 claims（SSO token 不透明，
+    // 无法从 DB token 回读，见 user-profile.ts 头注释）。saveUserProfileByEmail
+    // 内部全量 catch——落库失败只记日志，绝不阻断登录。
+    await saveUserProfileByEmail(email, detail);
+
     return {
       id,
-      email: `${id}@${SSO_EMAIL_DOMAIN}`,
+      email,
       name:
         (typeof detail.userName === "string" && detail.userName) ||
         (typeof detail.realName === "string" && detail.realName) ||

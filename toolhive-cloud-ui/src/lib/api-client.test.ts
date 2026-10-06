@@ -24,6 +24,8 @@ vi.mock("@/lib/auth/auth", () => ({
 
 vi.mock("@/lib/auth/constants", () => ({
   OIDC_PROVIDER_ID: "oidc",
+  // b770c5e 起 api-client 双 provider 回退需要 SSO_PROVIDER_ID，mock 需同步提供
+  SSO_PROVIDER_ID: "sso",
 }));
 
 vi.mock("@/lib/auth/db", () => mockIsDatabaseMode);
