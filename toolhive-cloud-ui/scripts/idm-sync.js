@@ -13,7 +13,7 @@
  *     X-HW-ID:      {X_HW_ID}
  *     X-HW-AppKey:  {X_HW_APPKEY}
  *     url:          {真实目标地址，如 https://iam.dongpeng.net/esc-idm/api/v1/public/appSync...}
- *     AuthToken:    {IDM_AUTH_TOKEN}
+ *     AuthToken:    自签 JWT（{iss:AppID, iat:now, jti:uuid}，HMAC256(AppSecret)）
  *   params: page / size / time（增量时间戳，秒）
  *
  * 用法：
@@ -30,6 +30,7 @@
 
 const fs = require("fs");
 const path = require("path");
+const crypto = require("crypto");
 
 // ---------- 配置加载（.env.local + 进程环境变量，后者优先） ----------
 
@@ -66,7 +67,11 @@ const CONFIG = {
   gatewayUrl: process.env.IAM_GATEWAY_URL || "https://dmp.dongpeng.net/v1/api/iam/general",
   hwId: process.env.X_HW_ID || "",
   hwAppKey: process.env.X_HW_APPKEY || "",
+  // AuthToken = 自签 JWT：{iss: AppID, iat: now, jti: uuid}，HMAC256(AppSecret)。
+  // 二选一：直接给现成 token（IDM_AUTH_TOKEN），或给签发材料（IDM_APP_ID/IDM_APP_SECRET）。
   authToken: process.env.IDM_AUTH_TOKEN || "",
+  appId: process.env.IDM_APP_ID || "",
+  appSecret: process.env.IDM_APP_SECRET || "",
   // 真实目标地址（经接口中台转发的 url header）。文档示例是 iamtest，
   // 生产按实际替换；三个 list 各自一个地址，缺省按 appSync 前缀拼。
   accountUrl: process.env.IDM_ACCOUNT_URL || "",
@@ -81,11 +86,42 @@ function requireConfig() {
   if (!CONFIG.databaseUrl) missing.push("DATABASE_URL");
   if (!CONFIG.hwId) missing.push("X_HW_ID");
   if (!CONFIG.hwAppKey) missing.push("X_HW_APPKEY");
-  if (!CONFIG.authToken) missing.push("IDM_AUTH_TOKEN");
+  // AuthToken：现成 token 或 签发材料（AppID+AppSecret）二选一
+  if (!CONFIG.authToken && !(CONFIG.appId && CONFIG.appSecret)) {
+    missing.push("IDM_AUTH_TOKEN 或 IDM_APP_ID+IDM_APP_SECRET");
+  }
   if (missing.length) {
     console.error(`[idm-sync] 缺少配置: ${missing.join(", ")}（.env.local 或环境变量）`);
     process.exit(1);
   }
+}
+
+// ---------- AuthToken 生成（对齐官方 Java 示例的 JWT 结构） ----------
+// Java: JWT.create().withIssuer(AppID).withIssuedAt(now).withJWTId(uuid)
+//        .sign(Algorithm.HMAC256(AppSecret)) → "Bearer " + token
+
+function b64url(input) {
+  return Buffer.from(input)
+    .toString("base64")
+    .replace(/=+$/, "")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_");
+}
+
+function makeAuthToken() {
+  if (CONFIG.authToken) return CONFIG.authToken;
+  const header = b64url(JSON.stringify({ alg: "HS256", typ: "JWT" }));
+  const payload = b64url(
+    JSON.stringify({
+      iss: CONFIG.appId,
+      iat: Math.floor(Date.now() / 1000),
+      jti: crypto.randomUUID(),
+    }),
+  );
+  const signature = b64url(
+    crypto.createHmac("sha256", CONFIG.appSecret).update(`${header}.${payload}`).digest(),
+  );
+  return `Bearer ${header}.${payload}.${signature}`;
 }
 
 // ---------- 接口中台调用 ----------
@@ -102,7 +138,7 @@ async function fetchViaGateway(targetUrl, params = {}) {
       "X-HW-ID": CONFIG.hwId,
       "X-HW-AppKey": CONFIG.hwAppKey,
       url: targetUrl,
-      AuthToken: CONFIG.authToken,
+      AuthToken: makeAuthToken(),
     },
     body: JSON.stringify({}),
   });
