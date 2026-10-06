@@ -75,8 +75,11 @@ const CONFIG = {
   authToken: process.env.IDM_AUTH_TOKEN || "",
   appId: process.env.IDM_APP_ID || "",
   appSecret: process.env.IDM_APP_SECRET || "",
-  // 真实目标地址（经接口中台转发的 url header）。文档示例是 iamtest，
-  // 生产按实际替换；三个 list 各自一个地址，缺省按 appSync 前缀拼。
+  // JWT 前缀形态：bearer（默认，"Bearer x.y.z"）或 raw（裸 token）——文档对
+  // header 名（AuthToken vs Authorization）与前缀的描述存在歧义，两头都发。
+  tokenScheme: process.env.IDM_TOKEN_SCHEME || "bearer",
+  // 真实目标地址（经接口中台转发的 url header）。生产实锤：单端点裸 appSync，
+  // 三类数据共用；IDM 按 body/params 区分类型。
   accountUrl: process.env.IDM_ACCOUNT_URL || "",
   orgUrl: process.env.IDM_ORG_URL || "",
   jobUrl: process.env.IDM_JOB_URL || "",
@@ -115,7 +118,6 @@ function b64url(input) {
 }
 
 function makeAuthToken() {
-  if (CONFIG.authToken) return CONFIG.authToken;
   const header = b64url(JSON.stringify({ alg: "HS256", typ: "JWT" }));
   const payload = b64url(
     JSON.stringify({
@@ -127,7 +129,11 @@ function makeAuthToken() {
   const signature = b64url(
     crypto.createHmac("sha256", CONFIG.appSecret).update(`${header}.${payload}`).digest(),
   );
-  return `Bearer ${header}.${payload}.${signature}`;
+  const token = `${header}.${payload}.${signature}`;
+  // IDM_AUTH_TOKEN 显式提供时按原文使用；否则自签后按 tokenScheme 加前缀
+  const raw = CONFIG.authToken || token;
+  if (CONFIG.tokenScheme === "raw") return raw.replace(/^Bearer\s+/i, "");
+  return /^Bearer\s/i.test(raw) ? raw : `Bearer ${raw}`;
 }
 
 // ---------- 接口中台调用 ----------
@@ -143,6 +149,8 @@ async function fetchViaGateway(targetUrl, params = {}) {
   for (const [k, v] of Object.entries(params)) {
     if (v !== undefined && v !== null) url.searchParams.set(k, String(v));
   }
+  // JWT 同时放 AuthToken 和 Authorization（文档两处描述不一致，两头都发）
+  const jwt = makeAuthToken();
   const response = await fetch(url, {
     method: "POST",
     headers: {
@@ -150,7 +158,8 @@ async function fetchViaGateway(targetUrl, params = {}) {
       "X-HW-ID": CONFIG.hwId,
       "X-HW-AppKey": gatewayAppKeyHeader(),
       url: targetUrl,
-      AuthToken: makeAuthToken(),
+      AuthToken: jwt,
+      Authorization: jwt,
     },
     body: JSON.stringify({}),
   });
@@ -170,9 +179,9 @@ async function fetchViaGateway(targetUrl, params = {}) {
 async function probe(kind, page = 1, size = 5) {
   requireConfig();
   const targets = {
-    account: CONFIG.accountUrl || `${APPSYNC_BASE}/account/list`,
-    org: CONFIG.orgUrl || `${APPSYNC_BASE}/org/list`,
-    job: CONFIG.jobUrl || `${APPSYNC_BASE}/job/list`,
+    account: CONFIG.accountUrl || APPSYNC_BASE,
+    org: CONFIG.orgUrl || APPSYNC_BASE,
+    job: CONFIG.jobUrl || APPSYNC_BASE,
   };
   const targetUrl = targets[kind];
   if (!targetUrl) {
@@ -235,17 +244,17 @@ async function sync() {
   await client.connect();
   try {
     console.error("[idm-sync] 拉取 org...");
-    const orgs = await fetchAllPages(CONFIG.orgUrl || `${APPSYNC_BASE}/org/list`, mapOrg);
+    const orgs = await fetchAllPages(CONFIG.orgUrl || APPSYNC_BASE, mapOrg);
     const orgNameById = new Map(orgs.map((o) => [o.orgId, o.orgName]));
     console.error(`[idm-sync] org 共 ${orgs.length} 条`);
 
     console.error("[idm-sync] 拉取 job...");
-    const jobs = await fetchAllPages(CONFIG.jobUrl || `${APPSYNC_BASE}/job/list`, mapJob);
+    const jobs = await fetchAllPages(CONFIG.jobUrl || APPSYNC_BASE, mapJob);
     const jobNameById = new Map(jobs.map((j) => [j.jobId, j.jobName]));
     console.error(`[idm-sync] job 共 ${jobs.length} 条`);
 
     console.error("[idm-sync] 拉取 account...");
-    const accounts = await fetchAllPages(CONFIG.accountUrl || `${APPSYNC_BASE}/account/list`, mapAccount);
+    const accounts = await fetchAllPages(CONFIG.accountUrl || APPSYNC_BASE, mapAccount);
     console.error(`[idm-sync] account 共 ${accounts.length} 条`);
 
     let upserted = 0;
