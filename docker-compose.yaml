@@ -63,7 +63,9 @@ services:
     ports:
       # 2026-09-24 端口对调：宿主 3000 -> 容器 8080（容器内部不变）；
       # 宿主 8080 让位给 Cloud UI 前端（公司域名反代转发目标）
-      - "3000:8080"
+      # 2026-10-07 收口：绑定 127.0.0.1——registry 仅本机可达（backend/前端均走
+      # 127.0.0.1 调用），内网其他机器不再能直连 anonymous 模式的 registry API
+      - "127.0.0.1:3000:8080"
     volumes:
       # Mount entire examples directory - all configs and registry files available
       - ./examples:/examples:ro
