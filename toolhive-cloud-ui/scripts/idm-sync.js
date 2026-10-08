@@ -109,31 +109,17 @@ function requireConfig() {
 // Java: JWT.create().withIssuer(AppID).withIssuedAt(now).withJWTId(uuid)
 //        .sign(Algorithm.HMAC256(AppSecret)) → "Bearer " + token
 
-function b64url(input) {
-  return Buffer.from(input)
-    .toString("base64")
-    .replace(/=+$/, "")
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_");
-}
+// JWT 签发逻辑已抽至 scripts/idm-jwt.js（纯参数化 + now 可注入，可单测），语义零改动。
+// b64url 仍被 showToken（token 自检打印）使用，一并从该模块引入。
+const { makeAuthToken: buildAuthToken, b64url } = require("./idm-jwt");
 
 function makeAuthToken() {
-  const header = b64url(JSON.stringify({ alg: "HS256", typ: "JWT" }));
-  const payload = b64url(
-    JSON.stringify({
-      iss: CONFIG.appId,
-      iat: Math.floor(Date.now() / 1000),
-      jti: crypto.randomUUID(),
-    }),
-  );
-  const signature = b64url(
-    crypto.createHmac("sha256", CONFIG.appSecret).update(`${header}.${payload}`).digest(),
-  );
-  const token = `${header}.${payload}.${signature}`;
-  // IDM_AUTH_TOKEN 显式提供时按原文使用；否则自签后按 tokenScheme 加前缀
-  const raw = CONFIG.authToken || token;
-  if (CONFIG.tokenScheme === "raw") return raw.replace(/^Bearer\s+/i, "");
-  return /^Bearer\s/i.test(raw) ? raw : `Bearer ${raw}`;
+  return buildAuthToken({
+    appId: CONFIG.appId,
+    appSecret: CONFIG.appSecret,
+    authToken: CONFIG.authToken,
+    tokenScheme: CONFIG.tokenScheme,
+  });
 }
 
 // ---------- 接口中台调用 ----------
