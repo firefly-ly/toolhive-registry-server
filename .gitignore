@@ -51,3 +51,4 @@ pgpass.local
 # Kind cluster kubeconfig
 kconfig.yaml
 .worktrees/
+toolhive-cloud-ui/ui-dev.log
