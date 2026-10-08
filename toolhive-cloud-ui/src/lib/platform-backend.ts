@@ -175,6 +175,7 @@ export async function approveSubmission(
     transport?: string;
     override_scan?: boolean;
     confirm_prompt_review?: boolean;
+    exempt_network?: boolean;
   },
 ): Promise<{ id: string; status: string }> {
   return request<{ id: string; status: string }>(`/submissions/${id}/approve`, {
@@ -687,12 +688,16 @@ export async function createSourceSubmission(p: {
   version?: string;
   payloadRef?: string;
   actor: string;
+  dataSource?: { type: string; targets: string[]; note: string };
 }): Promise<{ id: string }> {
   const qs = new URLSearchParams({
     name: p.name,
     display_name: p.displayName,
     ...(p.version ? { version: p.version } : {}),
     ...(p.payloadRef ? { payload_ref: p.payloadRef } : {}),
+    ...(p.dataSource
+      ? { data_source: JSON.stringify(p.dataSource) }
+      : {}),
   });
   const created = await fetch(`${BASE}/submissions/source?${qs}`, {
     method: "POST",

@@ -73,6 +73,23 @@ async function fetchFileFromLocation(
   throw new Error("不支持的文件位置格式，请输入 http/https URL 或本地绝对路径");
 }
 
+// 数据源声明（两段式豁免第 1 段，可选）：从表单提取并规整；type 缺失/none 返回 null。
+// 声明只是提交者意图，审批者勾选豁免（exempt_network）才是授权。
+function dataSourceFromForm(
+  fd: FormData,
+): { type: string; targets: string[]; note: string } | null {
+  const type = String(fd.get("data_source_type") ?? "").trim();
+  if (!type || type === "none") return null;
+  return {
+    type,
+    targets: String(fd.get("data_source_targets") ?? "")
+      .split(/[,;\n]/)
+      .map((s) => s.trim())
+      .filter(Boolean),
+    note: String(fd.get("data_source_note") ?? "").trim(),
+  };
+}
+
 export async function createSubmissionAction(formData: FormData): Promise<{
   ok: boolean;
   error?: string;
@@ -92,6 +109,7 @@ export async function createSubmissionAction(formData: FormData): Promise<{
   const image_ref = String(formData.get("image_ref") ?? "").trim();
   const transport = String(formData.get("transport") ?? "").trim();
   const meta: Record<string, unknown> = {};
+  const dataSource = dataSourceFromForm(formData);
   if (name) meta.name = name;
   if (description) meta.description = description;
   if (group_key) meta.group_key = group_key;
@@ -147,6 +165,7 @@ export async function createSubmissionAction(formData: FormData): Promise<{
         version: version || undefined,
         payloadRef: payload_ref || undefined,
         actor,
+        dataSource: dataSource ?? undefined,
       });
       // 私密 .env（可选）：单独上传，值入 ToolHive 加密凭据库，平台不落明文
       const envFile = formData.get("env_file") as File | null;
@@ -203,6 +222,8 @@ export async function createSubmissionAction(formData: FormData): Promise<{
     }
   }
   try {
+    // 数据源声明随提交入库（仅 MCP 表单会填；skill 提交 dataSource 恒为 null）
+    if (type === "mcp" && dataSource) meta.data_source = dataSource;
     await createSubmission({
       user_id: actor,
       type,
@@ -251,6 +272,9 @@ export async function approveSubmissionAction(formData: FormData) {
   const override_scan = String(formData.get("override_scan") ?? "") === "true";
   const confirm_prompt_review =
     String(formData.get("confirm_prompt_review") ?? "") === "true";
+  // 两段式豁免第 2 段：审批授权解除网络隔离（勾选动作进审计轨迹）
+  const exempt_network =
+    String(formData.get("exempt_network") ?? "") === "true";
   if (!id) return;
   await approveSubmission(id, "admin", {
     endpoint: endpoint || undefined,
@@ -258,6 +282,7 @@ export async function approveSubmissionAction(formData: FormData) {
     transport: transport || undefined,
     override_scan: override_scan || undefined,
     confirm_prompt_review: confirm_prompt_review || undefined,
+    exempt_network: exempt_network || undefined,
   });
   revalidatePath("/submissions");
   revalidatePath("/admin");

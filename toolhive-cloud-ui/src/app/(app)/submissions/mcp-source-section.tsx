@@ -46,6 +46,12 @@ interface McpSourceSectionProps {
   onSourceFile: (f: File | null) => void;
   envFile: File | null;
   onEnvFile: (f: File | null) => void;
+  dataSourceType: string;
+  onDataSourceTypeChange: (v: string) => void;
+  dataSourceTargets: string;
+  onDataSourceTargetsChange: (v: string) => void;
+  dataSourceNote: string;
+  onDataSourceNoteChange: (v: string) => void;
 }
 
 /** MCP 提交的来源选择区：ghcr 地址 / 镜像 tar 包 / 源码包（自动构建）+ 传输协议。 */
@@ -65,6 +71,12 @@ export function McpSourceSection({
   onSourceFile,
   envFile,
   onEnvFile,
+  dataSourceType,
+  onDataSourceTypeChange,
+  dataSourceTargets,
+  onDataSourceTargetsChange,
+  dataSourceNote,
+  onDataSourceNoteChange,
 }: McpSourceSectionProps) {
   return (
     <div className="space-y-4">
@@ -178,6 +190,64 @@ export function McpSourceSection({
           </div>
         </TabsContent>
       </Tabs>
+
+      <div className="space-y-2">
+        <label htmlFor="data_source_type" className="block text-sm font-medium">
+          数据源（声明）
+        </label>
+        <Select
+          name="data_source_type"
+          value={dataSourceType}
+          onValueChange={onDataSourceTypeChange}
+        >
+          <SelectTrigger id="data_source_type" className={selectTriggerClass}>
+            <SelectValue>
+              {dataSourceType === "database"
+                ? "数据库直连"
+                : dataSourceType === "http_api"
+                  ? "HTTP API"
+                  : "无（不访问外部数据源）"}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent
+            position="popper"
+            className="w-[var(--radix-select-trigger-width)]"
+          >
+            <SelectItem value="none">无（不访问外部数据源）</SelectItem>
+            <SelectItem value="http_api">HTTP API</SelectItem>
+            <SelectItem value="database">数据库直连</SelectItem>
+          </SelectContent>
+        </Select>
+        {dataSourceType !== "none" && (
+          <>
+            <input
+              id="data_source_targets"
+              type="text"
+              autoComplete="off"
+              value={dataSourceTargets}
+              onChange={(e) => onDataSourceTargetsChange(e.target.value)}
+              placeholder="数据源地址，host:port，多个用逗号分隔（如 10.1.2.3:5432）"
+              className={inputClass}
+            />
+            <input
+              id="data_source_note"
+              type="text"
+              autoComplete="off"
+              value={dataSourceNote}
+              onChange={(e) => onDataSourceNoteChange(e.target.value)}
+              placeholder="数据源用途（一句话，供审批人审核）"
+              className={inputClass}
+            />
+            <HintIcon text="提交容器默认运行在隔离网络内：HTTP(S) 经代理出网，数据库直连不可达。此声明供审批人审核——只有审批时勾选「解除网络隔离」，部署后容器才能直连数据源；公网目标地址会被重点审查。" />
+            {dataSourceType === "database" && (
+              <p className="text-xs text-amber-700">
+                数据库直连在隔离网内不可达：需审批时解除网络隔离，或改用平台中转
+                / 内网数据源。请如实填写目标地址。
+              </p>
+            )}
+          </>
+        )}
+      </div>
 
       <div className="space-y-2">
         <label htmlFor="transport" className="block text-sm font-medium">

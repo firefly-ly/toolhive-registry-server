@@ -27,6 +27,29 @@ function parseMeta(meta?: string): Record<string, unknown> {
   }
 }
 
+// 公网目标判定：私网/回环/本地域名返回 false，公网 IPv4 与域名返回 true（审批页标红）。
+// 域名无法静态判定解析范围，保守按公网处理，交由审批人人工确认。
+function isPublicTarget(t: string): boolean {
+  const host = t.replace(/:\d+$/, "").trim().toLowerCase();
+  if (!host) return false;
+  if (
+    host === "localhost" ||
+    host.endsWith(".local") ||
+    host.endsWith(".internal")
+  ) {
+    return false;
+  }
+  if (/^127\./.test(host)) return false;
+  if (/^10\./.test(host)) return false;
+  if (/^192\.168\./.test(host)) return false;
+  const m = host.match(/^172\.(\d+)\./);
+  if (m) {
+    const n = Number(m[1]);
+    return !(n >= 16 && n <= 31);
+  }
+  return true;
+}
+
 type ScanStatus =
   | "clean"
   | "warn"
@@ -163,6 +186,15 @@ export function ApproveDialog({ submission }: { submission: Submission }) {
   const needPromptConfirm = promptScan?.status === "alert";
   const [confirmScan, setConfirmScan] = useState(false);
   const [confirmPrompt, setConfirmPrompt] = useState(false);
+  // 两段式豁免：数据源声明（提交者填）展示 + 审批授权勾选（admin）
+  const dataSource = useMemo(() => {
+    const d = meta.data_source;
+    return d && typeof d === "object"
+      ? (d as { type?: string; targets?: string[]; note?: string })
+      : undefined;
+  }, [meta]);
+  const hasPublicTarget = (dataSource?.targets ?? []).some(isPublicTarget);
+  const [confirmExempt, setConfirmExempt] = useState(false);
 
   // 扫描进行中自动轮询：每 5s 刷新一次服务端数据（router.refresh 重新拉取提交列表，
   // 弹窗收到的 props 随之更新），扫描完成后状态自动由「扫描中」变为实际结果。
@@ -178,6 +210,7 @@ export function ApproveDialog({ submission }: { submission: Submission }) {
   const resetChecks = () => {
     setConfirmScan(false);
     setConfirmPrompt(false);
+    setConfirmExempt(false);
   };
 
   const title =
@@ -214,6 +247,7 @@ export function ApproveDialog({ submission }: { submission: Submission }) {
     fd.set("id", id);
     if (confirmScan) fd.set("override_scan", "true");
     if (confirmPrompt) fd.set("confirm_prompt_review", "true");
+    if (confirmExempt) fd.set("exempt_network", "true");
     try {
       await approveSubmissionAction(fd);
       setOpen(false);
@@ -465,6 +499,59 @@ export function ApproveDialog({ submission }: { submission: Submission }) {
             )}
           </div>
 
+          {/* 数据源声明（两段式豁免第 1 段）：提交者声明意图，公网目标标红供审批重点审查 */}
+          {isMcp && (
+            <div className="space-y-2 rounded-lg border bg-muted/30 p-3">
+              <p className="text-sm font-medium">数据源声明</p>
+              {!dataSource || dataSource.type === "none" ? (
+                <p className="text-xs text-muted-foreground">
+                  未声明外部数据源。若实际需要连库，应要求提交者重新提交补充声明。
+                </p>
+              ) : (
+                <div className="space-y-1.5 text-sm">
+                  <p>
+                    类型：
+                    {dataSource.type === "database"
+                      ? "数据库直连（隔离网内不可达，需解除隔离或改用中转）"
+                      : "HTTP API"}
+                  </p>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span>目标：</span>
+                    {(dataSource.targets ?? []).length ? (
+                      (dataSource.targets ?? []).map((t) => (
+                        <span
+                          key={t}
+                          className={cn(
+                            "rounded px-1.5 py-0.5 font-mono text-xs",
+                            isPublicTarget(t)
+                              ? "bg-destructive/15 text-destructive"
+                              : "bg-muted",
+                          )}
+                        >
+                          {t}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="text-xs text-muted-foreground">
+                        未填写
+                      </span>
+                    )}
+                  </div>
+                  {dataSource.note && (
+                    <p className="text-xs text-muted-foreground">
+                      用途：{dataSource.note}
+                    </p>
+                  )}
+                  {hasPublicTarget && (
+                    <p className="text-xs font-medium text-destructive">
+                      存在公网目标地址：解除隔离后容器可直连公网，与数据不出内网红线冲突，请谨慎确认。
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* 私密配置 .env：只展示键名清单，值在加密凭据库中，任何角色不可见 */}
           {isMcp &&
             Array.isArray(meta.env_keys) &&
@@ -501,6 +588,22 @@ export function ApproveDialog({ submission }: { submission: Submission }) {
                 : "未填写"}
             </p>
           </div>
+
+          {/* 两段式豁免第 2 段：审批授权解除网络隔离（仅 MCP，勾选进审计轨迹） */}
+          {isMcp && (
+            <label className="flex items-start gap-2 rounded-lg border border-amber-500/50 bg-amber-500/5 p-3 text-sm">
+              <input
+                type="checkbox"
+                className="mt-1"
+                checked={confirmExempt}
+                onChange={(e) => setConfirmExempt(e.target.checked)}
+              />
+              <span>
+                批准并解除该 MCP
+                的网络隔离（部署时容器退出隔离网，可主动访问外部数据源）。请确认上方数据源声明与实际用途一致，公网目标需符合数据不出内网要求（此操作将记入审计轨迹）。
+              </span>
+            </label>
+          )}
 
           <div className="border-t pt-3">
             <div

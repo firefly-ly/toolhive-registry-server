@@ -46,6 +46,10 @@ export function SubmissionForm({ action }: SubmissionFormProps) {
   }, [error]);
   const [cls, setCls] = useState<RegistryClassify | null>(null);
   const [autoMirror, setAutoMirror] = useState(false);
+  // 数据源声明（两段式豁免第 1 段）：提交者声明意图，审批者决定是否授权解除隔离
+  const [dataSourceType, setDataSourceType] = useState("none");
+  const [dataSourceTargets, setDataSourceTargets] = useState("");
+  const [dataSourceNote, setDataSourceNote] = useState("");
   const [pending, startTransition] = useTransition();
 
   const isMcp = type === "mcp";
@@ -107,6 +111,12 @@ export function SubmissionForm({ action }: SubmissionFormProps) {
       try {
         if (isMcp) {
           fd.set("mcp_source", mcpSource);
+          // 数据源声明：仅在有声明时传（none 不传，后端视为未声明）
+          if (dataSourceType !== "none") {
+            fd.set("data_source_type", dataSourceType);
+            fd.set("data_source_targets", dataSourceTargets);
+            fd.set("data_source_note", dataSourceNote);
+          }
           if (mcpSource === "tar") {
             if (!tarFile) {
               setError("请选择要上传的镜像 tar 包（来自 docker save）");
@@ -323,6 +333,12 @@ export function SubmissionForm({ action }: SubmissionFormProps) {
           onSourceFile={setSourceFile}
           envFile={envFile}
           onEnvFile={setEnvFile}
+          dataSourceType={dataSourceType}
+          onDataSourceTypeChange={setDataSourceType}
+          dataSourceTargets={dataSourceTargets}
+          onDataSourceTargetsChange={setDataSourceTargets}
+          dataSourceNote={dataSourceNote}
+          onDataSourceNoteChange={setDataSourceNote}
         />
       ) : (
         <SkillSourceSection
