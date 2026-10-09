@@ -8,11 +8,9 @@ import { authClient } from "@/lib/auth/auth-client";
 export function SignInButton({
   providerId,
   label = "登录",
-  variant = "default",
 }: {
   providerId: string;
   label?: string;
-  variant?: "default" | "outline";
 }) {
   const [isLoading, setIsLoading] = useState(false);
 
@@ -54,12 +52,16 @@ export function SignInButton({
   return (
     <Button
       onClick={handleOIDCSignIn}
-      variant={variant}
+      variant="action"
       className="w-full h-9 gap-2 cursor-pointer"
       size="default"
       disabled={isLoading}
     >
-      {isLoading ? <Loader2 className="size-4 animate-spin" /> : label}
+      {isLoading ? (
+        <Loader2 className="text-muted-foreground size-4 animate-spin" />
+      ) : (
+        label
+      )}
     </Button>
   );
 }
