@@ -1,39 +1,31 @@
-import { NavLink } from "@/components/nav-link";
+import { MobileNav } from "@/components/mobile-nav";
 import { NavbarLogo } from "@/components/navbar-logo";
 import { UserMenu } from "@/components/user-menu";
 // 直连组件文件而非 barrel：避免把整个 assistant 特性图（聊天栈）拖进主 bundle
 import { AssistantTrigger } from "@/features/assistant/components/trigger";
-import { getAuthContext } from "@/lib/auth/context";
+import type { AuthUser } from "@/lib/auth/context";
 
-const USER_NAV_ITEMS = [
-  { href: "/catalog", label: "MCP" },
-  { href: "/skills", label: "技能" },
-  { href: "/submissions", label: "提交" },
-  { href: "/favorites", label: "收藏" },
-  { href: "/stats", label: "统计" },
-];
+interface NavbarProps {
+  user?: AuthUser;
+  isAdmin: boolean;
+}
 
-// 管理者专属入口：审核队列 + 已发布条目的生命周期管理
-const ADMIN_NAV_ITEMS = [{ href: "/admin", label: "管理" }];
-
-export async function Navbar() {
-  const { user, isAdmin } = await getAuthContext();
-
-  const navItems = isAdmin
-    ? [...USER_NAV_ITEMS, ...ADMIN_NAV_ITEMS]
-    : USER_NAV_ITEMS;
-
+/**
+ * 深色顶栏：只承载用户区（菜单/邮箱/管理员徽章）与 AI 助手入口。
+ * 主导航已迁往桌面侧栏（AppSidebar）/ 移动抽屉（MobileNav）；
+ * 桌面端品牌在侧栏，此处 logo 仅移动端显示（白字标配深色底）。
+ * 面包屑在内容区顶部（NavBreadcrumb）——深色底与纸面色令牌不兼容。
+ */
+export function Navbar({ user, isAdmin }: NavbarProps) {
   return (
-    <header className="w-full border-b border-nav-border bg-nav-background text-white flex items-center justify-between pl-6 pr-4 h-16">
-      <div className="flex items-center gap-8">
-        <NavbarLogo />
-        <nav className="flex items-center gap-1">
-          {navItems.map((item) => (
-            <NavLink key={item.href} href={item.href} label={item.label} />
-          ))}
-        </nav>
+    <header className="flex h-16 w-full shrink-0 items-center justify-between border-b border-nav-border bg-nav-background pl-4 pr-4 text-white md:pl-6">
+      <div className="flex items-center gap-3">
+        <MobileNav isAdmin={isAdmin} />
+        <div className="md:hidden">
+          <NavbarLogo />
+        </div>
       </div>
-      <div className="flex shrink-0 items-center h-full">
+      <div className="flex h-full shrink-0 items-center">
         {user?.name && <UserMenu userName={user.name} />}
         {user?.email && (
           <span className="ml-2 text-xs text-white/60">{user.email}</span>
