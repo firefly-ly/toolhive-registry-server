@@ -448,7 +448,7 @@ export function ApproveDialog({ submission }: { submission: Submission }) {
                               "rounded px-1.5 py-0.5 font-semibold",
                               h.severity === "alert"
                                 ? "bg-destructive/15 text-destructive"
-                                : "bg-amber-500/15 text-amber-600",
+                                : "bg-warning/15 text-warning",
                             )}
                           >
                             {h.severity}
@@ -599,7 +599,7 @@ export function ApproveDialog({ submission }: { submission: Submission }) {
 
           {/* 两段式豁免第 2 段：审批授权解除网络隔离（仅 MCP，勾选进审计轨迹） */}
           {isMcp && (
-            <label className="flex items-start gap-2 rounded-lg border border-amber-500/50 bg-amber-500/5 p-3 text-sm">
+            <label className="flex items-start gap-2 rounded-lg border border-warning/50 bg-warning/5 p-3 text-sm">
               <input
                 type="checkbox"
                 className="mt-1"

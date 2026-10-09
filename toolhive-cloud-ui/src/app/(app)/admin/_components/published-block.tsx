@@ -74,7 +74,7 @@ export function PublishedBlock({
       <CardHeader className="flex flex-col gap-3 pb-3 sm:flex-row sm:items-center sm:justify-between">
         <CardTitle className="text-xl">已发布（{count}）</CardTitle>
         <div className="inline-flex items-center gap-2">
-          {hasBusy && <span className="text-xs text-amber-600">部署中…</span>}
+          {hasBusy && <span className="text-xs text-warning">部署中…</span>}
           <div className="inline-flex rounded-lg border bg-muted p-1">
             {FILTERS.map(({ key, label }) => (
               <button

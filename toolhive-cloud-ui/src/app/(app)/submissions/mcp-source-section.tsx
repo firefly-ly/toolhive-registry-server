@@ -116,10 +116,10 @@ export function McpSourceSection({
             <p
               className={`text-xs ${
                 cls.tier === 1
-                  ? "text-red-600"
+                  ? "text-destructive"
                   : cls.tier === 2
-                    ? "text-amber-700"
-                    : "text-red-600"
+                    ? "text-warning"
+                    : "text-destructive"
               }`}
             >
               {cls.tier === 1
@@ -240,7 +240,7 @@ export function McpSourceSection({
             />
             <HintIcon text="提交容器默认运行在隔离网络内：HTTP(S) 经代理出网，数据库直连不可达。此声明供审批人审核——只有审批时勾选「解除网络隔离」，部署后容器才能直连数据源；公网目标地址会被重点审查。" />
             {dataSourceType === "database" && (
-              <p className="text-xs text-amber-700">
+              <p className="text-xs text-warning">
                 数据库直连在隔离网内不可达：需审批时解除网络隔离，或改用平台中转
                 / 内网数据源。请如实填写目标地址。
               </p>

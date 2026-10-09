@@ -53,7 +53,7 @@ function CodeBlock({ code }: { code: string }) {
         aria-label="复制配置"
       >
         {copied ? (
-          <Check className="size-4 text-green-600" />
+          <Check className="size-4 text-success" />
         ) : (
           <Copy className="size-4" />
         )}

@@ -180,7 +180,7 @@ export function McpToolsModal({
                 >
                   <div className="min-w-0 flex-1">
                     <div className="mb-2 flex items-center gap-2">
-                      <Wrench className="size-4 shrink-0 text-blue-500" />
+                      <Wrench className="size-4 shrink-0 text-info" />
                       <h4 className="text-sm font-medium">{tool.name}</h4>
                     </div>
                     {tool.description ? (

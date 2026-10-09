@@ -144,8 +144,8 @@ export function FavsBlock({
                         className={cn(
                           "inline-flex items-center rounded-full px-2 py-0.5 text-sm font-medium",
                           r.item_type === "mcp"
-                            ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
-                            : "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300",
+                            ? "bg-info/15 text-info"
+                            : "bg-success/15 text-success",
                         )}
                       >
                         {r.item_type === "mcp" ? "MCP" : "Skill"}
@@ -173,7 +173,7 @@ export function FavsBlock({
                             size="sm"
                             className="gap-1 text-base"
                           >
-                            <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                            <Star className="h-4 w-4 fill-star text-star" />
                             取消收藏
                           </Button>
                         </form>

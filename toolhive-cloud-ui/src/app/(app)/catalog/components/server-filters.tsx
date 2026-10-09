@@ -65,10 +65,7 @@ export function ServerFilters({
       {/* 注册表多于一个时才显示切换器：单数据源时选择器没有可切换的项，徒占视觉空间 */}
       {registries.length > 1 && (
         <Select value={selectedRegistry} onValueChange={onRegistryChange}>
-          <SelectTrigger
-            className="w-38 h-9 bg-white dark:bg-card"
-            aria-label="选择注册表"
-          >
+          <SelectTrigger className="w-38 h-9 bg-card" aria-label="选择注册表">
             <SelectValue placeholder="选择注册表">
               {selectedRegistry || undefined}
             </SelectValue>
@@ -95,7 +92,7 @@ export function ServerFilters({
           placeholder="搜索 MCP…"
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
-          className="h-9 px-9 bg-white dark:bg-card"
+          className="h-9 px-9 bg-card"
         />
         {searchQuery && (
           <Button

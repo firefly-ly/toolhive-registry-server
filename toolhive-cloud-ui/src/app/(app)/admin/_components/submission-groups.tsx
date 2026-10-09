@@ -157,7 +157,7 @@ export function GroupRow({
               {!isOnShelf(activeItem) && (
                 <Badge
                   variant="outline"
-                  className="gap-1 border-amber-500/50 text-amber-600 text-xs"
+                  className="gap-1 border-warning/50 text-warning text-xs"
                 >
                   未上线
                 </Badge>
@@ -229,7 +229,7 @@ export function VersionRow({ s }: { s: Submission }) {
           {!isOnShelf(s) && (
             <Badge
               variant="outline"
-              className="border-amber-500/50 text-amber-600 text-xs"
+              className="border-warning/50 text-warning text-xs"
             >
               未上线
             </Badge>
@@ -299,7 +299,7 @@ export function VersionActions({ s }: { s: Submission }) {
           </form>
         )}
       {isMcp && (deploy === "unborn" || deploy === "failed") && !onShelf && (
-        <span className="inline-flex items-center gap-1 text-xs text-amber-600">
+        <span className="inline-flex items-center gap-1 text-xs text-warning">
           待配置可见范围后
         </span>
       )}

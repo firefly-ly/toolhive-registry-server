@@ -30,9 +30,8 @@ export const statusLabel: Record<string, string> = {
 };
 
 export const statusBadgeClass: Record<string, string> = {
-  open: "bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-400",
-  answered:
-    "bg-emerald-100 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-400",
+  open: "bg-warning/15 text-warning",
+  answered: "bg-success/15 text-success",
   closed: "bg-muted text-muted-foreground",
 };
 

@@ -59,7 +59,7 @@ export function VersionSwitcher({
           value={currentId}
           onChange={onChange}
           onClick={onClick}
-          className="cursor-pointer appearance-none rounded-md border border-slate-200 bg-background py-1 pl-2.5 pr-7 text-base font-medium outline-none hover:border-slate-400 dark:border-slate-700"
+          className="cursor-pointer appearance-none rounded-md border border-input bg-background py-1 pl-2.5 pr-7 text-base font-medium outline-none hover:border-muted-foreground/50"
         >
           {options.map((o) => (
             <option key={o.id} value={o.id}>
@@ -72,14 +72,14 @@ export function VersionSwitcher({
     );
   }
   return (
-    <div className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-card px-2.5 py-1.5 dark:border-slate-700">
+    <div className="inline-flex items-center gap-2 rounded-lg border border-input bg-card px-2.5 py-1.5">
       <span className="text-xs text-muted-foreground">版本</span>
       <div className="relative">
         <select
           aria-label="选择版本"
           value={currentId}
           onChange={onChange}
-          className="cursor-pointer appearance-none rounded-md border border-slate-200 bg-transparent py-1 pl-2 pr-6 text-sm font-medium outline-none dark:border-slate-700"
+          className="cursor-pointer appearance-none rounded-md border border-input bg-transparent py-1 pl-2 pr-6 text-sm font-medium outline-none"
         >
           {options.map((o) => (
             <option key={o.id} value={o.id}>

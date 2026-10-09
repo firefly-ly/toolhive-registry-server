@@ -48,7 +48,7 @@ export function TypePill({ t }: { t: "mcp" | "skill" }) {
       MCP
     </span>
   ) : (
-    <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
+    <span className="rounded-full bg-success/15 px-2 py-0.5 text-xs font-semibold text-success">
       Skill
     </span>
   );
@@ -123,21 +123,21 @@ export function gradeOf(score: number) {
   if (score >= 80)
     return {
       label: "优质",
-      cls: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300",
+      cls: "bg-success/15 text-success",
     };
   if (score >= 60)
     return {
       label: "良好",
-      cls: "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300",
+      cls: "bg-success/8 text-success/85",
     };
   if (score >= 45)
     return {
       label: "待观察",
-      cls: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300",
+      cls: "bg-warning/15 text-warning",
     };
   return {
     label: "低质",
-    cls: "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300",
+    cls: "bg-destructive/10 text-destructive",
   };
 }
 export const gradeColor = (s: number) =>

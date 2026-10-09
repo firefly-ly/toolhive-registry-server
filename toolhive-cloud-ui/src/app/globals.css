@@ -45,6 +45,11 @@ html {
   --destructive-foreground: 0 0% 98%;
   --success: 160 74% 26%;
 
+  /* 语义点缀：收藏星（金黄，保红<10%纪律）/ 警示琥珀 / 信息蓝 */
+  --star: 48 96% 53%;
+  --warning: 32 95% 44%;
+  --info: 217 91% 55%;
+
   /* 边框与输入 */
   --border: 35 14% 88.5%;
   --input: 35 14% 85%;
@@ -89,6 +94,9 @@ html {
   --destructive: 0 48% 55%;
   --destructive-foreground: 0 0% 98%;
   --success: 160 55% 45%;
+  --star: 48 96% 58%;
+  --warning: 38 92% 54%;
+  --info: 217 90% 65%;
   --border: 20 12% 19%;
   --input: 20 12% 22%;
   --ring: 358 85% 58%;
@@ -148,6 +156,9 @@ html {
   --color-nav-button-active-bg: hsl(var(--nav-button-active-bg));
   --color-nav-button-active-text: hsl(var(--nav-button-active-text));
   --color-success: hsl(var(--success));
+  --color-star: hsl(var(--star));
+  --color-warning: hsl(var(--warning));
+  --color-info: hsl(var(--info));
 }
 
 * {
@@ -249,5 +260,18 @@ body {
   to {
     opacity: 1;
     transform: scale(1);
+  }
+}
+
+/* 收藏星标：点亮时弹跳一下（类随 favorited 状态增删，切换即重放） */
+@keyframes star-pop {
+  0% {
+    transform: scale(0.5) rotate(-15deg);
+  }
+  60% {
+    transform: scale(1.3) rotate(5deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
   }
 }

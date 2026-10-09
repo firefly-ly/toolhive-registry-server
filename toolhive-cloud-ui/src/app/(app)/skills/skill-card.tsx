@@ -74,7 +74,7 @@ export function SkillCard({
                 aria-label="切换版本"
                 value={cur.id}
                 onChange={(e) => setCurId(e.target.value)}
-                className="cursor-pointer appearance-none rounded-md border border-slate-200 bg-background py-1 pl-2.5 pr-7 text-base font-medium outline-none hover:border-slate-400 dark:border-slate-700"
+                className="cursor-pointer appearance-none rounded-md border border-input bg-background py-1 pl-2.5 pr-7 text-base font-medium outline-none hover:border-muted-foreground/50"
               >
                 {versions.map((v) => (
                   <option key={v.id} value={v.id}>
@@ -113,7 +113,7 @@ export function SkillCard({
                 <Star
                   className={
                     favorited
-                      ? "h-4 w-4 fill-yellow-400 text-yellow-400"
+                      ? "h-4 w-4 fill-star text-star animate-[star-pop_320ms_ease-out]"
                       : "h-4 w-4 text-muted-foreground"
                   }
                 />

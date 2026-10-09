@@ -38,20 +38,20 @@ export function ToolCall({ part }: ToolCallProps) {
   return (
     <div className="bg-card mb-3 rounded-lg border p-3">
       <div className="mb-2 flex items-center gap-2">
-        <Wrench className="size-4 text-blue-500" />
+        <Wrench className="size-4 text-info" />
         <span className="text-foreground text-sm font-medium">
           Tool: {toolName}
         </span>
 
         {state === "output-available" && (
-          <CheckCircle className="size-4 text-green-500" />
+          <CheckCircle className="size-4 text-success" />
         )}
         {state === "output-error" && (
-          <AlertCircle className="size-4 text-red-500" />
+          <AlertCircle className="size-4 text-destructive" />
         )}
         {state === "input-streaming" && (
           <div className="flex items-center gap-1">
-            <div className="size-3 animate-spin rounded-full border border-blue-500 border-t-transparent" />
+            <div className="size-3 animate-spin rounded-full border border-info border-t-transparent" />
             <span className="text-muted-foreground text-xs">Streaming...</span>
           </div>
         )}
@@ -121,7 +121,7 @@ export function ToolCall({ part }: ToolCallProps) {
             )}
             <span>输入参数</span>
             {state === "input-streaming" && (
-              <span className="text-blue-500">(Streaming...)</span>
+              <span className="text-info">(Streaming...)</span>
             )}
           </Button>
           {isInputOpen && (
@@ -148,7 +148,7 @@ export function ToolCall({ part }: ToolCallProps) {
               <ChevronRight className="size-3" />
             )}
             <span>工具结果</span>
-            <CheckCircle className="size-3 text-green-500" />
+            <CheckCircle className="size-3 text-success" />
           </Button>
           {isOutputOpen && (
             <div className="mt-2">
@@ -159,12 +159,12 @@ export function ToolCall({ part }: ToolCallProps) {
       )}
 
       {state === "output-error" && (
-        <div className="mt-2 rounded border border-red-200 bg-red-50 p-2 dark:border-red-800 dark:bg-red-950/20">
-          <div className="flex items-center gap-2 text-sm text-red-600 dark:text-red-400">
+        <div className="mt-2 rounded border border-destructive/30 bg-destructive/10 p-2">
+          <div className="flex items-center gap-2 text-sm text-destructive">
             <AlertCircle className="size-4" />
             <strong>工具执行错误</strong>
           </div>
-          <div className="mt-1 text-xs text-red-700 dark:text-red-300">
+          <div className="mt-1 text-xs text-destructive/90">
             {"errorText" in part ? part.errorText : "Tool execution failed"}
           </div>
         </div>
@@ -180,9 +180,7 @@ export function ToolCall({ part }: ToolCallProps) {
             part.input !== undefined &&
             "output" in part &&
             part.output !== undefined && (
-              <span className="text-green-600 dark:text-green-400">
-                ✓ Completed
-              </span>
+              <span className="text-success">✓ Completed</span>
             )}
         </div>
       </div>
