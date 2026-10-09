@@ -3,95 +3,113 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* Scale the whole UI up by one step (~18px root). All rem-based Tailwind
-   text + spacing utilities grow together, so fonts get bigger and the blocks
-   they sit in expand to fit. Tunable: 112.5% = +12.5%; raise for a bigger jump. */
+/* CJK readability scaling: Chinese glyphs read visually smaller than Latin at
+   the same px, so the root stays one step up (~18px). All rem-based Tailwind
+   utilities scale together. Tunable: 112.5% = +12.5%. */
 html {
   font-size: 112.5%;
 }
 
+/* ============================================================
+   设计令牌 · 东鹏品牌版（B 方向：纸感浅色 + 品牌红点睛）
+   品牌色来源：logo 像素聚类实测——品牌红 #DC0A10 / 墨黑 #201614
+   纪律：红为高唤醒色，全站占比 <10%，只出现在主按钮/焦点环/
+   选中态/悬停晕；destructive 用降明度酒红 #A32D2D 区隔。
+   三格式归一口径：:root/.dark 存裸 HSL 三元组，@theme inline
+   统一以 hsl(var(--x)) 包裹（仅 oklch 全色值如 avatar 例外直引）。
+   ============================================================ */
 :root {
-  --background: 0 0% 100%;
-  --foreground: 240 10% 3.9%;
+  /* 纸面与墨色：暖纸白 + 品牌墨黑（冷蓝/纯白不再使用） */
+  --background: 40 23% 97.5%;
+  --foreground: 20 22% 11%;
   --card: 0 0% 100%;
-  --card-foreground: 240 10% 3.9%;
+  --card-foreground: 20 22% 11%;
   --popover: 0 0% 100%;
-  --popover-foreground: 240 10% 3.9%;
-  --destructive: 0 84.2% 60.2%;
-  --destructive-foreground: 0 0% 98%;
-  --border: 240 5.9% 90%;
-  --input: 240 5.9% 90%;
-  /* 品牌主色：与导航栏同一蓝系（nav-background ≈ oklch 216°），按钮/链接/焦点环统一
-     （下方为 :root 内唯一定义，覆盖并取代 shadcn 默认 slate 主色） */
-  --primary: 216 65% 42%;
-  --primary-foreground: 0 0% 100%;
-  --ring: 216 65% 48%;
-  --radius: 0.625rem;
-  --avatar-background: oklch(0.696 0 0 / 89.8%);
-  --nav-background: oklch(0.4282 0.0561 216.14);
-  --nav-border: oklch(0.6031 0.0621 214.22);
-  --nav-button-active-bg: oklch(0.3516 0.0612 220.22);
-  --nav-button-active-text: oklch(1 0 0);
-  --success: oklch(0.5849 0.095 159.91);
-  --sidebar: hsl(40 20% 98.5%);
-  --sidebar-foreground: hsl(240 5.3% 26.1%);
-  --sidebar-primary: hsl(240 5.9% 10%);
-  --sidebar-primary-foreground: hsl(0 0% 98%);
-  --sidebar-accent: hsl(240 4.8% 95.9%);
-  --sidebar-accent-foreground: hsl(240 5.9% 10%);
-  --sidebar-border: hsl(220 13% 91%);
-  --sidebar-ring: hsl(217.2 91.2% 59.8%);
+  --popover-foreground: 20 22% 11%;
 
-  /* System font stacks (offline-safe replacement for next/font/google).
-     全站字体规范：西文/数字 = Times New Roman，中文 = 微软雅黑。
-     拉丁字体在前命中西文，中文字符回退到雅黑（CSS 按字符逐个匹配）。
-     Keeps the same CSS variable names so @theme inline / body keep working
-     without a network connection to fonts.googleapis.com. */
-  --font-inter:
-    "Times New Roman", "Microsoft YaHei", ui-sans-serif, system-ui,
-    -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --font-merriweather:
-    "Times New Roman", "Microsoft YaHei", Georgia, Cambria, serif;
+  /* 品牌红：按钮/链接/焦点环唯一来源（#DC0A10，配白字 5.1:1 AA） */
+  --primary: 358 91% 45%;
+  --primary-foreground: 0 0% 100%;
+  --ring: 358 91% 45%;
+
+  /* 中性层（此前 :root 缺失，浅色下 muted/secondary/accent 实际失效，本次补齐） */
+  --secondary: 40 15% 93%;
+  --secondary-foreground: 20 22% 15%;
+  --muted: 40 18% 94.5%;
+  --muted-foreground: 25 8% 42%;
+  --accent: 358 70% 96.5%;
+  --accent-foreground: 358 80% 30%;
+
+  /* 状态色 */
+  --destructive: 0 57% 41%;
+  --destructive-foreground: 0 0% 98%;
+  --success: 160 74% 26%;
+
+  /* 边框与输入 */
+  --border: 35 14% 88.5%;
+  --input: 35 14% 85%;
+
+  /* 导航/登录页品牌面：品牌红加深（#8F0008），白 logo/白字直接可用 */
+  --nav-background: 357 100% 28%;
+  --nav-border: 357 55% 38%;
+  --nav-button-active-bg: 357 100% 21%;
+  --nav-button-active-text: 0 0% 100%;
+  --avatar-background: oklch(0.696 0 0 / 89.8%);
+
+  /* 内容区底色：与 --background 同一张纸，全站一致 */
+  --sidebar: 40 23% 97.5%;
+  --sidebar-foreground: 25 8% 30%;
+  --sidebar-primary: 358 91% 45%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 358 70% 96%;
+  --sidebar-accent-foreground: 358 80% 30%;
+  --sidebar-border: 35 14% 89%;
+  --sidebar-ring: 358 91% 45%;
+
+  --radius: 0.75rem;
 }
 
 .dark {
-  --background: 0 0% 7.5%;
-  --foreground: 0 0% 98%;
-  --card: 240 10% 3.9%;
-  --card-foreground: 0 0% 98%;
-  --popover: 240 10% 3.9%;
-  --popover-foreground: 0 0% 98%;
-  --primary: 0 0% 98%;
-  --primary-foreground: 240 5.9% 10%;
-  --secondary: 240 3.7% 15.9%;
-  --secondary-foreground: 0 0% 98%;
-  --muted: 240 3.7% 15.9%;
-  --muted-foreground: 240 5% 64.9%;
-  --accent: 240 3.7% 15.9%;
-  --accent-foreground: 0 0% 98%;
-  --destructive: 0 62.8% 30.6%;
+  /* 暗色 = 暖调近黑（呼应墨色），品牌红提亮保对比。图表等硬编码色
+     尚未令牌化，暗色下为尽力而为（best-effort），阶段 4 收编后再承诺完美 */
+  --background: 20 18% 8%;
+  --foreground: 40 20% 96%;
+  --card: 20 14% 11.5%;
+  --card-foreground: 40 20% 96%;
+  --popover: 20 14% 11.5%;
+  --popover-foreground: 40 20% 96%;
+  --primary: 358 85% 58%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 20 12% 17%;
+  --secondary-foreground: 40 20% 96%;
+  --muted: 20 12% 16%;
+  --muted-foreground: 30 8% 66%;
+  --accent: 358 45% 20%;
+  --accent-foreground: 358 90% 88%;
+  --destructive: 0 48% 55%;
   --destructive-foreground: 0 0% 98%;
-  --border: 240 3.7% 15.9%;
-  --input: 240 3.7% 15.9%;
-  --ring: 240 4.9% 83.9%;
+  --success: 160 55% 45%;
+  --border: 20 12% 19%;
+  --input: 20 12% 22%;
+  --ring: 358 85% 58%;
   --avatar-background: oklch(0.696 0 0 / 89.8%);
-  --nav-background: oklch(0.2645 0.0334 218.49);
-  --nav-border: oklch(0.3865 0.0535 217.72);
-  --nav-button-active-bg: oklch(0.4861 0.0787 216.59);
-  --nav-button-active-text: oklch(0.9851 0 0);
-  --success: oklch(0.724 0.1091 160.66);
-  --sidebar: hsl(var(--background));
-  --sidebar-foreground: hsl(240 4.8% 95.9%);
-  --sidebar-primary: hsl(224.3 76.3% 48%);
-  --sidebar-primary-foreground: hsl(0 0% 100%);
-  --sidebar-accent: hsl(240 3.7% 15.9%);
-  --sidebar-accent-foreground: hsl(240 4.8% 95.9%);
-  --sidebar-border: hsl(240 3.7% 15.9%);
-  --sidebar-ring: hsl(217.2 91.2% 59.8%);
+  --nav-background: 357 70% 13%;
+  --nav-border: 357 45% 24%;
+  --nav-button-active-bg: 358 80% 26%;
+  --nav-button-active-text: 0 0% 100%;
+  --sidebar: 20 18% 8%;
+  --sidebar-foreground: 30 10% 78%;
+  --sidebar-primary: 358 85% 58%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 358 45% 19%;
+  --sidebar-accent-foreground: 358 90% 88%;
+  --sidebar-border: 20 12% 19%;
+  --sidebar-ring: 358 85% 58%;
 }
 
 @theme inline {
-  /* 全站字体栈：优先系统 UI 字体，中文回退微软雅黑/苹方，杜绝宋体衬线回退 */
+  /* 全站字体栈：西文/数字走系统 UI，中文回退雅黑/苹方。
+     Times 衬线全站移除（页标题改由 .text-page-title 用无衬线重排） */
   --font-sans:
     system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial,
     "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
@@ -116,20 +134,20 @@ html {
   --color-border: hsl(var(--border));
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
-  --color-sidebar-ring: var(--sidebar-ring);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar: var(--sidebar);
+  --color-sidebar-ring: hsl(var(--sidebar-ring));
+  --color-sidebar-border: hsl(var(--sidebar-border));
+  --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
+  --color-sidebar-accent: hsl(var(--sidebar-accent));
+  --color-sidebar-primary-foreground: hsl(var(--sidebar-primary-foreground));
+  --color-sidebar-primary: hsl(var(--sidebar-primary));
+  --color-sidebar-foreground: hsl(var(--sidebar-foreground));
+  --color-sidebar: hsl(var(--sidebar));
   --color-avatar-background: var(--avatar-background);
-  --color-nav-background: var(--nav-background);
-  --color-nav-border: var(--nav-border);
-  --color-nav-button-active-bg: var(--nav-button-active-bg);
-  --color-nav-button-active-text: var(--nav-button-active-text);
-  --color-success: var(--success);
+  --color-nav-background: hsl(var(--nav-background));
+  --color-nav-border: hsl(var(--nav-border));
+  --color-nav-button-active-bg: hsl(var(--nav-button-active-bg));
+  --color-nav-button-active-text: hsl(var(--nav-button-active-text));
+  --color-success: hsl(var(--success));
 }
 
 * {
@@ -163,12 +181,12 @@ body {
 }
 
 @layer utilities {
+  /* 页面大标题：无衬线、收紧一档，页头不再压屏（原 2.125rem/300 衬线已废） */
   .text-page-title {
-    font-family: var(--font-merriweather), serif;
-    font-size: 2.125rem;
-    line-height: 2.625rem;
-    font-weight: 300;
-    letter-spacing: -0.053rem;
+    font-size: 1.75rem;
+    line-height: 2.375rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
   }
 }
 
@@ -206,7 +224,8 @@ body {
   background-clip: content-box;
 }
 
-/* 可点击卡片统一悬停反馈（目录/技能/提交三类卡片共用） */
+/* 可点击卡片统一悬停反馈（目录/技能/提交三类卡片共用）；
+   阴影带极淡品牌红晕，浮起时与纸面拉开温度差 */
 .card-hover {
   transition:
     box-shadow 0.2s ease,
@@ -215,8 +234,8 @@ body {
 }
 .card-hover:hover {
   box-shadow:
-    0 4px 12px -2px hsl(var(--primary) / 0.08),
-    0 2px 6px -2px hsl(240 5.9% 10% / 0.08);
+    0 4px 12px -2px hsl(var(--primary) / 0.1),
+    0 2px 6px -2px hsl(20 22% 11% / 0.08);
   border-color: hsl(var(--primary) / 0.35);
   transform: translateY(-2px);
 }
