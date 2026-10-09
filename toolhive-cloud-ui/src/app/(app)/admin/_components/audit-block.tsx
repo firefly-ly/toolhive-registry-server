@@ -171,7 +171,7 @@ export async function AuditBlock({
             id="audit-f-target"
             name="target_id"
             defaultValue={filters.target_id}
-            placeholder="sub_... / mcp:..."
+            placeholder="例如：sub_1234 / mcp:demo"
             className="h-9 w-56 font-mono"
           />
         </div>

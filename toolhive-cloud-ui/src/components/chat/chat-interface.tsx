@@ -44,7 +44,7 @@ export function ChatInterface() {
   useEffect(() => {
     const errorMessage = error?.message ?? null;
     if (errorMessage && errorMessage !== previousErrorRef.current) {
-      toast.error("出错了，请稍后再试", {
+      toast.error("请求失败，请稍后再试", {
         description: errorMessage,
       });
     }

@@ -1,8 +1,8 @@
 import { headers } from "next/headers";
 import { auth } from "./auth";
 import { ADMIN_EMAILS } from "./constants";
-import { claimAsStringArray, getUserClaimsFromDatabase } from "./utils";
 import { getUserProfileRaw } from "./user-profile";
+import { claimAsStringArray, getUserClaimsFromDatabase } from "./utils";
 
 export interface AuthUser {
   id?: string;
@@ -60,8 +60,7 @@ export async function getAuthContext(): Promise<AuthContext> {
   const roles = extractRoles(u);
   const groups = extractGroups(u);
 
-  const email =
-    typeof u.email === "string" ? u.email.toLowerCase().trim() : "";
+  const email = typeof u.email === "string" ? u.email.toLowerCase().trim() : "";
 
   // Better Auth does not persist arbitrary OIDC claims (roles/groups) onto the
   // user record by default, so re-derive them from the stored OIDC token when

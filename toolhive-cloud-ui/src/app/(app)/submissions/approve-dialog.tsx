@@ -84,7 +84,7 @@ interface PromptScanResult {
   error?: string;
 }
 
-// 扫描三态徽章：绿=clean/低危，黄=warn/等待，红=critical/alert/出错，灰=skipped
+// 扫描三态徽章：绿=clean/低危，黄=warn/等待，红=critical/alert/扫描失败，灰=skipped
 function ScanBadge({
   label,
   status,
@@ -250,6 +250,11 @@ export function ApproveDialog({ submission }: { submission: Submission }) {
     if (confirmExempt) fd.set("exempt_network", "true");
     try {
       await approveSubmissionAction(fd);
+      toast.success("已通过并发布", {
+        description: isMcp
+          ? "条目已进入已发布管理，请设置可见范围后部署"
+          : "条目已进入已发布管理，请设置可见范围后上架",
+      });
       setOpen(false);
       resetChecks();
       router.refresh();
@@ -267,6 +272,9 @@ export function ApproveDialog({ submission }: { submission: Submission }) {
     fd.set("id", id);
     try {
       await rejectSubmissionAction(fd);
+      toast.success("已拒绝该提交", {
+        description: "提交者可修改后重新提交",
+      });
       setOpen(false);
       router.refresh();
     } catch (e) {

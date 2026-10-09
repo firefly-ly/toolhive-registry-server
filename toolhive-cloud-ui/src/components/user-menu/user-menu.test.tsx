@@ -35,7 +35,7 @@ describe("UserMenu", () => {
     if (!trigger) return;
     await user.click(trigger);
 
-    const signOutItem = screen.getByRole("menuitem", { name: /sign out/i });
+    const signOutItem = screen.getByRole("menuitem", { name: /退出登录/ });
     await user.click(signOutItem);
 
     expect(signOut).toHaveBeenCalledOnce();

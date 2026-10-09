@@ -16,14 +16,14 @@ export function ErrorPage({ error, reset }: ErrorPageProps) {
 
   return (
     <ErrorPageLayout
-      title="页面出错了"
+      title="页面加载失败"
       actions={
         <Button onClick={reset} variant="default">
           重试
         </Button>
       }
     >
-      An unexpected error occurred. Please try again.
+      发生意外错误，请重试。
     </ErrorPageLayout>
   );
 }

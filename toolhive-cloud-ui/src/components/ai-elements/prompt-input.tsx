@@ -109,7 +109,7 @@ export function PromptInputAttachment({
         </div>
       )}
       <Button
-        aria-label="Remove attachment"
+        aria-label="移除附件"
         className="absolute -top-1.5 -right-1.5 h-6 w-6 rounded-full opacity-0
           group-hover:opacity-100"
         onClick={() => attachments.remove(data.id)}

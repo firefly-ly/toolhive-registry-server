@@ -3,6 +3,7 @@
 import { Eye } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { toast } from "sonner";
 import { ConfirmForm } from "@/components/confirm-form";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -47,6 +48,22 @@ export const REGISTRY_TONE: Record<
   "delete-error": "destructive",
   "": "secondary",
 };
+
+// 给裸 form 的写操作 Server Action 包一层成功 toast。
+// 约定：action 成功返回 { ok: true }；失败在 action 内部 redirect 携带 error 参数
+// （由 admin 页统一弹错误 toast），此处不处理失败分支。
+function withActionToast(
+  action: (formData: FormData) => Promise<unknown>,
+  message: string,
+  description?: string,
+) {
+  return async (formData: FormData) => {
+    const res = (await action(formData)) as { ok?: boolean } | undefined;
+    if (res?.ok) {
+      toast.success(message, description ? { description } : undefined);
+    }
+  };
+}
 
 export function parseMeta(meta?: string): Record<string, string> {
   try {
@@ -268,7 +285,13 @@ export function VersionActions({ s }: { s: Submission }) {
       {isMcp &&
         (deploy === "unborn" || deploy === "failed") &&
         canToggleRun && (
-          <form action={deploySubmissionAction}>
+          <form
+            action={withActionToast(
+              deploySubmissionAction,
+              "已开始部署",
+              "部署约需 1~3 分钟，状态将自动刷新",
+            )}
+          >
             <input type="hidden" name="id" value={s.id} />
             <Button type="submit" variant="outline" size="sm">
               部署
@@ -289,6 +312,8 @@ export function VersionActions({ s }: { s: Submission }) {
           title="确认轮换 Token？"
           description="将生成新的代理访问令牌，旧 Token 立即作废——所有已复制到客户端的接入配置会立刻失效（401），需要重新复制配置。仅影响该 MCP，其他条目不受影响。"
           confirmText="确认轮换"
+          successToast="Token 已轮换"
+          successDescription="旧令牌已作废，请在各客户端重新复制接入配置"
         >
           轮换 Token
         </ConfirmForm>
@@ -300,6 +325,8 @@ export function VersionActions({ s }: { s: Submission }) {
           title="确认下架？"
           description="仅从 Registry 目录移除，对用户隐藏；运行实例继续保留，恢复上架后无需重新部署。提交记录保留，可通过「恢复 / 上架」重新显示。"
           confirmText="确认下架"
+          successToast="已下架"
+          successDescription="条目已从目录隐藏，运行实例保留；可随时恢复上架"
         >
           下架
         </ConfirmForm>
@@ -311,6 +338,8 @@ export function VersionActions({ s }: { s: Submission }) {
           title="确认恢复 / 上架？"
           description="将把该条目重新对用户开放，回滚此前的下架操作。"
           confirmText="确认恢复"
+          successToast="已恢复上架"
+          successDescription="条目已重新在目录对用户开放"
         >
           恢复 / 上架
         </ConfirmForm>
@@ -324,13 +353,21 @@ export function VersionActions({ s }: { s: Submission }) {
               title="确认下线该 MCP？"
               description="将停止当前运行实例、释放容器，但保留 Registry 目录条目（MCP 界面仍可见）。提交记录保留，可随时通过「恢复上线」重新部署。"
               confirmText="确认下线"
+              successToast="已下线"
+              successDescription="运行实例已停止；可随时恢复上线"
             >
               下线
             </ConfirmForm>
           )}
           {/* 下线后的回滚：已 undeployed 显示「恢复上线」 */}
           {deploy === "undeployed" && canToggleRun && (
-            <form action={deploySubmissionAction}>
+            <form
+              action={withActionToast(
+                deploySubmissionAction,
+                "已恢复上线",
+                "正在启动部署，状态将自动刷新",
+              )}
+            >
               <input type="hidden" name="id" value={s.id} />
               <Button type="submit" variant="outline" size="sm">
                 恢复上线
@@ -340,7 +377,13 @@ export function VersionActions({ s }: { s: Submission }) {
         </>
       )}
       {canResync && (
-        <form action={syncRegistryAction}>
+        <form
+          action={withActionToast(
+            syncRegistryAction,
+            "已触发同步",
+            "同步结果以条目上的 Registry 徽章为准",
+          )}
+        >
           <input type="hidden" name="id" value={s.id} />
           <Button type="submit" variant="outline" size="sm">
             重新同步
@@ -356,6 +399,8 @@ export function VersionActions({ s }: { s: Submission }) {
         description="删除将：从 Registry 移除目录条目、停止并销毁运行实例、清理制品文件。此操作不可回滚，删除后无法恢复，请谨慎确认。"
         confirmText="确认删除"
         destructive
+        successToast="已删除"
+        successDescription="目录条目、运行实例与制品文件均已清理"
       >
         删除
       </ConfirmForm>

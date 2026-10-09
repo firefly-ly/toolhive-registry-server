@@ -28,9 +28,9 @@ export function CopyUrlButton({
 
     try {
       await navigator.clipboard.writeText(url);
-      toast.success("Successfully copied");
+      toast.success("已复制到剪贴板");
     } catch {
-      toast.error("Failed to copy URL");
+      toast.error("复制失败");
     }
   };
 
@@ -39,12 +39,12 @@ export function CopyUrlButton({
       variant={variant}
       size={size}
       onClick={handleCopyUrl}
-      aria-label="Copy URL"
+      aria-label="复制链接"
       className={cn("cursor-pointer", className)}
       {...props}
     >
       <Copy className="size-4" />
-      <span className={cn(labelClassName)}>Copy URL</span>
+      <span className={cn(labelClassName)}>复制链接</span>
     </Button>
   );
 }

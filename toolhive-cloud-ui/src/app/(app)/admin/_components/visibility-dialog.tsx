@@ -2,6 +2,7 @@
 
 import { Eye, HelpCircle, Users } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -63,6 +64,16 @@ export function VisibilityDialog({ s }: { s: Submission }) {
       : false) === true;
   const isMcp = s.type === "mcp";
 
+  // 纯 Server Action 表单无法反馈成功；包装后成功弹 toast 并关闭弹窗。
+  // 失败仍由 setVisibilityAction 内部 redirect 携带 error 参数兜底。
+  async function handleSubmit(fd: FormData) {
+    const res = (await setVisibilityAction(fd)) as { ok?: boolean } | undefined;
+    if (res?.ok) {
+      toast.success(notOnShelf ? "已保存并上线" : "已保存可见范围");
+      setOpen(false);
+    }
+  }
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -89,7 +100,7 @@ export function VisibilityDialog({ s }: { s: Submission }) {
               : " 默认全员可见；设为指定范围后，未授权用户在目录中不可见、无法下载与调用。"}
           </DialogDescription>
         </DialogHeader>
-        <form action={setVisibilityAction} className="space-y-4">
+        <form action={handleSubmit} className="space-y-4">
           <input type="hidden" name="id" value={s.id} />
           <input type="hidden" name="mode" value={mode} />
 

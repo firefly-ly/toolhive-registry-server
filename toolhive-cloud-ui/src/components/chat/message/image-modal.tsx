@@ -48,7 +48,7 @@ export function ImageModal({
         size="icon"
         onClick={onClose}
         className="absolute top-4 right-4 rounded-full bg-white/10 text-white hover:bg-white/20"
-        aria-label="Close modal"
+        aria-label="关闭预览"
       >
         <X className="size-6" />
       </Button>

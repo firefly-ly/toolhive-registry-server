@@ -75,7 +75,7 @@ describe("ServerDetail", () => {
       render(<ServerDetail {...mockProps} />);
 
       // 复制行含 CopyUrlButton 与 复制配置 弹窗按钮，用 getAllByRole 容忍多个匹配
-      const copyButtons = screen.getAllByRole("button", { name: /copy url/i });
+      const copyButtons = screen.getAllByRole("button", { name: /复制链接/ });
       expect(copyButtons.length).toBeGreaterThan(0);
       expect(copyButtons[0]).toBeVisible();
     });
@@ -87,7 +87,7 @@ describe("ServerDetail", () => {
         screen.queryByDisplayValue(mockProps.serverUrl),
       ).not.toBeInTheDocument();
       expect(
-        screen.queryByRole("button", { name: /copy url/i }),
+        screen.queryByRole("button", { name: /复制链接/ }),
       ).not.toBeInTheDocument();
     });
   });
@@ -99,7 +99,7 @@ describe("ServerDetail", () => {
       expect(screen.getByText(mockProps.description)).toBeVisible();
       expect(screen.getByRole("link", { name: /查看仓库/ })).toBeVisible();
       expect(screen.getByDisplayValue(mockProps.serverUrl)).toBeVisible();
-      const copyButtons = screen.getAllByRole("button", { name: /copy url/i });
+      const copyButtons = screen.getAllByRole("button", { name: /复制链接/ });
       expect(copyButtons.length).toBeGreaterThan(0);
     });
 

@@ -82,7 +82,7 @@ export function SkillsWrapper({
           <div className="relative">
             <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="搜索技能..."
+              placeholder="搜索技能…"
               value={search}
               onChange={(e) => handleSearch(e.target.value)}
               className="w-56 pl-9"
@@ -93,9 +93,9 @@ export function SkillsWrapper({
 
       <div className="flex-1 overflow-auto">
         {filtered.length === 0 ? (
-          <p className="text-muted-foreground">未找到匹配的技能。</p>
+          <p className="text-muted-foreground">未找到匹配的技能</p>
         ) : pageItems.length === 0 ? (
-          <p className="text-muted-foreground">未找到匹配的技能。</p>
+          <p className="text-muted-foreground">未找到匹配的技能</p>
         ) : viewMode === "grid" ? (
           <div className="grid grid-cols-1 gap-3 pb-3 md:grid-cols-2 lg:grid-cols-3">
             {pageItems.map((s) => {

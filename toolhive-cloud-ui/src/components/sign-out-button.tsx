@@ -13,11 +13,9 @@ export function SignOut() {
     try {
       await signOut();
     } catch (error) {
-      toast.error("Signout failed", {
-        description:
-          error instanceof Error
-            ? error.message
-            : "An unexpected error occurred",
+      console.error("[sign-out]", error);
+      toast.error("退出登录失败", {
+        description: "请稍后重试；若持续失败请联系管理员",
       });
       setIsSigningOut(false);
     }
@@ -31,7 +29,7 @@ export function SignOut() {
       size="lg"
       className="rounded-full"
     >
-      {isSigningOut ? "Signing Out..." : "Sign Out"}
+      {isSigningOut ? "退出中…" : "退出登录"}
     </Button>
   );
 }

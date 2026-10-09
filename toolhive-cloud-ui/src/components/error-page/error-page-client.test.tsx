@@ -20,16 +20,16 @@ describe("ErrorPage", () => {
     expect(console.error).toHaveBeenCalledWith(error);
   });
 
-  it("displays '页面出错了' title", () => {
+  it("displays '页面加载失败' title", () => {
     render(<ErrorPage error={new Error("Test")} reset={vi.fn()} />);
 
-    expect(screen.getByRole("heading", { name: "页面出错了" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "页面加载失败" })).toBeVisible();
   });
 
   it("displays error description", () => {
     render(<ErrorPage error={new Error("Test")} reset={vi.fn()} />);
 
-    expect(screen.getByText(/an unexpected error occurred/i)).toBeVisible();
+    expect(screen.getByText(/发生意外错误/)).toBeVisible();
   });
 
   it("calls reset function when Try again button is clicked", async () => {

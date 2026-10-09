@@ -126,12 +126,12 @@ export function SubmittedMcpCard({
             </span>
           </div>
           <div className="flex items-center gap-2">
-            {/* 部署且实例在线才显示「调用」按钮；点击弹出客户端接入配置（与 registry ServerCard 一致） */}
+            {/* 部署且实例在线才显示「接入」按钮；点击弹出客户端接入配置（与 registry ServerCard 一致） */}
             {cur.public_endpoint && cur.healthy ? (
               <CopyMcpConfigDialog
                 serverName={cur.name}
                 config={{ url: cur.public_endpoint, headers: cur.mcp_headers }}
-                triggerLabel="调用"
+                triggerLabel="接入"
                 className="rounded-full"
               />
             ) : (

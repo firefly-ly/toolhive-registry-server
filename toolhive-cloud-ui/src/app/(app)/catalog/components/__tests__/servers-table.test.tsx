@@ -68,7 +68,7 @@ describe("ServersTable", () => {
   it("displays copy URL button when URL is available", () => {
     render(<ServersTable servers={[mockServer]} />);
 
-    const copyButton = screen.getByRole("button", { name: /copy url/i });
+    const copyButton = screen.getByRole("button", { name: /复制链接/ });
     expect(copyButton).toBeVisible();
   });
 
@@ -81,7 +81,7 @@ describe("ServersTable", () => {
     render(<ServersTable servers={[serverWithoutUrl]} />);
 
     expect(
-      screen.queryByRole("button", { name: /copy url/i }),
+      screen.queryByRole("button", { name: /复制链接/ }),
     ).not.toBeInTheDocument();
   });
 

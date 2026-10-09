@@ -11,8 +11,8 @@ import {
   SSO_PROVIDER_ID,
 } from "./constants";
 import { getIdTokenFromDatabase, getTokenFromDatabase } from "./db";
-import { saveUserProfileByEmail } from "./user-profile";
 import type { OidcUserInfo } from "./types";
+import { saveUserProfileByEmail } from "./user-profile";
 
 // ============================================================================
 // Token Expiry Check (for Server Component context)

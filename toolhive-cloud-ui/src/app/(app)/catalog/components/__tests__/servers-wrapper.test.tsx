@@ -59,11 +59,11 @@ describe("ServersWrapper", () => {
       <ServersWrapper servers={mockServers} registries={mockRegistries} />,
     );
 
-    expect(screen.getByLabelText("List view")).toBeVisible();
-    expect(screen.getByLabelText("Grid view")).toBeVisible();
+    expect(screen.getByLabelText("列表视图")).toBeVisible();
+    expect(screen.getByLabelText("网格视图")).toBeVisible();
     // 两个注册表时显示切换器
     expect(screen.getByLabelText("选择注册表")).toBeVisible();
-    expect(screen.getByPlaceholderText("搜索")).toBeVisible();
+    expect(screen.getByPlaceholderText("搜索 MCP…")).toBeVisible();
   });
 
   it("hides registry selector when only one registry exists", () => {
@@ -92,7 +92,7 @@ describe("ServersWrapper", () => {
       <ServersWrapper servers={mockServers} registries={mockRegistries} />,
     );
 
-    await user.click(screen.getByLabelText("List view"));
+    await user.click(screen.getByLabelText("列表视图"));
 
     await waitFor(() => {
       expect(screen.getByText("名称")).toBeVisible();
@@ -107,8 +107,8 @@ describe("ServersWrapper", () => {
       <ServersWrapper servers={mockServers} registries={mockRegistries} />,
     );
 
-    await user.click(screen.getByLabelText("List view"));
-    await user.click(screen.getByLabelText("Grid view"));
+    await user.click(screen.getByLabelText("列表视图"));
+    await user.click(screen.getByLabelText("网格视图"));
 
     await waitFor(() => {
       expect(screen.getByText("AWS Nova Canvas")).toBeVisible();
@@ -122,7 +122,9 @@ describe("ServersWrapper", () => {
       <ServersWrapper servers={mockServers} registries={mockRegistries} />,
     );
 
-    const searchInput = screen.getByPlaceholderText("搜索") as HTMLInputElement;
+    const searchInput = screen.getByPlaceholderText(
+      "搜索 MCP…",
+    ) as HTMLInputElement;
     await user.type(searchInput, "aws");
 
     expect(searchInput.value).toBe("aws");
@@ -136,11 +138,13 @@ describe("ServersWrapper", () => {
       <ServersWrapper servers={mockServers} registries={mockRegistries} />,
     );
 
-    const searchInput = screen.getByPlaceholderText("搜索") as HTMLInputElement;
+    const searchInput = screen.getByPlaceholderText(
+      "搜索 MCP…",
+    ) as HTMLInputElement;
     await user.type(searchInput, "aws");
     expect(searchInput.value).toBe("aws");
 
-    await user.click(screen.getByLabelText("List view"));
+    await user.click(screen.getByLabelText("列表视图"));
 
     await waitFor(() => {
       expect(screen.getByText("名称")).toBeVisible();

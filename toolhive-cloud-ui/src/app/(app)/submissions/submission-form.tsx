@@ -201,6 +201,7 @@ export function SubmissionForm({ action }: SubmissionFormProps) {
           return;
         }
         // 成功才重置 DOM
+        toast.success("已提交，进入审核队列");
         form.reset();
         resetFormState();
       } catch (err) {

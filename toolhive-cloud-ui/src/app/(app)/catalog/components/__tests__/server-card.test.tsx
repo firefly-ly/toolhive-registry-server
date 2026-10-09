@@ -38,11 +38,11 @@ describe("ServerCard", () => {
     expect(screen.getByText("暂无描述")).toBeTruthy();
   });
 
-  it("has 调用 (connect) button", () => {
+  it("has 接入 (connect) button", () => {
     render(<ServerCard server={mockServer} serverUrl="/servers/test-server" />);
 
-    // 卡片上的接入动作已由 Copy URL 按钮升级为「调用」配置弹窗
-    const callButton = screen.getByRole("button", { name: /调用/ });
+    // 卡片上的「接入」弹出客户端接入配置；真实调用（试跑工具）在详情页
+    const callButton = screen.getByRole("button", { name: /接入/ });
     expect(callButton).toBeTruthy();
   });
 

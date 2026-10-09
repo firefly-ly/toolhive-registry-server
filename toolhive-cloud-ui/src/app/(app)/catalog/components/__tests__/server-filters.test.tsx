@@ -22,7 +22,7 @@ describe("ServerFilters", () => {
       <ServerFilters {...defaultProps} onViewModeChange={onViewModeChange} />,
     );
 
-    await user.click(screen.getByLabelText("List view"));
+    await user.click(screen.getByLabelText("列表视图"));
 
     expect(onViewModeChange).toHaveBeenCalledWith("list");
   });
@@ -39,7 +39,7 @@ describe("ServerFilters", () => {
       />,
     );
 
-    await user.click(screen.getByLabelText("Grid view"));
+    await user.click(screen.getByLabelText("网格视图"));
 
     expect(onViewModeChange).toHaveBeenCalledWith("grid");
   });
@@ -50,7 +50,7 @@ describe("ServerFilters", () => {
 
     render(<ServerFilters {...defaultProps} onSearchChange={onSearchChange} />);
 
-    const searchInput = screen.getByPlaceholderText("搜索");
+    const searchInput = screen.getByPlaceholderText("搜索 MCP…");
     await user.type(searchInput, "test");
 
     expect(onSearchChange).toHaveBeenCalled();
@@ -59,21 +59,21 @@ describe("ServerFilters", () => {
   it("displays search query value", () => {
     render(<ServerFilters {...defaultProps} searchQuery="aws" />);
 
-    const searchInput = screen.getByPlaceholderText("搜索");
+    const searchInput = screen.getByPlaceholderText("搜索 MCP…");
     expect(searchInput).toHaveValue("aws");
   });
 
   it("marks grid button as checked when grid mode is selected", () => {
     render(<ServerFilters {...defaultProps} viewMode="grid" />);
 
-    const gridButton = screen.getByLabelText("Grid view");
+    const gridButton = screen.getByLabelText("网格视图");
     expect(gridButton).toHaveAttribute("aria-checked", "true");
   });
 
   it("marks list button as checked when list mode is selected", () => {
     render(<ServerFilters {...defaultProps} viewMode="list" />);
 
-    const listButton = screen.getByLabelText("List view");
+    const listButton = screen.getByLabelText("列表视图");
     expect(listButton).toHaveAttribute("aria-checked", "true");
   });
 

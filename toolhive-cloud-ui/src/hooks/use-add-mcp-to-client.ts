@@ -35,7 +35,7 @@ async function copyToClipboard(text: string, successMessage: string) {
     await navigator.clipboard.writeText(text);
     toast.success(successMessage);
   } catch {
-    toast.error("Failed to copy to clipboard");
+    toast.error("复制失败");
   }
 }
 

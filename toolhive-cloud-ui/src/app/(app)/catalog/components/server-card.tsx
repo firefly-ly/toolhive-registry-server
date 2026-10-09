@@ -101,7 +101,7 @@ export function ServerCard({
               <CopyMcpConfigDialog
                 serverName={server.title ?? name ?? ""}
                 config={{ url: serverUrl }}
-                triggerLabel="调用"
+                triggerLabel="接入"
                 className="rounded-full"
               />
             )}

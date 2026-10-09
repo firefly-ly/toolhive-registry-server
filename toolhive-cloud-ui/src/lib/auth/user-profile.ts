@@ -55,8 +55,8 @@ export async function saveUserProfileByEmail(
 ): Promise<void> {
   if (!(await ensureTable())) return;
   try {
-      await pool!.query(
-        `INSERT INTO user_profile (email, orgs, jobs, user_types, raw, updated_at)
+    await pool!.query(
+      `INSERT INTO user_profile (email, orgs, jobs, user_types, raw, updated_at)
          VALUES ($1, $2::jsonb, $3::jsonb, $4::jsonb, $5::jsonb, NOW())
          ON CONFLICT (email) DO UPDATE SET
            -- 防覆盖：SSO profile 当前不下发组织数据（detail 为空对象），
@@ -94,9 +94,7 @@ export async function saveUserProfileByEmail(
  * 数组/对象数组/逗号串），归一化由调用方用 claimAsStringArray 统一处理，
  * 避免在本模块对未知形态做错误假设。
  */
-export async function getUserProfileRaw(
-  email: string,
-): Promise<{
+export async function getUserProfileRaw(email: string): Promise<{
   orgs: unknown;
   jobs: unknown;
   userTypes: unknown;

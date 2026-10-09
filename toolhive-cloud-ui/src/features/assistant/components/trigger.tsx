@@ -28,7 +28,7 @@ export function AssistantTrigger() {
             size="icon"
             onClick={toggleSidebar}
             className="size-9 cursor-pointer hover:text-white focus:text-white"
-            aria-label="Toggle Assistant"
+            aria-label="切换助手侧栏"
           >
             <MessageCircle className="size-5" />
           </Button>

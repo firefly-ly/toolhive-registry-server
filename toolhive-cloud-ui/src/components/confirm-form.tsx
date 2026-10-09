@@ -1,6 +1,7 @@
 "use client";
 
 import { type ReactNode, useTransition } from "react";
+import { toast } from "sonner";
 import { Button, type ButtonProps } from "@/components/ui/button";
 import { useConfirm } from "@/hooks/use-confirm";
 
@@ -21,6 +22,10 @@ interface ConfirmFormProps {
   cancelText?: string;
   /** 破坏性操作：确认按钮变红，并默认用于不可回滚的删除等场景 */
   destructive?: boolean;
+  /** 成功后的 toast 标题（约定 action 成功返回 { ok: true }；失败由 action 内部 redirect 兜底） */
+  successToast?: string;
+  /** 成功 toast 的补充说明（结果 + 下一步） */
+  successDescription?: string;
 }
 
 /**
@@ -39,6 +44,8 @@ export function ConfirmForm({
   confirmText = "确认",
   cancelText = "取消",
   destructive = false,
+  successToast,
+  successDescription,
 }: ConfirmFormProps) {
   const { confirm, ConfirmDialog } = useConfirm();
   const [pending, startTransition] = useTransition();
@@ -56,7 +63,13 @@ export function ConfirmForm({
     const fd = new FormData();
     for (const [k, v] of Object.entries(fields)) fd.set(k, v);
     startTransition(async () => {
-      await action(fd);
+      const res = (await action(fd)) as { ok?: boolean } | undefined;
+      if (successToast && res?.ok) {
+        toast.success(
+          successToast,
+          successDescription ? { description: successDescription } : undefined,
+        );
+      }
     });
   }
 

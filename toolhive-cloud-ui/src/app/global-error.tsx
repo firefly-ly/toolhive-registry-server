@@ -21,7 +21,7 @@ export default function GlobalError({ reset }: GlobalErrorProps) {
             className="shrink-0 brightness-0 dark:brightness-100"
           />
 
-          <h1 className="text-xl text-muted-foreground">页面出错了</h1>
+          <h1 className="text-xl text-muted-foreground">页面加载失败</h1>
 
           <Button onClick={reset} variant="default">
             重试

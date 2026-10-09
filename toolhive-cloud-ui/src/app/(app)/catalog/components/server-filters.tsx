@@ -48,14 +48,14 @@ export function ServerFilters({
       >
         <ToggleGroupItem
           value="list"
-          aria-label="List view"
+          aria-label="列表视图"
           className="size-11 rounded-md data-[state=on]:bg-accent data-[state=on]:shadow-none"
         >
           <List className="size-5" />
         </ToggleGroupItem>
         <ToggleGroupItem
           value="grid"
-          aria-label="Grid view"
+          aria-label="网格视图"
           className="size-11 rounded-md data-[state=on]:bg-accent data-[state=on]:shadow-none"
         >
           <LayoutGrid className="size-4" />
@@ -92,7 +92,7 @@ export function ServerFilters({
         <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           type="text"
-          placeholder="搜索"
+          placeholder="搜索 MCP…"
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
           className="h-9 px-9 bg-white dark:bg-card"
@@ -103,7 +103,7 @@ export function ServerFilters({
             size="icon"
             onClick={() => onSearchChange("")}
             className="absolute top-1/2 right-1 size-7 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-            aria-label="Clear search"
+            aria-label="清除搜索"
           >
             <X className="size-4" />
           </Button>

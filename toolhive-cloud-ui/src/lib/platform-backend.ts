@@ -695,9 +695,7 @@ export async function createSourceSubmission(p: {
     display_name: p.displayName,
     ...(p.version ? { version: p.version } : {}),
     ...(p.payloadRef ? { payload_ref: p.payloadRef } : {}),
-    ...(p.dataSource
-      ? { data_source: JSON.stringify(p.dataSource) }
-      : {}),
+    ...(p.dataSource ? { data_source: JSON.stringify(p.dataSource) } : {}),
   });
   const created = await fetch(`${BASE}/submissions/source?${qs}`, {
     method: "POST",

@@ -35,7 +35,7 @@ export function AssistantSidebar({ models }: { models: string[] }) {
             size="icon"
             className="size-7 text-white hover:text-white"
             onClick={toggleSidebar}
-            aria-label="Close sidebar"
+            aria-label="关闭侧栏"
           >
             <PanelRightClose className="size-4" />
           </Button>

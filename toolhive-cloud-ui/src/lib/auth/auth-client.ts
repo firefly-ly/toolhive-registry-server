@@ -29,9 +29,8 @@ export const signOut = async () => {
     window.location.replace(redirectUrl);
   } catch (error) {
     console.error("[Auth] Sign out error:", error);
-    toast.error("Sign out failed", {
-      description:
-        error instanceof Error ? error.message : "An unexpected error occurred",
+    toast.error("退出登录失败", {
+      description: "正在返回登录页；若持续失败请联系管理员",
     });
 
     // Fallback redirect on error

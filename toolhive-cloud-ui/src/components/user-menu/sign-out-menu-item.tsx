@@ -9,14 +9,14 @@ export function SignOutMenuItem() {
       await signOut();
     } catch (error) {
       console.error("Sign out failed:", error);
-      toast.error("Failed to sign out. Please try again.");
+      toast.error("退出登录失败，请重试");
     }
   };
 
   return (
     <DropdownMenuItem onSelect={handleSignOut}>
       <LogOut />
-      Sign out
+      退出登录
     </DropdownMenuItem>
   );
 }

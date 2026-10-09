@@ -82,7 +82,7 @@ describe("SignInPage", () => {
     await user.click(signInButton);
 
     await waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith("登录出错", {
+      expect(toast.error).toHaveBeenCalledWith("登录失败", {
         description: "Network error",
       });
     });
@@ -100,8 +100,8 @@ describe("SignInPage", () => {
     await user.click(signInButton);
 
     await waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith("登录出错", {
-        description: "An unexpected error occurred",
+      expect(toast.error).toHaveBeenCalledWith("登录失败", {
+        description: "登录过程中发生异常，请重试",
       });
     });
   });

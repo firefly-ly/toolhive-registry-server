@@ -41,9 +41,9 @@ export function SignInButton({
     } catch (error) {
       setIsLoading(false);
       const errorMessage =
-        error instanceof Error ? error.message : "An unexpected error occurred";
+        error instanceof Error ? error.message : "登录过程中发生异常，请重试";
 
-      toast.error("登录出错", {
+      toast.error("登录失败", {
         description: errorMessage,
       });
     }

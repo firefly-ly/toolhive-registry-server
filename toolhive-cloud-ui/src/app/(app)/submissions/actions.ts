@@ -288,6 +288,7 @@ export async function approveSubmissionAction(formData: FormData) {
   revalidatePath("/admin");
   revalidatePath("/catalog");
   revalidatePath("/skills");
+  return { ok: true };
 }
 
 // 管理者拒绝待审核提交
@@ -299,6 +300,7 @@ export async function rejectSubmissionAction(formData: FormData) {
   revalidatePath("/submissions");
   revalidatePath("/catalog");
   revalidatePath("/skills");
+  return { ok: true };
 }
 
 // 生命周期状态变更（管理者操作：下架 deprecated / 删除 removed 等）
@@ -328,6 +330,7 @@ export async function setLifecycleAction(formData: FormData) {
   revalidatePath("/skills");
   revalidatePath("/mcp/[ref]", "page");
   // 成功后停留原地；失败才跳转携带 error 参数弹 toast
+  return { ok: true };
 }
 
 // P3：管理者手动触发 / 取消 ToolHive 部署（MCP）
@@ -356,6 +359,7 @@ export async function deploySubmissionAction(formData: FormData) {
   revalidatePath("/catalog");
   revalidatePath("/mcp/[ref]");
   // 停留在原地：只刷新数据不导航，部署状态由卡片徽章（部署中…/运行中/部署失败）就地反映
+  return { ok: true };
 }
 
 export async function undeploySubmissionAction(formData: FormData) {
@@ -374,6 +378,7 @@ export async function undeploySubmissionAction(formData: FormData) {
   revalidatePath("/catalog");
   revalidatePath("/mcp/[ref]");
   // 成功后停留原地；失败才跳转携带 error 参数弹 toast
+  return { ok: true };
 }
 
 // P5：轮换代理访问令牌（仅管理员，仅 MCP）。旧 Token 立即作废，已复制配置需重新复制。
@@ -391,6 +396,7 @@ export async function rotateMcpTokenAction(formData: FormData) {
   revalidatePath("/admin");
   revalidatePath("/mcp/[ref]");
   // 成功后停留原地；用户需在各客户端重新复制接入配置
+  return { ok: true };
 }
 
 // P4：重新同步到 Registry Server（同步失败后重试 / 补发布）
@@ -410,6 +416,7 @@ export async function syncRegistryAction(formData: FormData) {
   revalidatePath("/catalog");
   revalidatePath("/skills");
   // 成功后停留原地；失败才跳转携带 error 参数弹 toast
+  return { ok: true };
 }
 
 // 管理员设置条目可见范围（方案C：发布时决定哪些成员/组可查看/下载/调用）。
@@ -448,6 +455,7 @@ export async function setVisibilityAction(formData: FormData) {
   revalidatePath("/mcp/[ref]", "page");
   revalidatePath("/skills");
   // 成功后停留原地；失败才跳转携带 error 参数弹 toast
+  return { ok: true };
 }
 // （原 activateVersionAction 已随激活指针废弃移除——用户侧版本下拉自选已上架版本，
 //  目录默认展示"最新已上架版本"，不再维护激活指针。）
