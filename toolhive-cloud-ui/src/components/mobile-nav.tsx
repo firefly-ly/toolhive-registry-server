@@ -36,7 +36,7 @@ export function MobileNav({ isAdmin }: MobileNavProps) {
           variant="ghost"
           size="icon"
           aria-label="打开导航菜单"
-          className="size-9 cursor-pointer text-white hover:bg-white/10 hover:text-white focus:text-white md:hidden"
+          className="size-9 cursor-pointer md:hidden"
         >
           <Menu className="size-5" />
         </Button>

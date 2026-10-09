@@ -28,15 +28,15 @@ function segmentLabel(segment: string): string {
 
 /**
  * 内容区顶部面包屑：由 pathname 分段推导，静态段走 SEGMENT_LABELS 中文名。
- * 面包屑从深色 navbar 移到纸面内容区——navbar 是深色底，breadcrumb 令牌是纸面色，
- * 两处底色不兼容，故独立成组件放在 main 内。
+ * 仅二三级页面渲染（一级页与页面大标题重复）；动态段回落到解码原值并截断。
  */
 export function NavBreadcrumb() {
   const pathname = usePathname();
   const segments = pathname.split("/").filter(Boolean);
 
-  // 根路径无面包屑
-  if (segments.length === 0) return null;
+  // 一级页面不渲染：单段面包屑只会和页面自身大标题重复
+  // （如 /catalog 的「MCP」小字悬在「MCP 目录」上）；二级及以下才定位价值
+  if (segments.length < 2) return null;
 
   let href = "";
   const crumbs = segments.map((segment, index) => {
@@ -49,7 +49,7 @@ export function NavBreadcrumb() {
   });
 
   return (
-    <Breadcrumb>
+    <Breadcrumb className="mb-3">
       <BreadcrumbList>
         {crumbs.map((crumb) => (
           <Fragment key={crumb.href}>

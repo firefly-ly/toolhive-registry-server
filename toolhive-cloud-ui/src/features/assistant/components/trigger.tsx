@@ -27,7 +27,7 @@ export function AssistantTrigger() {
             variant="ghost"
             size="icon"
             onClick={toggleSidebar}
-            className="size-9 cursor-pointer hover:text-white focus:text-white"
+            className="size-9 cursor-pointer"
             aria-label="切换助手侧栏"
           >
             <MessageCircle className="size-5" />

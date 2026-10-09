@@ -64,9 +64,8 @@ export function AppShell({ isAdmin, navbar, children }: AppShellProps) {
         <main className="flex min-h-0 flex-1 flex-col overflow-hidden bg-sidebar px-8 pt-6 pb-5 dark:bg-background">
           {/* 内容收宽居中：超宽屏下行长可控，深色顶栏/浅色侧栏仍全宽铺满 */}
           <div className="mx-auto flex h-full min-h-0 w-full max-w-[1400px] flex-col">
-            <div className="mb-3 shrink-0">
-              <NavBreadcrumb />
-            </div>
+            {/* 面包屑自带 mb-3，一级页返回 null 时零占位 */}
+            <NavBreadcrumb />
             {/* 子页面根节点有两种口径（h-full / flex-1），双层 flex 保证两者都占满剩余高度 */}
             <div className="flex min-h-0 flex-1 flex-col">{children}</div>
           </div>
