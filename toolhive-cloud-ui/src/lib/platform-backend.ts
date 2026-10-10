@@ -101,7 +101,14 @@ export async function queryAudit(filters: {
   from?: string;
   to?: string;
   limit?: number;
-}): Promise<{ count: number; items: AuditEntry[] }> {
+  offset?: number;
+}): Promise<{
+  count: number;
+  total?: number;
+  limit?: number;
+  offset?: number;
+  items: AuditEntry[];
+}> {
   const qs = new URLSearchParams();
   if (filters.actor) qs.set("actor", filters.actor);
   if (filters.action) qs.set("action", filters.action);
@@ -109,6 +116,7 @@ export async function queryAudit(filters: {
   if (filters.from) qs.set("from", filters.from);
   if (filters.to) qs.set("to", filters.to);
   if (filters.limit) qs.set("limit", String(filters.limit));
+  if (filters.offset) qs.set("offset", String(filters.offset));
   const q = qs.toString();
   return request(`/audit${q ? `?${q}` : ""}`);
 }

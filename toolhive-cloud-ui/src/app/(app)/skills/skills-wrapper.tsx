@@ -1,11 +1,12 @@
 "use client";
 
-import { LayoutGrid, List, Search } from "lucide-react";
+import { LayoutGrid, List, Search, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
-import { PageHeader } from "@/components/header-page";
+import { EmptyState, PageHeader } from "@/components/header-page";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import type { Skill } from "@/lib/platform-backend";
 import { CatalogPagination } from "../catalog/components/catalog-pagination";
 import { SkillCard } from "./skill-card";
@@ -20,10 +21,9 @@ interface SkillsWrapperProps {
 }
 
 /**
- * Client wrapper for the skills marketplace.
- * Mirrors the catalog layout: full-height flex, header with search + view toggle,
- * scrollable grid/list. Clicking a card navigates to the /skills/[id] detail page
- * (same behavior as the MCP catalog), not a side sheet.
+ * Skill 市场客户端壳层：与 MCP 目录同一套页面范式——
+ * 页头（标题+数量摘要）/ 工具栏独立成行（左搜索、右视图切换）/ 卡片网格 / 底部分页。
+ * 点卡片进 /skills/[id] 详情页。
  */
 export function SkillsWrapper({
   skills,
@@ -60,42 +60,73 @@ export function SkillsWrapper({
 
   return (
     <div className="flex h-full flex-col">
-      <PageHeader title="Skill 目录">
-        {/* 与 Catalog 的 ServerFilters 保持一致的从左到右顺序：视图切换 -> 搜索 */}
-        <div className="flex items-center gap-4">
-          <Button
-            variant={viewMode === "list" ? "secondary" : "ghost"}
-            size="icon"
-            onClick={() => setViewMode("list")}
-            aria-label="列表视图"
-          >
-            <List className="h-4 w-4" />
-          </Button>
-          <Button
-            variant={viewMode === "grid" ? "secondary" : "ghost"}
-            size="icon"
-            onClick={() => setViewMode("grid")}
-            aria-label="网格视图"
-          >
-            <LayoutGrid className="h-4 w-4" />
-          </Button>
-          <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="搜索技能…"
-              value={search}
-              onChange={(e) => handleSearch(e.target.value)}
-              className="w-56 pl-9"
-            />
-          </div>
+      <PageHeader
+        title="Skill 目录"
+        description={`共 ${skills.length} 个技能，均经安全扫描后上架`}
+      />
+
+      {/* 工具栏独立成行：左搜索，右视图切换（与 MCP 目录同款） */}
+      <div className="mb-4 flex w-full flex-wrap items-center justify-between gap-3">
+        <div className="relative w-72 max-w-full">
+          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            type="text"
+            placeholder="搜索技能名称或描述…"
+            value={search}
+            onChange={(e) => handleSearch(e.target.value)}
+            className="h-9 px-9 bg-card"
+          />
+          {search && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => handleSearch("")}
+              className="absolute top-1/2 right-1 size-7 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              aria-label="清除搜索"
+            >
+              <X className="size-4" />
+            </Button>
+          )}
         </div>
-      </PageHeader>
+        <ToggleGroup
+          type="single"
+          value={viewMode}
+          onValueChange={(value) => {
+            if (value) setViewMode(value as "grid" | "list");
+          }}
+          spacing={1}
+          className="gap-2"
+        >
+          <ToggleGroupItem
+            value="list"
+            aria-label="列表视图"
+            className="size-9 rounded-md data-[state=on]:bg-accent data-[state=on]:shadow-none"
+          >
+            <List className="size-4" />
+          </ToggleGroupItem>
+          <ToggleGroupItem
+            value="grid"
+            aria-label="网格视图"
+            className="size-9 rounded-md data-[state=on]:bg-accent data-[state=on]:shadow-none"
+          >
+            <LayoutGrid className="size-4" />
+          </ToggleGroupItem>
+        </ToggleGroup>
+      </div>
 
       <div className="flex-1 overflow-auto">
-        {filtered.length === 0 ? (
-          <p className="text-muted-foreground">未找到匹配的技能</p>
-        ) : pageItems.length === 0 ? (
-          <p className="text-muted-foreground">未找到匹配的技能</p>
+        {skills.length === 0 ? (
+          <EmptyState
+            icon={Search}
+            title="还没有上架的技能"
+            description="技能经提交、安全扫描、审批通过后会出现在这里。"
+          />
+        ) : filtered.length === 0 ? (
+          <EmptyState
+            icon={Search}
+            title="未找到匹配结果"
+            description={`没有找到与「${search}」匹配的技能，试试调整搜索条件。`}
+          />
         ) : viewMode === "grid" ? (
           <div className="grid grid-cols-1 gap-3 pb-3 md:grid-cols-2 lg:grid-cols-3">
             {pageItems.map((s) => {

@@ -34,7 +34,10 @@ export default async function SubmissionsPage({
 
   return (
     <div className="flex h-full flex-col">
-      <PageHeader title="提交管理" />
+      <PageHeader
+        title="提交管理"
+        description={`历史提交 ${ownSubmissions.length} 条 · 全程记入审计轨迹`}
+      />
 
       {/* 顶部 Tab 切换：新建提交 / 历史提交（与 admin 一致，整块可点） */}
       <div className="px-8 pt-2">
@@ -42,10 +45,8 @@ export default async function SubmissionsPage({
           <Link
             href="/submissions?tab=new"
             className={cn(
-              buttonVariants({
-                variant: tab === "new" ? "default" : "ghost",
-                size: "sm",
-              }),
+              buttonVariants({ variant: "ghost", size: "sm" }),
+              tab === "new" && "bg-primary/10 text-primary",
               "min-w-[130px]",
             )}
           >
@@ -54,10 +55,8 @@ export default async function SubmissionsPage({
           <Link
             href="/submissions?tab=history"
             className={cn(
-              buttonVariants({
-                variant: tab === "history" ? "default" : "ghost",
-                size: "sm",
-              }),
+              buttonVariants({ variant: "ghost", size: "sm" }),
+              tab === "history" && "bg-primary/10 text-primary",
               "min-w-[130px]",
             )}
           >

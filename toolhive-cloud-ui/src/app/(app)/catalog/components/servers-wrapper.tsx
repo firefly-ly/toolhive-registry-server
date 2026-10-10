@@ -112,7 +112,13 @@ export function ServersWrapper({
 
   return (
     <div className="flex flex-col h-full">
-      <PageHeader title="MCP 目录">
+      <PageHeader
+        title="MCP 目录"
+        description={`共 ${allItems.length} 个服务，其中 ${submittedMcps.length} 个来自用户提交`}
+      />
+
+      {/* 工具栏独立成行：左搜索/数据源，右视图切换 */}
+      <div className="mx-auto mb-4 w-full">
         <ServerFilters
           registries={registries}
           selectedRegistry={selectedRegistry}
@@ -121,8 +127,9 @@ export function ServersWrapper({
           onViewModeChange={handleViewModeChange}
           searchQuery={search}
           onSearchChange={handleSearchChange}
+          onClearSearch={handleClearSearch}
         />
-      </PageHeader>
+      </div>
 
       <div className="flex-1 overflow-auto">
         <Servers

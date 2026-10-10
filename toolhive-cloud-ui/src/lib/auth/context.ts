@@ -53,7 +53,13 @@ export async function getAuthContext(): Promise<AuthContext> {
   const u = session?.user as Record<string, unknown> | undefined;
   if (!u) {
     if (process.env.DEMO_MODE === "1")
-      return { isAdmin: true, roles: ["admin"], groups: ["admin"] };
+      return {
+        // 补演示身份：actorHeaders 据此注入 x-actor-* 头，审计等管理员接口才可通
+        user: { email: "demo@example.com", name: "演示管理员" },
+        isAdmin: true,
+        roles: ["admin"],
+        groups: ["admin"],
+      };
     return { isAdmin: false, roles: [], groups: [] };
   }
 

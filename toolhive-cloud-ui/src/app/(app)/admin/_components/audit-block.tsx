@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { DateField } from "@/components/admin/date-field";
 import { ErrorToast } from "@/components/error-toast";
 import { Button } from "@/components/ui/button";
@@ -8,6 +9,9 @@ import {
   queryAudit,
 } from "@/lib/platform-backend";
 import { cn } from "@/lib/utils";
+
+// 审计分页：每页条数（后端同口径，≤200）
+const AUDIT_PAGE_SIZE = 50;
 
 // 动作中文名（后端 action 枚举 → 展示文案）
 const ACTION_LABELS: Record<string, string> = {
@@ -75,6 +79,7 @@ function safeParseDetail(detail: string): Record<string, unknown> {
 
 export async function AuditBlock({
   filters,
+  page = 1,
 }: {
   filters: {
     actor?: string;
@@ -82,17 +87,37 @@ export async function AuditBlock({
     target_id?: string;
     from?: string;
     to?: string;
-    limit?: number;
   };
+  page?: number;
 }) {
   let items: AuditEntry[] = [];
   let error = "";
+  let total = 0;
   try {
-    const res = await queryAudit({ ...filters, limit: filters.limit || 200 });
+    const res = await queryAudit({
+      ...filters,
+      limit: AUDIT_PAGE_SIZE,
+      offset: (page - 1) * AUDIT_PAGE_SIZE,
+    });
     items = res.items;
+    total = res.total ?? res.count;
   } catch (e) {
     error = e instanceof Error ? e.message : String(e);
   }
+
+  // 分页链接：保留当前筛选条件，仅翻页
+  const pageUrl = (p: number) => {
+    const qs = new URLSearchParams();
+    qs.set("tab", "audit");
+    qs.set("page", String(p));
+    if (filters.actor) qs.set("actor", filters.actor);
+    if (filters.action) qs.set("action", filters.action);
+    if (filters.target_id) qs.set("target_id", filters.target_id);
+    if (filters.from) qs.set("from", filters.from);
+    if (filters.to) qs.set("to", filters.to);
+    return `/admin?${qs.toString()}`;
+  };
+  const totalPages = Math.max(1, Math.ceil(total / AUDIT_PAGE_SIZE));
 
   // 对象 ID → 可读名称映射（来自提交记录 meta.name），提升表格可读性
   const nameMap = new Map<string, string>();
@@ -308,9 +333,23 @@ export async function AuditBlock({
       )}
 
       {!error && items.length > 0 && (
-        <p className="text-xs text-muted-foreground">
-          共 {items.length} 条（最多返回 1000 条，可用筛选缩小范围）
-        </p>
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-muted-foreground">
+            共 {total} 条 · 第 {page} / {totalPages} 页
+          </p>
+          <div className="flex items-center gap-2">
+            {page > 1 && (
+              <Button variant="outline" size="sm" asChild>
+                <Link href={pageUrl(page - 1)}>上一页</Link>
+              </Button>
+            )}
+            {page < totalPages && (
+              <Button variant="outline" size="sm" asChild>
+                <Link href={pageUrl(page + 1)}>下一页</Link>
+              </Button>
+            )}
+          </div>
+        </div>
       )}
     </div>
   );

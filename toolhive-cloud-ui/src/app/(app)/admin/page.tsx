@@ -44,6 +44,7 @@ export default async function AdminPage({
   searchParams: Promise<{
     tab?: string;
     error?: string;
+    page?: string;
     actor?: string;
     action?: string;
     target_id?: string;
@@ -57,12 +58,14 @@ export default async function AdminPage({
   const {
     tab = "reviews",
     error,
+    page: pageRaw,
     actor,
     action,
     target_id,
     from,
     to,
   } = await searchParams;
+  const page = Math.max(1, Number(pageRaw) || 1);
 
   const submissions = await listSubmissions();
 
@@ -85,7 +88,10 @@ export default async function AdminPage({
 
   return (
     <div className="flex h-full flex-col">
-      <PageHeader title="管理后台" />
+      <PageHeader
+        title="管理后台"
+        description={`待审 ${pending.length} · 已发布 ${published.length} 项 · 回收站 ${retired.length} 条`}
+      />
 
       {/* 顶部 Tab 切换：直接用 Link 渲染为按钮，整块可点（Button 未实现 asChild，套 Link 会导致只有文字能点） */}
       <div className="px-8 pt-2">
@@ -93,10 +99,8 @@ export default async function AdminPage({
           <Link
             href="/admin?tab=reviews"
             className={cn(
-              buttonVariants({
-                variant: tab === "reviews" ? "default" : "ghost",
-                size: "sm",
-              }),
+              buttonVariants({ variant: "ghost", size: "sm" }),
+              tab === "reviews" && "bg-primary/10 text-primary",
               "min-w-[130px]",
             )}
           >
@@ -105,10 +109,8 @@ export default async function AdminPage({
           <Link
             href="/admin?tab=published"
             className={cn(
-              buttonVariants({
-                variant: tab === "published" ? "default" : "ghost",
-                size: "sm",
-              }),
+              buttonVariants({ variant: "ghost", size: "sm" }),
+              tab === "published" && "bg-primary/10 text-primary",
               "min-w-[130px]",
             )}
           >
@@ -117,10 +119,8 @@ export default async function AdminPage({
           <Link
             href="/admin?tab=retired"
             className={cn(
-              buttonVariants({
-                variant: tab === "retired" ? "default" : "ghost",
-                size: "sm",
-              }),
+              buttonVariants({ variant: "ghost", size: "sm" }),
+              tab === "retired" && "bg-primary/10 text-primary",
               "min-w-[130px]",
             )}
           >
@@ -129,10 +129,8 @@ export default async function AdminPage({
           <Link
             href="/admin?tab=audit"
             className={cn(
-              buttonVariants({
-                variant: tab === "audit" ? "default" : "ghost",
-                size: "sm",
-              }),
+              buttonVariants({ variant: "ghost", size: "sm" }),
+              tab === "audit" && "bg-primary/10 text-primary",
               "min-w-[130px]",
             )}
           >
@@ -151,7 +149,10 @@ export default async function AdminPage({
         ) : tab === "retired" ? (
           <RetiredBlock retired={retired} />
         ) : tab === "audit" ? (
-          <AuditBlock filters={{ actor, action, target_id, from, to }} />
+          <AuditBlock
+            filters={{ actor, action, target_id, from, to }}
+            page={page}
+          />
         ) : (
           <PublishedBlock
             mcpGroups={mcpGroups}

@@ -29,6 +29,35 @@ interface SubmissionFormProps {
   }>;
 }
 
+/**
+ * 表单分组容器：序号圆点 + 小节标题 + 内容。
+ * 长表单切成「基本信息 → 制品来源 → 描述与提交」三段有节奏的块，降低一次性铺开的压迫感。
+ */
+function FormSection({
+  step,
+  title,
+  hint,
+  children,
+}: {
+  step: number;
+  title: string;
+  hint?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="rounded-xl border p-5">
+      <div className="mb-4 flex items-center gap-2.5">
+        <span className="flex size-6 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+          {step}
+        </span>
+        <h3 className="font-medium">{title}</h3>
+        {hint && <span className="text-xs text-muted-foreground">{hint}</span>}
+      </div>
+      {children}
+    </section>
+  );
+}
+
 export function SubmissionForm({ action }: SubmissionFormProps) {
   const [type, setType] = useState<"mcp" | "skill">("skill");
   const [transport, setTransport] = useState("auto");
@@ -215,168 +244,193 @@ export function SubmissionForm({ action }: SubmissionFormProps) {
     <form onSubmit={handleSubmit} className="space-y-4">
       <input type="hidden" name="type" value={type} />
 
-      <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-[180px_1fr_1fr]">
-        <div className="space-y-2">
-          <label
-            htmlFor="submission-type"
-            className="block text-sm font-medium"
-          >
-            类型
-          </label>
-          <Select
-            value={type}
-            onValueChange={(value) => setType(value as "mcp" | "skill")}
-          >
-            <SelectTrigger id="submission-type" className={selectTriggerClass}>
-              <SelectValue placeholder="选择类型">
-                {type === "mcp" ? "MCP Server" : "Skills"}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent
-              position="popper"
-              className="w-[var(--radix-select-trigger-width)]"
-            >
-              <SelectItem value="mcp">MCP Server</SelectItem>
-              <SelectItem value="skill">Skills</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+      <FormSection step={1} title="基本信息" hint="类型、引用与展示名称">
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-[180px_1fr_1fr]">
+            <div className="space-y-2">
+              <label
+                htmlFor="submission-type"
+                className="block text-sm font-medium"
+              >
+                类型
+              </label>
+              <Select
+                value={type}
+                onValueChange={(value) => setType(value as "mcp" | "skill")}
+              >
+                <SelectTrigger
+                  id="submission-type"
+                  className={selectTriggerClass}
+                >
+                  <SelectValue placeholder="选择类型">
+                    {type === "mcp" ? "MCP Server" : "Skills"}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent
+                  position="popper"
+                  className="w-[var(--radix-select-trigger-width)]"
+                >
+                  <SelectItem value="mcp">MCP Server</SelectItem>
+                  <SelectItem value="skill">Skills</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-        <div className="space-y-2">
-          <label htmlFor="payload_ref" className="block text-sm font-medium">
-            引用（payload_ref）
-          </label>
-          <input
-            id="payload_ref"
-            name="payload_ref"
-            placeholder={isMcp ? "dws-explorer:1.0.0" : "dws-explorer:1.0.0"}
-            className={inputClass}
-            required
-          />
-          <div
-            className="inline-flex items-center gap-1 text-xs text-muted-foreground"
-            title="格式建议：产品名:版本号（如 dws-explorer:1.0.0）。系统据此自动分组并识别版本，同名产品多版本可并存。"
-          >
-            <HelpCircle className="size-3.5 cursor-help" />
-            <span>格式建议</span>
+            <div className="space-y-2">
+              <label
+                htmlFor="payload_ref"
+                className="block text-sm font-medium"
+              >
+                引用（payload_ref）
+              </label>
+              <input
+                id="payload_ref"
+                name="payload_ref"
+                placeholder={
+                  isMcp ? "dws-explorer:1.0.0" : "dws-explorer:1.0.0"
+                }
+                className={inputClass}
+                required
+              />
+              <div
+                className="inline-flex items-center gap-1 text-xs text-muted-foreground"
+                title="格式建议：产品名:版本号（如 dws-explorer:1.0.0）。系统据此自动分组并识别版本，同名产品多版本可并存。"
+              >
+                <HelpCircle className="size-3.5 cursor-help" />
+                <span>格式建议</span>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="name" className="block text-sm font-medium">
+                名称（必填）
+              </label>
+              <input
+                id="name"
+                name="name"
+                placeholder="DWS 数据探查器"
+                className={inputClass}
+                required
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <label htmlFor="group_key" className="block text-sm font-medium">
+                产品标识 group_key（可选）
+              </label>
+              <input
+                id="group_key"
+                name="group_key"
+                placeholder="默认从引用中提取，如 dws-explorer"
+                className={inputClass}
+              />
+            </div>
+            <div className="space-y-2">
+              <label htmlFor="version" className="block text-sm font-medium">
+                版本号 version（可选）
+              </label>
+              <input
+                id="version"
+                name="version"
+                placeholder="默认从引用中提取，如 1.0.0"
+                className={inputClass}
+              />
+            </div>
+          </div>
+
+          <div className="w-full space-y-2">
+            <label
+              htmlFor="repository_url"
+              className="block text-sm font-medium"
+            >
+              仓库地址（repository_url，可选）
+            </label>
+            <input
+              id="repository_url"
+              name="repository_url"
+              placeholder="https://github.com/你的组织/你的仓库"
+              className={inputClass}
+            />
+            <p className="text-xs text-muted-foreground">
+              可选：开源上游仓库地址。填写后详情页展示仓库入口（最新代码 / 最新
+              README）；不填则以上传的源码包为准。
+            </p>
           </div>
         </div>
+      </FormSection>
 
-        <div className="space-y-2">
-          <label htmlFor="name" className="block text-sm font-medium">
-            名称（必填）
-          </label>
-          <input
-            id="name"
-            name="name"
-            placeholder="DWS 数据探查器"
-            className={inputClass}
-            required
+      <FormSection
+        step={2}
+        title="制品来源"
+        hint={isMcp ? "镜像 / tar 包 / 源码构建" : "技能包文件或下载地址"}
+      >
+        {isMcp ? (
+          <McpSourceSection
+            mcpSource={mcpSource}
+            onSourceChange={setMcpSource}
+            imageRef={imageRef}
+            onImageRefChange={setImageRef}
+            cls={cls}
+            autoMirror={autoMirror}
+            onAutoMirrorChange={setAutoMirror}
+            transport={transport}
+            onTransportChange={setTransport}
+            tarFile={tarFile}
+            onTarFile={setTarFile}
+            sourceFile={sourceFile}
+            onSourceFile={setSourceFile}
+            envFile={envFile}
+            onEnvFile={setEnvFile}
+            dataSourceType={dataSourceType}
+            onDataSourceTypeChange={setDataSourceType}
+            dataSourceTargets={dataSourceTargets}
+            onDataSourceTargetsChange={setDataSourceTargets}
+            dataSourceNote={dataSourceNote}
+            onDataSourceNoteChange={setDataSourceNote}
           />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2">
-        <div className="space-y-2">
-          <label htmlFor="group_key" className="block text-sm font-medium">
-            产品标识 group_key（可选）
-          </label>
-          <input
-            id="group_key"
-            name="group_key"
-            placeholder="默认从引用中提取，如 dws-explorer"
-            className={inputClass}
+        ) : (
+          <SkillSourceSection
+            skillSource={skillSource}
+            onSourceChange={setSkillSource}
+            file={file}
+            onFile={setFile}
           />
+        )}
+      </FormSection>
+
+      <FormSection step={3} title="描述与提交" hint="描述会展示在目录卡片上">
+        <div className="space-y-4">
+          <div className="w-full space-y-2">
+            <label htmlFor="description" className="block text-sm font-medium">
+              描述{isMcp ? "（可选）" : "（必填）"}
+            </label>
+            <input
+              id="description"
+              name="description"
+              placeholder={
+                isMcp
+                  ? "一句话描述这个 MCP Server 能做什么"
+                  : "一句话描述这个技能能做什么"
+              }
+              className={inputClass}
+              required={!isMcp}
+            />
+          </div>
+
+          <div className="flex justify-end">
+            <Button
+              type="submit"
+              size="lg"
+              disabled={pending}
+              className="text-base"
+            >
+              {pending ? "提交中…" : "提交"}
+            </Button>
+          </div>
         </div>
-        <div className="space-y-2">
-          <label htmlFor="version" className="block text-sm font-medium">
-            版本号 version（可选）
-          </label>
-          <input
-            id="version"
-            name="version"
-            placeholder="默认从引用中提取，如 1.0.0"
-            className={inputClass}
-          />
-        </div>
-      </div>
-
-      <div className="w-full space-y-2">
-        <label htmlFor="repository_url" className="block text-sm font-medium">
-          仓库地址（repository_url，可选）
-        </label>
-        <input
-          id="repository_url"
-          name="repository_url"
-          placeholder="https://github.com/你的组织/你的仓库"
-          className={inputClass}
-        />
-        <p className="text-xs text-muted-foreground">
-          可选：开源上游仓库地址。填写后详情页展示仓库入口（最新代码 / 最新
-          README）；不填则以上传的源码包为准。
-        </p>
-      </div>
-
-      {isMcp ? (
-        <McpSourceSection
-          mcpSource={mcpSource}
-          onSourceChange={setMcpSource}
-          imageRef={imageRef}
-          onImageRefChange={setImageRef}
-          cls={cls}
-          autoMirror={autoMirror}
-          onAutoMirrorChange={setAutoMirror}
-          transport={transport}
-          onTransportChange={setTransport}
-          tarFile={tarFile}
-          onTarFile={setTarFile}
-          sourceFile={sourceFile}
-          onSourceFile={setSourceFile}
-          envFile={envFile}
-          onEnvFile={setEnvFile}
-          dataSourceType={dataSourceType}
-          onDataSourceTypeChange={setDataSourceType}
-          dataSourceTargets={dataSourceTargets}
-          onDataSourceTargetsChange={setDataSourceTargets}
-          dataSourceNote={dataSourceNote}
-          onDataSourceNoteChange={setDataSourceNote}
-        />
-      ) : (
-        <SkillSourceSection
-          skillSource={skillSource}
-          onSourceChange={setSkillSource}
-          file={file}
-          onFile={setFile}
-        />
-      )}
-
-      <div className="w-full space-y-2">
-        <label htmlFor="description" className="block text-sm font-medium">
-          描述{isMcp ? "（可选）" : "（必填）"}
-        </label>
-        <input
-          id="description"
-          name="description"
-          placeholder={
-            isMcp
-              ? "一句话描述这个 MCP Server 能做什么"
-              : "一句话描述这个技能能做什么"
-          }
-          className={inputClass}
-          required={!isMcp}
-        />
-      </div>
-
-      <div className="flex justify-end">
-        <Button
-          type="submit"
-          size="lg"
-          disabled={pending}
-          className="text-base"
-        >
-          {pending ? "提交中…" : "提交"}
-        </Button>
-      </div>
+      </FormSection>
     </form>
   );
 }
