@@ -62,7 +62,6 @@ function parseMeta(meta?: string) {
 interface SubmissionListProps {
   submissions: Submission[];
   type?: "mcp" | "skill";
-  fullHeight?: boolean;
   showSearch?: boolean;
   searchPlaceholder?: string;
   showActions?: boolean;
@@ -85,7 +84,6 @@ function submissionSearchText(s: Submission): string {
 export function SubmissionList({
   submissions,
   type,
-  fullHeight,
   showSearch = true,
   searchPlaceholder = "搜索名称、描述、提交者…",
   showActions = true,
@@ -101,8 +99,7 @@ export function SubmissionList({
     return base.filter((s) => submissionSearchText(s).includes(q));
   }, [submissions, type, query]);
 
-  const boxHeight = fullHeight ? "h-full min-h-[65vh]" : "h-[520px]";
-
+  // 固定高度滚动盒：min-h 强撑会冲破外层白卡边界（曾致审核队列行溢出白框），禁用
   return (
     <div className="flex h-full flex-col">
       {showSearch && (
@@ -116,7 +113,7 @@ export function SubmissionList({
           />
         </div>
       )}
-      <div className={`${boxHeight} overflow-auto rounded-md border`}>
+      <div className="h-[520px] overflow-auto rounded-md border">
         <Table>
           <TableHeader className="sticky top-0 z-10 bg-background">
             <TableRow>

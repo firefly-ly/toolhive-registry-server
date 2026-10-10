@@ -42,15 +42,12 @@ export function TrendChart({
           idx % 6
         ];
   const seg = (d?: string) => (d ? d.slice(5) : "");
+  // x 轴刻度：首尾区间四等分取整——日期间隔均匀（旧实现取 0/0.2/0.5/0.75/1 比例，间距 0.2/0.3/0.25/0.25 视觉不均）
   const ticks = Array.from(
     new Set(
-      [
-        0,
-        Math.floor(n / 5),
-        Math.floor(n / 2),
-        Math.floor((3 * n) / 4),
-        n - 1,
-      ].filter((t) => t >= 0 && t < n),
+      [0, 0.25, 0.5, 0.75, 1]
+        .map((f) => Math.round(f * (n - 1)))
+        .filter((t) => t >= 0 && t < n),
     ),
   );
 
@@ -155,7 +152,7 @@ export function TrendChart({
             <text
               x={x(t)}
               y={Ht - 4}
-              textAnchor="middle"
+              textAnchor={t === 0 ? "start" : t === n - 1 ? "end" : "middle"}
               fontSize="10"
               fill="hsl(var(--muted-foreground))"
             >
