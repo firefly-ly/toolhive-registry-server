@@ -83,10 +83,8 @@ export function FavsBlock({
                   type="button"
                   onClick={() => setFilter(key)}
                   className={cn(
-                    buttonVariants({
-                      variant: filter === key ? "default" : "ghost",
-                      size: "sm",
-                    }),
+                    buttonVariants({ variant: "ghost", size: "sm" }),
+                    filter === key && "bg-primary/10 text-primary",
                     "cursor-pointer border-none shadow-none",
                   )}
                 >

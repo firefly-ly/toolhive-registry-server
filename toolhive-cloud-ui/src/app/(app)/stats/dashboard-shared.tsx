@@ -77,7 +77,7 @@ export function Seg({
           className={cn(
             "rounded-md px-4 py-1 text-base transition-colors cursor-pointer",
             on === o.k
-              ? "bg-primary text-primary-foreground"
+              ? "bg-primary/10 text-primary"
               : "text-muted-foreground hover:text-foreground",
           )}
         >

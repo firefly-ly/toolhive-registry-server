@@ -36,7 +36,7 @@ function SidebarNavLink({
         "flex h-9 items-center rounded-md text-sm font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-sidebar-ring",
         collapsed ? "w-full justify-center" : "px-2.5",
         active
-          ? "bg-primary/10 text-primary"
+          ? "bg-primary text-primary-foreground hover:bg-primary/90"
           : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground",
       )}
     >

@@ -71,7 +71,7 @@ export function ServerDetailTabs({
           <TabsTrigger
             key={tab.value}
             value={tab.value}
-            className="rounded-lg border-0 px-6 text-muted-foreground data-[state=active]:text-primary-foreground data-[state=active]:shadow-none"
+            className="rounded-lg border-0 px-6 text-muted-foreground"
           >
             {tab.label}
           </TabsTrigger>
