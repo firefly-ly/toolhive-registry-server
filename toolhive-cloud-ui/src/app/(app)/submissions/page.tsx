@@ -34,10 +34,7 @@ export default async function SubmissionsPage({
 
   return (
     <div className="flex h-full flex-col">
-      <PageHeader
-        title="提交管理"
-        description={`历史提交 ${ownSubmissions.length} 条 · 全程记入审计轨迹`}
-      />
+      <PageHeader title="提交管理" />
 
       {/* 顶部 Tab 切换：新建提交 / 历史提交（与 admin 一致，整块可点） */}
       <div className="px-8 pt-2">

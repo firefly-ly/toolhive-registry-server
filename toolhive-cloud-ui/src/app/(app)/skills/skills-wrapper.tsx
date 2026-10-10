@@ -60,10 +60,7 @@ export function SkillsWrapper({
 
   return (
     <div className="flex h-full flex-col">
-      <PageHeader
-        title="Skill 目录"
-        description={`共 ${skills.length} 个技能，均经安全扫描后上架`}
-      />
+      <PageHeader title="Skill 目录" />
 
       {/* 工具栏独立成行：左搜索，右视图切换（与 MCP 目录同款） */}
       <div className="mb-4 flex w-full flex-wrap items-center justify-between gap-3">

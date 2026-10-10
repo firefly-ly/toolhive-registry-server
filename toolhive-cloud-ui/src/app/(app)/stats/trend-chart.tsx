@@ -112,7 +112,7 @@ export function TrendChart({
               y1={yy}
               x2={Wd - padR}
               y2={yy}
-              stroke="#eef1f5"
+              stroke="hsl(var(--border) / 0.6)"
               strokeWidth="1"
             />
           );
@@ -128,13 +128,18 @@ export function TrendChart({
               y={yy + 3}
               textAnchor="end"
               fontSize="9.5"
-              fill="#9aa1ac"
+              fill="hsl(var(--muted-foreground))"
             >
               {v}
             </text>
           );
         })}
-        <text x={padL - 34} y={padT - 6} fontSize="9.5" fill="#9aa1ac">
+        <text
+          x={padL - 34}
+          y={padT - 6}
+          fontSize="9.5"
+          fill="hsl(var(--muted-foreground))"
+        >
           次数
         </text>
         {ticks.map((t) => (
@@ -144,7 +149,7 @@ export function TrendChart({
               y1={padT}
               x2={x(t)}
               y2={Ht - padB}
-              stroke="#eef1f5"
+              stroke="hsl(var(--border) / 0.6)"
               strokeWidth="1"
             />
             <text
@@ -152,7 +157,7 @@ export function TrendChart({
               y={Ht - 4}
               textAnchor="middle"
               fontSize="10"
-              fill="#9aa1ac"
+              fill="hsl(var(--muted-foreground))"
             >
               {seg(days[t])}
             </text>
@@ -189,8 +194,8 @@ export function TrendChart({
                 cx={nearest.x}
                 cy={nearest.y}
                 r={4}
-                fill={hitColor || "#111"}
-                stroke="#fff"
+                fill={hitColor || "hsl(var(--foreground))"}
+                stroke="hsl(var(--background))"
                 strokeWidth="1.5"
               />
             );
@@ -218,7 +223,7 @@ export function TrendChart({
             >
               <span
                 className="mr-1.5 inline-block h-2.5 w-2.5 rounded-sm align-middle"
-                style={{ background: hitColor || "#111" }}
+                style={{ background: hitColor || "hsl(var(--foreground))" }}
               />
               {hitName}
             </div>

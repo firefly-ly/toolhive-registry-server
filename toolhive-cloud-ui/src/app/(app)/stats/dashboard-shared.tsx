@@ -39,8 +39,8 @@ export interface TrendItem {
 }
 
 export type Filt = "all" | "mcp" | "skill";
-export const MCP = "#3b82f6";
-export const SKILL = "#0f9d76";
+export const MCP = "hsl(var(--info))";
+export const SKILL = "hsl(var(--success))";
 
 export function TypePill({ t }: { t: "mcp" | "skill" }) {
   return t === "mcp" ? (
@@ -141,7 +141,13 @@ export function gradeOf(score: number) {
   };
 }
 export const gradeColor = (s: number) =>
-  s >= 80 ? "#0f9d76" : s >= 60 ? "#3b6d11" : s >= 45 ? "#b45309" : "#b0302a";
+  s >= 80
+    ? "hsl(var(--success))"
+    : s >= 60
+      ? "hsl(var(--success) / 0.75)"
+      : s >= 45
+        ? "hsl(var(--warning))"
+        : "hsl(var(--destructive))";
 export function Kpi({
   l,
   v,

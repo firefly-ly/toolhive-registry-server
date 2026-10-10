@@ -65,10 +65,7 @@ export default async function FavoritesPage() {
 
   return (
     <div className="flex h-full flex-col">
-      <PageHeader
-        title="我的收藏"
-        description={`共 ${rows.length} 项：MCP ${rows.filter((r) => r.item_type === "mcp").length} · Skill ${rows.filter((r) => r.item_type === "skill").length}`}
-      />
+      <PageHeader title="我的收藏" />
 
       <div className="flex-1 overflow-auto px-8 pb-10 pt-4">
         <FavsBlock title="我的收藏" count={rows.length} rows={rows} />

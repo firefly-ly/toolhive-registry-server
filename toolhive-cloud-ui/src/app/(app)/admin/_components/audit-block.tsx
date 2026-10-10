@@ -119,6 +119,36 @@ export async function AuditBlock({
   };
   const totalPages = Math.max(1, Math.ceil(total / AUDIT_PAGE_SIZE));
 
+  // 页码列表：≤7 页全铺；更长时折叠为 1 … p-1 p p+1 … N（key 用 gap 位置，稳定）
+  const pageNumbers = (() => {
+    const pushPage = (
+      out: { key: string; v: number | "…" }[],
+      prev: number,
+      p: number,
+    ) => {
+      if (p - prev > 1) out.push({ key: `gap-${prev}-${p}`, v: "…" });
+      out.push({ key: `p${p}`, v: p });
+    };
+    if (totalPages <= 7) {
+      const out: { key: string; v: number | "…" }[] = [];
+      for (let i = 1; i <= totalPages; i++) pushPage(out, i - 1, i);
+      return out;
+    }
+    const set = new Set(
+      [1, totalPages, page - 1, page, page + 1].filter(
+        (p) => p >= 1 && p <= totalPages,
+      ),
+    );
+    const sorted = [...set].sort((a, b) => a - b);
+    const out: { key: string; v: number | "…" }[] = [];
+    let prev = 0;
+    for (const p of sorted) {
+      pushPage(out, prev, p);
+      prev = p;
+    }
+    return out;
+  })();
+
   // 对象 ID → 可读名称映射（来自提交记录 meta.name），提升表格可读性
   const nameMap = new Map<string, string>();
   try {
@@ -337,11 +367,36 @@ export async function AuditBlock({
           <p className="text-xs text-muted-foreground">
             共 {total} 条 · 第 {page} / {totalPages} 页
           </p>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
             {page > 1 && (
               <Button variant="outline" size="sm" asChild>
                 <Link href={pageUrl(page - 1)}>上一页</Link>
               </Button>
+            )}
+            {pageNumbers.map((item) =>
+              item.v === "…" ? (
+                <span
+                  key={item.key}
+                  className="px-1 text-xs text-muted-foreground"
+                >
+                  …
+                </span>
+              ) : (
+                <Link
+                  key={item.key}
+                  href={pageUrl(item.v)}
+                  aria-current={item.v === page ? "page" : undefined}
+                  aria-label={`第 ${item.v} 页`}
+                  className={cn(
+                    "flex h-8 min-w-8 items-center justify-center rounded-md px-2 text-sm",
+                    item.v === page
+                      ? "bg-primary/10 font-medium text-primary"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                  )}
+                >
+                  {item.v}
+                </Link>
+              ),
             )}
             {page < totalPages && (
               <Button variant="outline" size="sm" asChild>

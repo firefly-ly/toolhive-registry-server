@@ -86,9 +86,19 @@ export function StatsDashboard({
           v={kpis.total}
           s={`MCP ${items.filter((i) => i.type === "mcp").length} · Skill ${items.filter((i) => i.type === "skill").length}`}
         />
-        <Kpi l="平均综合分" v={kpis.avg} s="0–100" c="#0f9d76" />
-        <Kpi l="优质 (≥80)" v={kpis.good} s="高价值 · 可主推" c="#0d6b52" />
-        <Kpi l="需关注 (<50)" v={kpis.watch} s="缺维护 / 低采纳" c="#b0302a" />
+        <Kpi l="平均综合分" v={kpis.avg} s="0–100" c="hsl(var(--success))" />
+        <Kpi
+          l="优质 (≥80)"
+          v={kpis.good}
+          s="高价值 · 可主推"
+          c="hsl(var(--success) / 0.8)"
+        />
+        <Kpi
+          l="需关注 (<50)"
+          v={kpis.watch}
+          s="缺维护 / 低采纳"
+          c="hsl(var(--destructive))"
+        />
       </div>
 
       {/* 排行榜 | 留存 */}
@@ -123,7 +133,7 @@ export function StatsDashboard({
               className={cn(
                 "rounded-xl border p-2.5 text-left transition-colors cursor-pointer",
                 retMode === "users"
-                  ? "border-primary bg-primary text-primary-foreground"
+                  ? "border-primary/40 bg-primary/10 text-primary"
                   : "border-border bg-card hover:border-primary/40",
               )}
             >
@@ -137,7 +147,7 @@ export function StatsDashboard({
               className={cn(
                 "rounded-xl border p-2.5 text-left transition-colors cursor-pointer",
                 retMode === "ppc"
-                  ? "border-primary bg-primary text-primary-foreground"
+                  ? "border-primary/40 bg-primary/10 text-primary"
                   : "border-border bg-card hover:border-primary/40",
               )}
             >

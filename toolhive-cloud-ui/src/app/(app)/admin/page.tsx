@@ -88,10 +88,7 @@ export default async function AdminPage({
 
   return (
     <div className="flex h-full flex-col">
-      <PageHeader
-        title="管理后台"
-        description={`待审 ${pending.length} · 已发布 ${published.length} 项 · 回收站 ${retired.length} 条`}
-      />
+      <PageHeader title="管理后台" />
 
       {/* 顶部 Tab 切换：直接用 Link 渲染为按钮，整块可点（Button 未实现 asChild，套 Link 会导致只有文字能点） */}
       <div className="px-8 pt-2">

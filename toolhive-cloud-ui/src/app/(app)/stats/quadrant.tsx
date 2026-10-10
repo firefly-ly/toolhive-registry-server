@@ -31,12 +31,12 @@ export function Quadrant({ items }: { items: ItemStat[] }) {
     cy0 = (y0 + y1) / 2;
   const col = (s: number) =>
     s >= 80
-      ? "rgba(15,157,118,.62)"
+      ? "hsl(var(--success) / 0.55)"
       : s >= 60
-        ? "rgba(15,157,118,.46)"
+        ? "hsl(var(--success) / 0.4)"
         : s >= 45
-          ? "rgba(230,161,0,.58)"
-          : "rgba(226,75,74,.58)";
+          ? "hsl(var(--warning) / 0.55)"
+          : "hsl(var(--destructive) / 0.55)";
   const shown = items.filter((i) => (i.adopt30 || 0) > 0 && i.score > 0);
   const cap = (v: number, lo: number, hi: number) =>
     Math.max(lo, Math.min(hi, v));
@@ -52,8 +52,8 @@ export function Quadrant({ items }: { items: ItemStat[] }) {
         y={y0}
         width={plotW}
         height={plotH}
-        fill="#fbfcfe"
-        stroke="#e6eaf0"
+        fill="hsl(var(--card))"
+        stroke="hsl(var(--border))"
       />
       {ticks.map((t) => (
         <line
@@ -62,7 +62,7 @@ export function Quadrant({ items }: { items: ItemStat[] }) {
           y1={y0}
           x2={X(t)}
           y2={y1}
-          stroke="#eef1f5"
+          stroke="hsl(var(--border) / 0.6)"
         />
       ))}
       {ticks.map((t) => (
@@ -72,7 +72,7 @@ export function Quadrant({ items }: { items: ItemStat[] }) {
           y1={Y((maxAdopt * t) / 100)}
           x2={x1}
           y2={Y((maxAdopt * t) / 100)}
-          stroke="#eef1f5"
+          stroke="hsl(var(--border) / 0.6)"
         />
       ))}
       {/* 中位线 */}
@@ -81,7 +81,7 @@ export function Quadrant({ items }: { items: ItemStat[] }) {
         y1={y0}
         x2={cx0}
         y2={y1}
-        stroke="#cbd3de"
+        stroke="hsl(var(--muted-foreground) / 0.45)"
         strokeWidth="1.3"
       />
       <line
@@ -89,23 +89,36 @@ export function Quadrant({ items }: { items: ItemStat[] }) {
         y1={cy0}
         x2={x1}
         y2={cy0}
-        stroke="#cbd3de"
+        stroke="hsl(var(--muted-foreground) / 0.45)"
         strokeWidth="1.3"
       />
       {/* Y 轴：轴线 + 刻度 + 数字（数字为对应区段的最大采纳数） */}
-      <line x1={x0} y1={y0} x2={x0} y2={y1} stroke="#6b7280" strokeWidth="1" />
+      <line
+        x1={x0}
+        y1={y0}
+        x2={x0}
+        y2={y1}
+        stroke="hsl(var(--muted-foreground))"
+        strokeWidth="1"
+      />
       {ticks.map((t) => {
         const y = Y((maxAdopt * t) / 100);
         const num = Math.round((maxAdopt * t) / 100);
         return (
           <g key={`y${t}`}>
-            <line x1={x0 - 5} y1={y} x2={x0} y2={y} stroke="#6b7280" />
+            <line
+              x1={x0 - 5}
+              y1={y}
+              x2={x0}
+              y2={y}
+              stroke="hsl(var(--muted-foreground))"
+            />
             <text
               x={x0 - 8}
               y={y + 4}
               textAnchor="end"
               fontSize="10"
-              fill="#6b7280"
+              fill="hsl(var(--muted-foreground))"
             >
               {num}
             </text>
@@ -113,18 +126,31 @@ export function Quadrant({ items }: { items: ItemStat[] }) {
         );
       })}
       {/* X 轴：轴线 + 刻度 + 数字（综合评分 0/25/50/75/100） */}
-      <line x1={x0} y1={y1} x2={x1} y2={y1} stroke="#6b7280" strokeWidth="1" />
+      <line
+        x1={x0}
+        y1={y1}
+        x2={x1}
+        y2={y1}
+        stroke="hsl(var(--muted-foreground))"
+        strokeWidth="1"
+      />
       {ticks.map((t) => {
         const x = X(t);
         return (
           <g key={`x${t}`}>
-            <line x1={x} y1={y1} x2={x} y2={y1 + 5} stroke="#6b7280" />
+            <line
+              x1={x}
+              y1={y1}
+              x2={x}
+              y2={y1 + 5}
+              stroke="hsl(var(--muted-foreground))"
+            />
             <text
               x={x}
               y={y1 + 18}
               textAnchor="middle"
               fontSize="10"
-              fill="#6b7280"
+              fill="hsl(var(--muted-foreground))"
             >
               {t}
             </text>
@@ -138,7 +164,7 @@ export function Quadrant({ items }: { items: ItemStat[] }) {
         y={y0 - 8}
         textAnchor="start"
         fontSize="12"
-        fill="#1f2937"
+        fill="hsl(var(--foreground))"
         fontWeight="700"
       >
         近一月采纳数
@@ -148,7 +174,7 @@ export function Quadrant({ items }: { items: ItemStat[] }) {
         x={x1}
         y={y1 + 32}
         fontSize="12"
-        fill="#1f2937"
+        fill="hsl(var(--foreground))"
         fontWeight="700"
         textAnchor="end"
       >
@@ -158,12 +184,12 @@ export function Quadrant({ items }: { items: ItemStat[] }) {
         x={x1 - 8}
         y={y0 + 14}
         fontSize="11"
-        fill="#0d6b52"
+        fill="hsl(var(--success))"
         textAnchor="end"
       >
         高采纳 · 高质量
       </text>
-      <text x={x0 + 8} y={y1 - 6} fontSize="11" fill="#b0302a">
+      <text x={x0 + 8} y={y1 - 6} fontSize="11" fill="hsl(var(--destructive))">
         低采纳 · 低质量
       </text>
       {/* 名牌投影滤镜 */}
@@ -173,7 +199,7 @@ export function Quadrant({ items }: { items: ItemStat[] }) {
             dx="0"
             dy="2"
             stdDeviation="3"
-            floodColor="#0f172a"
+            floodColor="#201614"
             floodOpacity="0.14"
           />
         </filter>
@@ -202,7 +228,7 @@ export function Quadrant({ items }: { items: ItemStat[] }) {
               cy={py}
               r={rr}
               fill={col(it.score)}
-              stroke="#fff"
+              stroke="hsl(var(--background))"
               strokeWidth="1"
             />
             {isHover &&
@@ -210,12 +236,12 @@ export function Quadrant({ items }: { items: ItemStat[] }) {
                 // 圆点颜色与气泡评级一致（不透明版）
                 const dotFill =
                   it.score >= 80
-                    ? "#0f9d76"
+                    ? "hsl(var(--success))"
                     : it.score >= 60
-                      ? "#3b6d11"
+                      ? "hsl(var(--success) / 0.75)"
                       : it.score >= 45
-                        ? "#e6a100"
-                        : "#e24b4a";
+                        ? "hsl(var(--warning))"
+                        : "hsl(var(--destructive))";
                 const nameTxt =
                   it.name.length > 16 ? `${it.name.slice(0, 15)}…` : it.name;
                 const metaTxt = `${it.type === "mcp" ? "调用" : "下载"} ${Math.round(it.adopt30)} · 评分 ${it.score}`;
@@ -251,16 +277,16 @@ export function Quadrant({ items }: { items: ItemStat[] }) {
                       width={w}
                       height={h}
                       rx={8}
-                      fill="#ffffff"
-                      stroke="#dfe5ec"
+                      fill="hsl(var(--card))"
+                      stroke="hsl(var(--border))"
                       strokeWidth="0.8"
                       filter="url(#quadTipShadow)"
                     />
                     {/* 指向气泡的小三角 */}
                     <path
                       d={`M ${tip - 5} ${seamY + dir * 0.5} L ${tip + 5} ${seamY + dir * 0.5} L ${tip} ${seamY + dir * 6} Z`}
-                      fill="#ffffff"
-                      stroke="#dfe5ec"
+                      fill="hsl(var(--card))"
+                      stroke="hsl(var(--border))"
                       strokeWidth="0.8"
                     />
                     {/* 盖住三角与矩形接缝处的描边线 */}
@@ -269,7 +295,7 @@ export function Quadrant({ items }: { items: ItemStat[] }) {
                       y={below ? top + h - 0.9 : top - 0.9}
                       width={9}
                       height={1.8}
-                      fill="#ffffff"
+                      fill="hsl(var(--card))"
                     />
                     {/* 第一行：评级色圆点 + 名称 */}
                     <circle
@@ -283,7 +309,7 @@ export function Quadrant({ items }: { items: ItemStat[] }) {
                       y={top + 9.5}
                       fontSize="8"
                       fontWeight="700"
-                      fill="#111827"
+                      fill="hsl(var(--foreground))"
                       dominantBaseline="middle"
                     >
                       {nameTxt}
@@ -293,7 +319,7 @@ export function Quadrant({ items }: { items: ItemStat[] }) {
                       x={textX}
                       y={top + 20}
                       fontSize="7.5"
-                      fill="#6b7280"
+                      fill="hsl(var(--muted-foreground))"
                       dominantBaseline="middle"
                     >
                       {metaTxt}

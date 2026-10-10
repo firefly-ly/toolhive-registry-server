@@ -112,10 +112,7 @@ export function ServersWrapper({
 
   return (
     <div className="flex flex-col h-full">
-      <PageHeader
-        title="MCP 目录"
-        description={`共 ${allItems.length} 个服务，其中 ${submittedMcps.length} 个来自用户提交`}
-      />
+      <PageHeader title="MCP 目录" />
 
       {/* 工具栏独立成行：左搜索/数据源，右视图切换 */}
       <div className="mx-auto mb-4 w-full">
