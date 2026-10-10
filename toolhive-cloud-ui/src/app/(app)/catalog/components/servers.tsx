@@ -90,7 +90,7 @@ export function Servers({
           <ServersTable servers={servers} onServerClick={handleServerClick} />
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-3 pb-3 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-3 pb-3">
           {servers.map((server) => (
             <ServerCard
               key={server.name}

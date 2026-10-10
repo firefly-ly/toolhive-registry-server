@@ -126,7 +126,7 @@ export function ServersWrapper({
 
       {/* 陈列馆门面仅在首页且无搜索词时展示，避免干扰检索结果 */}
       {!search && safePage === 0 && (
-        <div className="mx-auto mb-4 w-full">
+        <div className="mx-auto mb-4 w-full @container">
           <CatalogHero
             newest={sortedSubmitted[0] ?? null}
             feed={sortedSubmitted.slice(1, 4)}

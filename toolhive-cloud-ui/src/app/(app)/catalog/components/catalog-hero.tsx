@@ -26,7 +26,7 @@ export function CatalogHero({
     });
 
   return (
-    <div className="grid grid-cols-1 gap-3 lg:grid-cols-[2fr_1fr]">
+    <div className="grid grid-cols-1 gap-3 @[900px]:grid-cols-[minmax(480px,2fr)_minmax(280px,1fr)]">
       {/* 主打卡：红书脊 + 最新上架 */}
       <div
         className="flex flex-col justify-between rounded-xl border bg-card px-5 py-4"

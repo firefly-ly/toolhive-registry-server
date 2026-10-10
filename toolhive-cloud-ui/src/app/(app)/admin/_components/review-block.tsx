@@ -103,7 +103,7 @@ export function ReviewBlock({ pending }: { pending: Submission[] }) {
   }
 
   return (
-    <div className="grid h-full min-h-0 grid-cols-1 gap-4 lg:grid-cols-[2fr_3fr]">
+    <div className="grid h-full min-h-0 grid-cols-1 gap-4 lg:grid-cols-[minmax(300px,2fr)_minmax(460px,3fr)]">
       {/* 左栏：分组队列 */}
       <div className="flex min-h-0 flex-col rounded-xl border bg-card">
         <div className="space-y-2.5 border-b p-3">
