@@ -111,7 +111,7 @@ export function SkillsWrapper({
   };
 
   return (
-    <div className="flex h-full flex-col overflow-y-auto">
+    <div className="-mr-8 flex h-full flex-col overflow-y-auto pr-8">
       <PageHeader title="技能目录" />
 
       {/* 陈列馆门面：搜索/组合过滤时隐藏 */}

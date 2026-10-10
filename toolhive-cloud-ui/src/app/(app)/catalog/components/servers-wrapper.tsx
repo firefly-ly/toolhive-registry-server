@@ -121,7 +121,7 @@ export function ServersWrapper({
   );
 
   return (
-    <div className="flex h-full flex-col overflow-y-auto">
+    <div className="-mr-8 flex h-full flex-col overflow-y-auto pr-8">
       <PageHeader title="MCP 目录" />
 
       {/* 陈列馆门面：翻页保留，搜索时隐藏避免干扰检索结果 */}
