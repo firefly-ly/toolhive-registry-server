@@ -171,7 +171,7 @@ export async function AuditBlock({
     "h-9 rounded-md border bg-transparent px-2 text-sm shadow-xs dark:bg-input/30";
 
   return (
-    <div className="space-y-4">
+    <div className="flex min-h-0 flex-1 flex-col gap-4">
       {/* 筛选表单：GET 提交回 /admin?tab=audit，纯服务端过滤，无需 client state */}
       <form
         method="get"
@@ -277,9 +277,9 @@ export async function AuditBlock({
       {error && <ErrorToast message={`审计查询失败：${error}`} />}
 
       {!error && (
-        <div className="overflow-hidden rounded-xl border">
+        <div className="min-h-0 flex-1 overflow-y-auto rounded-xl border">
           <table className="w-full text-left text-base">
-            <thead className="bg-muted/50 text-sm text-muted-foreground">
+            <thead className="sticky top-0 z-10 bg-muted text-sm text-muted-foreground">
               <tr>
                 <th className="px-3 py-2 font-medium">时间</th>
                 <th className="px-3 py-2 font-medium">操作人</th>

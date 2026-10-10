@@ -59,7 +59,7 @@ type ScanStatus =
   | "skipped"
   | "scanning";
 
-interface TrivyResult {
+export interface TrivyResult {
   status: ScanStatus;
   critical?: number;
   high?: number;
@@ -69,7 +69,7 @@ interface TrivyResult {
   error?: string;
 }
 
-interface PromptScanResult {
+export interface PromptScanResult {
   status: ScanStatus;
   total?: number;
   hits?: {
@@ -85,7 +85,8 @@ interface PromptScanResult {
 }
 
 // 扫描三态徽章：绿=clean/低危，黄=warn/等待，红=critical/alert/扫描失败，灰=skipped
-function ScanBadge({
+// 导出供管理页「指挥台」档案摘要复用（同一套状态→文案口径）
+export function ScanBadge({
   label,
   status,
   extra,
@@ -150,7 +151,17 @@ function Field({
   );
 }
 
-export function ApproveDialog({ submission }: { submission: Submission }) {
+export function ApproveDialog({
+  submission,
+  triggerLabel = "审批",
+  triggerClassName,
+}: {
+  submission: Submission;
+  /** 触发按钮文案（指挥台档案用「审查并审批」） */
+  triggerLabel?: string;
+  /** 追加到触发按钮的类（尺寸/样式微调） */
+  triggerClassName?: string;
+}) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [phase, setPhase] = useState<"idle" | "approving" | "rejecting">(
@@ -296,8 +307,8 @@ export function ApproveDialog({ submission }: { submission: Submission }) {
       }}
     >
       <DialogTrigger asChild>
-        <Button size="sm" className="text-sm">
-          审批
+        <Button size="sm" className={cn("text-sm", triggerClassName)}>
+          {triggerLabel}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-6xl">
