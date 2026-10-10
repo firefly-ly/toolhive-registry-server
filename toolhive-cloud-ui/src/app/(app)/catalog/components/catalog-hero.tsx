@@ -2,23 +2,49 @@
 
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import type { McpServer } from "@/lib/platform-backend";
+
+/** hero 条目的最小结构（McpServer / Skill 均天然满足） */
+export interface HeroItem {
+  id: string;
+  name: string;
+  description?: string;
+  version?: string;
+  owner?: string;
+  created_at: string;
+}
 
 /**
- * 「最新上架」主打卡 + 最近更新 feed（陈列馆门面）。
- * 数据源 = 已审批提交的 MCP 按 created_at 倒序；registry 条目无时间戳不参与排序。
- * 无提交条目时整体不渲染，不占位。
+ * 「最新上架」主打卡 + 最近更新 feed（陈列馆门面，MCP/Skill 两页共用）。
+ * 数据源 = 已上架条目按 created_at 倒序；无条目时整体不渲染，不占位。
+ * accent：info 蓝=MCP，success 青绿=Skill（全站类型色觉系统）。
  */
 export function CatalogHero({
   newest,
   feed,
+  routePrefix = "/mcp",
+  typeLabel = "MCP",
+  accent = "info",
 }: {
-  newest: McpServer | null;
-  feed: McpServer[];
+  newest: HeroItem | null;
+  feed: HeroItem[];
+  routePrefix?: string;
+  typeLabel?: string;
+  accent?: "info" | "success";
 }) {
   const router = useRouter();
   if (!newest) return null;
 
+  const isTeal = accent === "success";
+  const accentHex = isTeal ? "hsl(var(--success))" : "hsl(var(--primary))";
+  const chipCls = isTeal
+    ? "bg-success/10 text-success"
+    : "bg-primary/10 text-primary";
+  const typeCls = isTeal
+    ? "bg-success/10 text-success"
+    : "bg-info/10 text-info";
+
+  const go = (id: string) =>
+    router.push(`${routePrefix}/${encodeURIComponent(id)}`);
   const fmtDate = (iso: string) =>
     new Date(iso).toLocaleDateString("zh-CN", {
       month: "2-digit",
@@ -27,13 +53,15 @@ export function CatalogHero({
 
   return (
     <div className="grid grid-cols-1 gap-3 @[900px]:grid-cols-[minmax(480px,2fr)_minmax(280px,1fr)]">
-      {/* 主打卡：红书脊 + 最新上架 */}
+      {/* 主打卡：色觉书脊 + 最新上架 */}
       <div
         className="flex flex-col justify-between rounded-xl border bg-card px-5 py-4"
-        style={{ borderLeft: "4px solid hsl(var(--primary))" }}
+        style={{ borderLeft: `4px solid ${accentHex}` }}
       >
         <div>
-          <span className="mb-2 inline-block rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
+          <span
+            className={`mb-2 inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${chipCls}`}
+          >
             最新上架
           </span>
           <p className="truncate text-lg font-medium">{newest.name}</p>
@@ -47,8 +75,8 @@ export function CatalogHero({
               v{newest.version}
             </span>
           )}
-          <span className="rounded-md bg-info/10 px-2 py-0.5 text-xs text-info">
-            MCP
+          <span className={`rounded-md px-2 py-0.5 text-xs ${typeCls}`}>
+            {typeLabel}
           </span>
           <span className="truncate text-xs text-muted-foreground">
             {newest.owner || "内部提交"}
@@ -57,7 +85,7 @@ export function CatalogHero({
             type="button"
             size="sm"
             className="ml-auto"
-            onClick={() => router.push(`/mcp/${encodeURIComponent(newest.id)}`)}
+            onClick={() => go(newest.id)}
           >
             查看详情
           </Button>
@@ -75,7 +103,7 @@ export function CatalogHero({
               <button
                 key={m.id}
                 type="button"
-                onClick={() => router.push(`/mcp/${encodeURIComponent(m.id)}`)}
+                onClick={() => go(m.id)}
                 className="flex w-full cursor-pointer items-center gap-2 rounded-md px-1 py-0.5 text-left transition-colors hover:bg-muted/50"
               >
                 <span className="size-1.5 shrink-0 rounded-full bg-success" />

@@ -121,11 +121,11 @@ export function ServersWrapper({
   );
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex h-full flex-col overflow-y-auto">
       <PageHeader title="MCP 目录" />
 
-      {/* 陈列馆门面仅在首页且无搜索词时展示，避免干扰检索结果 */}
-      {!search && safePage === 0 && (
+      {/* 陈列馆门面：翻页保留，搜索时隐藏避免干扰检索结果 */}
+      {!search && (
         <div className="mx-auto mb-4 w-full @container">
           <CatalogHero
             newest={sortedSubmitted[0] ?? null}
@@ -148,7 +148,7 @@ export function ServersWrapper({
         />
       </div>
 
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1">
         <Servers
           servers={pageServers}
           registryName={selectedRegistry}

@@ -52,7 +52,7 @@ export function SkillCard({
   const versionLabel = (s: Skill) => (s.version ? `v${s.version}` : s.name);
 
   return (
-    <Card className="card-hover flex h-full w-full flex-col gap-4 py-4">
+    <Card className="card-hover flex h-full w-full flex-col gap-4 border-t-2 border-t-success/40 py-4 transition-colors hover:border-success/40">
       <CardHeader className="gap-1">
         <div className="flex items-center justify-between gap-2">
           <CardTitle
