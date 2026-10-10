@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { PageHeader } from "@/components/header-page";
-import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getAuthContext } from "@/lib/auth/context";
 import { listSubmissions } from "@/lib/platform-backend";
@@ -33,18 +32,19 @@ export default async function SubmissionsPage({
       });
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="-mr-8 flex h-full flex-col overflow-y-auto pr-8">
       <PageHeader title="提交管理" />
 
-      {/* 顶部 Tab 切换：新建提交 / 历史提交（与 admin 一致，整块可点） */}
-      <div className="px-8 pt-2">
-        <div className="inline-flex gap-2 rounded-lg border bg-muted p-1">
+      {/* 顶部 Tab 切换：新建提交 / 历史提交（分段控件口径） */}
+      <div className="pb-4">
+        <div className="inline-flex rounded-lg border bg-card p-1">
           <Link
             href="/submissions?tab=new"
             className={cn(
-              buttonVariants({ variant: "ghost", size: "sm" }),
-              tab === "new" && "bg-primary/10 text-primary",
-              "min-w-[130px]",
+              "rounded-md px-4 py-1.5 text-sm transition-colors",
+              tab === "new"
+                ? "bg-primary/10 font-medium text-primary"
+                : "text-muted-foreground hover:text-foreground",
             )}
           >
             新建提交
@@ -52,9 +52,10 @@ export default async function SubmissionsPage({
           <Link
             href="/submissions?tab=history"
             className={cn(
-              buttonVariants({ variant: "ghost", size: "sm" }),
-              tab === "history" && "bg-primary/10 text-primary",
-              "min-w-[130px]",
+              "rounded-md px-4 py-1.5 text-sm transition-colors",
+              tab === "history"
+                ? "bg-primary/10 font-medium text-primary"
+                : "text-muted-foreground hover:text-foreground",
             )}
           >
             历史提交
@@ -62,7 +63,7 @@ export default async function SubmissionsPage({
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto px-8 pb-10 pt-4">
+      <div className="pb-10">
         {tab === "new" ? (
           <Card className="mx-auto max-w-7xl shadow-none">
             <CardHeader>

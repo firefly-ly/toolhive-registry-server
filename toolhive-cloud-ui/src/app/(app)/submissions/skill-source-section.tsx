@@ -47,6 +47,8 @@ export function SkillSourceSection({
             buttonLabel="选择文件"
             file={file}
             onFile={onFile}
+            dropzone
+            hint="支持 .zip / .tar.gz / .tgz / .tar，包内须含 SKILL.md（顶部 YAML front matter：name / description）"
           />
         </TabsContent>
 
