@@ -44,7 +44,7 @@ export function ServerCard({
 
   return (
     <Card
-      className="card-hover flex h-full w-full flex-col gap-4 py-4"
+      className="card-hover flex h-full w-full flex-col gap-4 py-4 transition-colors hover:border-primary/40"
       onClick={onClick ? () => onClick() : undefined}
     >
       <CardHeader className="cursor-pointer gap-1">
@@ -93,6 +93,7 @@ export function ServerCard({
               </Button>
             </form>
             <span className="text-xs text-muted-foreground">
+              {server.version ? `v${server.version} · ` : ""}
               {callCount} 次调用
             </span>
           </div>

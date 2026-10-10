@@ -10,6 +10,7 @@ import type {
 import type { McpServer } from "@/lib/platform-backend";
 import { CATALOG_PAGE_SIZE } from "../constants";
 import { useCatalogFilters } from "../hooks/use-catalog-filters";
+import { CatalogHero } from "./catalog-hero";
 import { CatalogPagination } from "./catalog-pagination";
 import { ServerFilters } from "./server-filters";
 import { Servers } from "./servers";
@@ -110,9 +111,28 @@ export function ServersWrapper({
     router.push(`/catalog?registryName=${encodeURIComponent(value)}`);
   };
 
+  // 陈列馆门面：已提交 MCP 按 created_at 倒序 → 最新上架主打卡 + 最近更新 feed
+  const sortedSubmitted = useMemo(
+    () =>
+      [...submittedMcps].sort(
+        (a, b) => +new Date(b.created_at) - +new Date(a.created_at),
+      ),
+    [submittedMcps],
+  );
+
   return (
     <div className="flex flex-col h-full">
       <PageHeader title="MCP 目录" />
+
+      {/* 陈列馆门面仅在首页且无搜索词时展示，避免干扰检索结果 */}
+      {!search && safePage === 0 && (
+        <div className="mx-auto mb-4 w-full">
+          <CatalogHero
+            newest={sortedSubmitted[0] ?? null}
+            feed={sortedSubmitted.slice(1, 4)}
+          />
+        </div>
+      )}
 
       {/* 工具栏独立成行：左搜索/数据源，右视图切换 */}
       <div className="mx-auto mb-4 w-full">
