@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { AppSidebar } from "@/components/app-sidebar";
+import { CommandPalette } from "@/components/command-palette";
 import { NavBreadcrumb } from "@/components/nav-breadcrumb";
 import { cn } from "@/lib/utils";
 
@@ -50,6 +51,13 @@ export function AppShell({ isAdmin, navbar, children }: AppShellProps) {
         isAdmin={isAdmin}
         collapsed={collapsed}
         onToggle={toggleCollapsed}
+      />
+
+      {/* ⌘K 全局命令面板：导航跳转与侧栏操作 */}
+      <CommandPalette
+        isAdmin={isAdmin}
+        collapsed={collapsed}
+        onToggleSidebar={toggleCollapsed}
       />
 
       {/* 右列：侧栏宽度的 padding 承接（<md 无侧栏，全宽） */}
