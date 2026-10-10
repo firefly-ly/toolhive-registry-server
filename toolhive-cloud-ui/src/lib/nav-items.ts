@@ -21,7 +21,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/catalog", label: "MCP", icon: Boxes },
   { href: "/skills", label: "技能", icon: Wrench },
   { href: "/submissions", label: "提交", icon: FileUp },
-  { href: "/favorites", label: "收藏", icon: Star },
+  { href: "/favorites", label: "工作台", icon: Star },
   { href: "/stats", label: "统计", icon: BarChart3 },
   { href: "/admin", label: "管理", icon: ShieldCheck, adminOnly: true },
 ];
@@ -40,7 +40,7 @@ export const SEGMENT_LABELS: Record<string, string> = {
   catalog: "MCP",
   skills: "技能",
   submissions: "提交管理",
-  favorites: "我的收藏",
+  favorites: "工作台",
   stats: "使用统计",
   admin: "管理",
   reviews: "审核队列",
