@@ -163,7 +163,10 @@ export function FavsBlock({
                     </span>
                   </div>
                   <p className="mt-2 line-clamp-1 text-xs text-muted-foreground">
-                    {r.description || "暂无描述"}
+                    {r.description ||
+                      (r.href
+                        ? "暂无描述"
+                        : "条目已下线、版本已更新或当前账号无权查看")}
                   </p>
                   <p className="mt-1 text-xs text-muted-foreground/70">
                     {r.metric || "暂无使用记录"}
@@ -181,14 +184,17 @@ export function FavsBlock({
                         取消收藏
                       </Button>
                     </form>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="ml-auto h-8"
-                      asChild
-                    >
-                      <Link href={r.href}>查看</Link>
-                    </Button>
+                    {/* href 为空 = 条目已不可达（下线/无权限），不渲染查看入口 */}
+                    {r.href && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="ml-auto h-8"
+                        asChild
+                      >
+                        <Link href={r.href}>查看</Link>
+                      </Button>
+                    )}
                   </div>
                 </div>
               );

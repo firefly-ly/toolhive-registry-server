@@ -38,7 +38,16 @@ export default async function McpDetailPage({
   params,
   searchParams,
 }: McpDetailPageProps) {
-  const { ref } = await params;
+  const { ref: encodedRef } = await params;
+  // Next 对动态段保留百分号编码（如 registry 服务器名 io.github.stacklok%2Fgithub），
+  // 统一解码后再做提交 id / registry 名匹配，否则 find 永远失配。
+  const ref = (() => {
+    try {
+      return decodeURIComponent(encodedRef);
+    } catch {
+      return encodedRef;
+    }
+  })();
   const { from, call } = await searchParams;
   const backHref =
     from === "stats"
