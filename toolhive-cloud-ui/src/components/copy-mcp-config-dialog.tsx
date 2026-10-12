@@ -114,10 +114,8 @@ export function CopyMcpConfigDialog({
         onClick={(e) => e.stopPropagation()}
       >
         <DialogHeader>
-          <DialogTitle className="text-xl">
-            在客户端中接入「{serverName}」
-          </DialogTitle>
-          <DialogDescription className="text-base">
+          <DialogTitle>在客户端中接入「{serverName}」</DialogTitle>
+          <DialogDescription>
             复制下方配置粘贴到你的客户端配置文件中，即可使用该 MCP。
           </DialogDescription>
         </DialogHeader>

@@ -291,7 +291,7 @@ export function VersionRow({ s }: { s: Submission }) {
           {!isOnShelf(s) && (
             <Badge
               variant="outline"
-              className="border-warning/50 text-warning text-xs"
+              className="border-warning/50 text-warning text-xs font-medium"
             >
               未上线
             </Badge>
@@ -361,7 +361,7 @@ export function VersionActions({ s }: { s: Submission }) {
           </form>
         )}
       {isMcp && (deploy === "unborn" || deploy === "failed") && !onShelf && (
-        <span className="inline-flex items-center gap-1 text-xs text-warning">
+        <span className="inline-flex items-center gap-1 text-xs font-medium text-warning">
           待配置可见范围后
         </span>
       )}
@@ -545,7 +545,7 @@ export function RetiredRow({ s }: { s: Submission }) {
           </span>
           <span
             className={cn(
-              "shrink-0 rounded px-1.5 py-0.5 text-[11px] font-medium",
+              "shrink-0 rounded px-1.5 py-0.5 text-xs font-medium",
               rejected
                 ? "bg-destructive/10 text-destructive"
                 : "bg-muted text-muted-foreground",
@@ -561,7 +561,7 @@ export function RetiredRow({ s }: { s: Submission }) {
           {new Date(s.created_at).toLocaleDateString("zh-CN")}
         </div>
       </div>
-      <span className="shrink-0 font-mono text-xs text-muted-foreground/70">
+      <span className="shrink-0 font-mono text-xs text-muted-foreground">
         {versionOf(s)}
       </span>
     </div>

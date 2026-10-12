@@ -7,6 +7,11 @@ import { CopyMcpConfigDialog } from "@/components/copy-mcp-config-dialog";
 import { McpGlyph } from "@/components/type-glyph";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { toggleFavoriteAction } from "@/lib/platform-actions";
 import type { McpServer } from "@/lib/platform-backend";
 
@@ -79,10 +84,10 @@ export function SubmittedMcpCard({
       </div>
 
       <div className="flex flex-1 flex-col p-4">
-        <p className="line-clamp-2 text-sm leading-[18px] text-muted-foreground">
+        <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
           {cur.description || "暂无描述"}
         </p>
-        <p className="mt-1.5 flex items-center gap-1.5 text-xs text-muted-foreground/70">
+        <p className="mt-1.5 flex items-center gap-1.5 text-xs text-muted-foreground">
           <span className="truncate">提交者：{cur.owner || mcp.owner}</span>
           <Badge variant="outline" className="shrink-0 text-xs">
             用户提交
@@ -123,13 +128,19 @@ export function SubmittedMcpCard({
                 className="rounded-full"
               />
             ) : (
-              <Badge
-                variant="outline"
-                className="gap-1 border-warning/40 text-xs text-warning"
-                title="该版本尚未部署，实例未在平台运行"
-              >
-                未运行
-              </Badge>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge
+                    variant="outline"
+                    className="gap-1 border-warning/40 text-xs font-medium text-warning"
+                  >
+                    未运行
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent>
+                  该版本尚未部署，实例未在平台运行
+                </TooltipContent>
+              </Tooltip>
             )}
             <Button
               type="button"

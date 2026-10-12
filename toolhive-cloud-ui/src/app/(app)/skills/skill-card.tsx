@@ -78,10 +78,10 @@ export function SkillCard({
       </div>
 
       <div className="flex flex-1 flex-col p-4">
-        <p className="line-clamp-2 text-sm leading-[18px] text-muted-foreground">
+        <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
           {cur.description || "暂无描述"}
         </p>
-        <p className="mt-1.5 truncate text-xs text-muted-foreground/70">
+        <p className="mt-1.5 truncate text-xs text-muted-foreground">
           提交者：{cur.owner || skill.owner}
         </p>
 

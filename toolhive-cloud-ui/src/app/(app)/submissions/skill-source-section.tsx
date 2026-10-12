@@ -60,7 +60,7 @@ export function SkillSourceSection({
             id="download_url"
             name="download_url"
             type="text"
-            placeholder="https://内网地址/xxx.zip  或  C:\path\to\xxx.zip  或  \\server\share\xxx.zip"
+            placeholder="https://example.com/xxx.zip 或本地 / 共享路径"
             className={inputClass}
           />
           <HintIcon text="支持 http/https 下载链接，或本平台可访问的本地绝对路径（含 UNC 共享路径）。" />

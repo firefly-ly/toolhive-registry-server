@@ -4,6 +4,11 @@ import { CircleSlash, Loader2, Play, Star } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { callMcpAction, toggleFavoriteAction } from "@/lib/platform-actions";
 
 interface McpDetailActionsProps {
@@ -203,14 +208,20 @@ export function McpDetailActions({
 
         {/* 「复制配置」已收敛到上方「使用方式」区块，此处不再重复 */}
         {!publicEndpoint && endpoint && (
-          <Badge
-            variant="outline"
-            className="gap-1 border-warning/40 text-sm text-warning"
-            title="部署记录存在，但实例探测不可达（容器可能已被清理或未启动），复制配置会连不通"
-          >
-            <CircleSlash className="size-3.5" />
-            实例离线
-          </Badge>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Badge
+                variant="outline"
+                className="gap-1 border-warning/40 text-sm font-medium text-warning"
+              >
+                <CircleSlash className="size-3.5" />
+                实例离线
+              </Badge>
+            </TooltipTrigger>
+            <TooltipContent className="max-w-xs leading-relaxed">
+              部署记录存在，但实例探测不可达（容器可能已被清理或未启动），复制配置会连不通
+            </TooltipContent>
+          </Tooltip>
         )}
 
         <span className="text-sm text-muted-foreground">
@@ -232,7 +243,7 @@ export function McpDetailActions({
               // 切换工具即填入该工具的参数模板（无入参则为 {}）
               setArgsText(argsTemplate(t));
             }}
-            className="w-full rounded-md border bg-background px-3 py-2 text-base"
+            className="w-full rounded-md border bg-background px-3 py-2 text-sm"
           >
             {tools.map((t) => (
               <option key={t.name} value={t.name}>
@@ -253,7 +264,7 @@ export function McpDetailActions({
               value={argsText}
               onChange={(e) => setArgsText(e.target.value)}
               rows={4}
-              className="w-full rounded-md border bg-background px-3 py-2 font-mono text-base"
+              className="w-full rounded-md border bg-background px-3 py-2 font-mono text-sm"
               placeholder='{"key":"value"}'
             />
             {(() => {
@@ -316,7 +327,7 @@ export function McpDetailActions({
       )}
 
       {phase === "error" && (
-        <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-base text-destructive">
+        <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
           {error}
         </div>
       )}

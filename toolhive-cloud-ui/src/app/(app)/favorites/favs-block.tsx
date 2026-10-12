@@ -153,7 +153,7 @@ export function FavsBlock({
                     </p>
                     <span
                       className={cn(
-                        "shrink-0 rounded-md px-1.5 py-0.5 text-[11px]",
+                        "shrink-0 rounded-md px-1.5 py-0.5 text-xs",
                         isMcp
                           ? "bg-info/10 text-info"
                           : "bg-success/10 text-success",
@@ -168,7 +168,7 @@ export function FavsBlock({
                         ? "暂无描述"
                         : "条目已下线、版本已更新或当前账号无权查看")}
                   </p>
-                  <p className="mt-1 text-xs text-muted-foreground/70">
+                  <p className="mt-1 text-xs text-muted-foreground">
                     {r.metric || "暂无使用记录"}
                   </p>
                   <div className="mt-3 flex items-center gap-2 border-t pt-3">
@@ -240,7 +240,7 @@ export function FavsBlock({
                         </span>
                       )}
                     </p>
-                    <p className="text-xs text-muted-foreground/70">{a.date}</p>
+                    <p className="text-xs text-muted-foreground">{a.date}</p>
                   </div>
                 </div>
               ))}

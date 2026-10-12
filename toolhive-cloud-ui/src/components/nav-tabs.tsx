@@ -58,7 +58,7 @@ export function NavTabs({
             {typeof t.count === "number" && (
               <span
                 className={cn(
-                  "ml-0.5 rounded-full px-1.5 py-0.5 text-[11px] leading-none",
+                  "ml-0.5 rounded-full px-1.5 py-0.5 text-xs leading-none",
                   active
                     ? "bg-primary/10 font-medium text-primary"
                     : "bg-muted text-muted-foreground",

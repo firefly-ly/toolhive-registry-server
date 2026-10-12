@@ -60,7 +60,7 @@ export function ServerCard({
       </div>
 
       <div className="flex flex-1 flex-col p-4">
-        <p className="line-clamp-2 text-sm leading-[18px] text-muted-foreground">
+        <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
           {description || "暂无描述"}
         </p>
 

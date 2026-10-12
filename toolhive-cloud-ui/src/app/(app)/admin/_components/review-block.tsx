@@ -162,7 +162,7 @@ export function ReviewBlock({ pending }: { pending: Submission[] }) {
                   <span className="min-w-0 truncate text-sm font-medium">
                     {name}
                   </span>
-                  <Badge variant="outline" className="shrink-0 text-[11px]">
+                  <Badge variant="outline" className="shrink-0 text-xs">
                     {TYPE_LABEL[first.type] ?? first.type}
                   </Badge>
                   <span className="ml-auto shrink-0 text-xs text-muted-foreground">

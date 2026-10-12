@@ -287,7 +287,7 @@ export async function AuditBlock({
             const labelOf = (key: string) => {
               const m = key.match(/^(\d+)-(\d+)-(\d+)$/);
               if (!m) return key;
-              const [, y, mo, d] = m;
+              const [, mo, d] = m;
               if (key === dayKey(today)) return `今天 · ${+mo}月${+d}日`;
               if (key === dayKey(yest)) return `昨天 · ${+mo}月${+d}日`;
               return `${+mo}月${+d}日`;
@@ -321,7 +321,7 @@ export async function AuditBlock({
                         e.result !== "success" && "bg-destructive/5",
                       )}
                     >
-                      <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-medium text-primary">
+                      <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary">
                         {(e.actor_email || "?").charAt(0).toUpperCase()}
                       </span>
                       <div className="min-w-0 flex-1">
@@ -330,7 +330,7 @@ export async function AuditBlock({
                             {e.actor_email}
                           </span>
                           {!!e.actor_admin && (
-                            <span className="ml-1.5 rounded bg-primary/10 px-1 py-0.5 text-[11px] text-primary">
+                            <span className="ml-1.5 rounded bg-primary/10 px-1 py-0.5 text-xs text-primary">
                               管理员
                             </span>
                           )}

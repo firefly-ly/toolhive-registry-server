@@ -1,6 +1,7 @@
 "use client";
 
-import { FileArchive, HelpCircle, Link2 } from "lucide-react";
+import { FileArchive, Link2 } from "lucide-react";
+import { Hint } from "@/components/hint";
 import {
   Select,
   SelectContent,
@@ -20,13 +21,9 @@ export const selectTriggerClass =
 
 export function HintIcon({ text }: { text: string }) {
   return (
-    <div
-      className="inline-flex items-center gap-1 text-xs text-muted-foreground"
-      title={text}
-    >
-      <HelpCircle className="size-3.5 cursor-help" />
+    <Hint text={text}>
       <span>说明</span>
-    </div>
+    </Hint>
   );
 }
 
@@ -259,7 +256,7 @@ export function McpSourceSection({
           onValueChange={onTransportChange}
         >
           <SelectTrigger id="transport" className={selectTriggerClass}>
-            <SelectValue placeholder="自动检测">
+            <SelectValue placeholder="未指定（提交后自动检测）">
               {transport === "auto" ? "自动检测" : transport}
             </SelectValue>
           </SelectTrigger>

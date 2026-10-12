@@ -50,7 +50,7 @@ function CheckItem({
     <div className="flex items-center gap-2 text-sm">
       <span
         className={cn(
-          "flex size-4.5 shrink-0 items-center justify-center rounded-full text-[11px] font-medium",
+          "flex size-4.5 shrink-0 items-center justify-center rounded-full text-xs font-medium",
           ok
             ? "bg-success/15 text-success"
             : pending

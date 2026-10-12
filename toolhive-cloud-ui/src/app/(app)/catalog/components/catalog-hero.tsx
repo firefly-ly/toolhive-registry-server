@@ -110,7 +110,7 @@ export function CatalogHero({
                 <span className="min-w-0 flex-1 truncate text-sm">
                   {m.name} {m.version ? `v${m.version}` : ""}
                 </span>
-                <span className="shrink-0 text-xs text-muted-foreground/70">
+                <span className="shrink-0 text-xs text-muted-foreground">
                   {fmtDate(m.created_at)}
                 </span>
               </button>

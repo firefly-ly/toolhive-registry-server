@@ -26,7 +26,7 @@ export function EmptyState({
 
         <div className="space-y-2">
           <h2 className="text-xl font-semibold tracking-tight">{title}</h2>
-          <p className="text-muted-foreground">{description}</p>
+          <p className="text-sm text-muted-foreground">{description}</p>
         </div>
 
         {actions}

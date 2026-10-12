@@ -1,8 +1,9 @@
 "use client";
 
-import { Eye, HelpCircle, Users } from "lucide-react";
+import { Eye, Users } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { Hint } from "@/components/hint";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -41,7 +42,7 @@ function readVisibility(s: Submission): VisibilityData {
 }
 
 const inputClass =
-  "border-input h-10 w-full rounded-md border bg-transparent px-3 text-sm outline-none placeholder:text-muted-foreground/60 focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]";
+  "border-input h-10 w-full rounded-md border bg-transparent px-3 text-sm outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]";
 
 // 管理员配置条目可见范围：全员可见，或仅指定成员（邮箱）/组可见。
 // 提交到 setVisibilityAction（Server Action），后端硬校验管理员身份。
@@ -180,13 +181,9 @@ export function VisibilityDialog({ s }: { s: Submission }) {
                   placeholder="例如：product-team, platform-eng"
                   className={inputClass}
                 />
-                <div
-                  className="inline-flex items-center gap-1 text-xs text-muted-foreground"
-                  title="组名与登录用户身上的 groups 标识匹配（来自 Casdoor / IdP 的 groups 声明）。管理员始终可见全部条目。"
-                >
-                  <HelpCircle className="size-3.5 cursor-help" />
+                <Hint text="组名与登录用户身上的 groups 标识匹配（来自 Casdoor / IdP 的 groups 声明）。管理员始终可见全部条目。">
                   <span>组名匹配规则</span>
-                </div>
+                </Hint>
               </div>
             </div>
           )}

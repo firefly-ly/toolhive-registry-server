@@ -1,9 +1,10 @@
 "use client";
 
-import { Download, HelpCircle } from "lucide-react";
+import { Download } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { Hint } from "@/components/hint";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -313,7 +314,7 @@ export function ApproveDialog({
       </DialogTrigger>
       <DialogContent className="sm:max-w-6xl">
         <DialogHeader>
-          <DialogTitle className="text-xl">审批提交</DialogTitle>
+          <DialogTitle>审批提交</DialogTitle>
           <DialogDescription>
             请审查以下提交内容，再决定是否通过。
           </DialogDescription>
@@ -581,13 +582,11 @@ export function ApproveDialog({
             meta.env_keys.length > 0 && (
               <div className="space-y-2 rounded-lg border bg-muted/30 p-3">
                 <p className="text-sm font-medium">私密配置（.env）</p>
-                <div
-                  className="inline-flex items-center gap-1 text-xs text-muted-foreground"
-                  title={`已配置 ${meta.env_keys.length} 个环境变量，值经 ToolHive 加密凭据库存储，平台全程不落明文；部署时经 --secret 注入容器。`}
+                <Hint
+                  text={`已配置 ${meta.env_keys.length} 个环境变量，值经 ToolHive 加密凭据库存储，平台全程不落明文；部署时经 --secret 注入容器。`}
                 >
-                  <HelpCircle className="size-3.5 cursor-help" />
                   <span>已配置 {meta.env_keys.length} 个环境变量</span>
-                </div>
+                </Hint>
                 <div className="flex flex-wrap gap-1.5">
                   {(meta.env_keys as string[]).map((k) => (
                     <span
@@ -629,17 +628,15 @@ export function ApproveDialog({
           )}
 
           <div className="border-t pt-3">
-            <div
-              className="inline-flex items-center gap-1 text-xs text-muted-foreground"
-              title={
+            <Hint
+              text={
                 isMcp
                   ? "通过后进入「已发布管理」，处于未上线状态（默认仅管理员可见）。管理员需先在该条目点「上线 / 可见范围」选择范围并保存后，才解锁「部署」；部署成功后再按可见范围对普通用户开放调用。"
                   : "通过后进入「已发布管理」，处于未上架状态（默认仅管理员可见）。管理员需在该条目点「上线 / 可见范围」选择范围并保存后，才对所选范围开放目录可见与下载。"
               }
             >
-              <HelpCircle className="size-3.5 cursor-help" />
               <span>通过后的上线流程说明</span>
-            </div>
+            </Hint>
           </div>
         </div>
 

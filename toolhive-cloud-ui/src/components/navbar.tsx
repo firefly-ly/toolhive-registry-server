@@ -28,7 +28,7 @@ export function Navbar({ user, isAdmin }: NavbarProps) {
           className="flex items-center md:hidden"
         >
           <BrandMark className="size-6 shrink-0" />
-          <span className="ml-2 text-[15px] font-semibold tracking-tight">
+          <span className="ml-2 text-sm font-semibold tracking-tight">
             ToolHive
           </span>
         </Link>
@@ -41,7 +41,7 @@ export function Navbar({ user, isAdmin }: NavbarProps) {
           </span>
         )}
         {isAdmin && (
-          <span className="ml-1.5 rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
+          <span className="ml-1.5 rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
             管理员
           </span>
         )}

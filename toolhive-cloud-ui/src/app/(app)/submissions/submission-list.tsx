@@ -225,13 +225,13 @@ export function SubmissionList({
         <Table>
           <TableHeader className="sticky top-0 z-10 bg-background">
             <TableRow>
-              <TableHead className="text-base">名称</TableHead>
-              <TableHead className="text-base">描述</TableHead>
-              <TableHead className="text-base">提交者</TableHead>
-              <TableHead className="text-base">时间</TableHead>
-              <TableHead className="text-base">状态</TableHead>
+              <TableHead className="text-sm">名称</TableHead>
+              <TableHead className="text-sm">描述</TableHead>
+              <TableHead className="text-sm">提交者</TableHead>
+              <TableHead className="text-sm">时间</TableHead>
+              <TableHead className="text-sm">状态</TableHead>
               {showActions && (
-                <TableHead className="text-right text-base">操作</TableHead>
+                <TableHead className="text-right text-sm">操作</TableHead>
               )}
             </TableRow>
           </TableHeader>
@@ -240,7 +240,7 @@ export function SubmissionList({
               <TableRow>
                 <TableCell
                   colSpan={showActions ? 6 : 5}
-                  className="py-10 text-center text-base text-muted-foreground"
+                  className="py-10 text-center text-sm text-muted-foreground"
                 >
                   暂无{type === "mcp" ? "MCP" : type === "skill" ? "Skill" : ""}
                   提交
@@ -254,7 +254,7 @@ export function SubmissionList({
 
               return (
                 <TableRow key={s.id}>
-                  <TableCell className="text-base font-medium">
+                  <TableCell className="text-sm font-medium">
                     <div className="flex flex-col gap-0.5">
                       <span className="truncate" title={title}>
                         {title}
@@ -273,11 +273,11 @@ export function SubmissionList({
                       </Badge>
                     </div>
                   </TableCell>
-                  <TableCell className="max-w-md truncate text-base text-muted-foreground">
+                  <TableCell className="max-w-md truncate text-sm text-muted-foreground">
                     {meta.description || "—"}
                   </TableCell>
-                  <TableCell className="text-base">{s.user_id}</TableCell>
-                  <TableCell className="text-base text-muted-foreground">
+                  <TableCell className="text-sm">{s.user_id}</TableCell>
+                  <TableCell className="text-sm text-muted-foreground">
                     {new Date(s.created_at).toLocaleDateString("zh-CN")}
                   </TableCell>
                   <TableCell>

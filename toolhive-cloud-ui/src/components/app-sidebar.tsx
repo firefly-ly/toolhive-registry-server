@@ -87,7 +87,7 @@ export function AppSidebar({ isAdmin, collapsed, onToggle }: AppSidebarProps) {
       >
         <BrandMark className="size-6 shrink-0" />
         {!collapsed && (
-          <span className="ml-2.5 text-[15px] font-semibold tracking-tight">
+          <span className="ml-2.5 text-sm font-semibold tracking-tight">
             ToolHive
           </span>
         )}
