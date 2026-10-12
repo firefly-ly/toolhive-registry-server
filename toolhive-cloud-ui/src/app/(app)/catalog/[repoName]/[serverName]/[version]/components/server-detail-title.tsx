@@ -45,8 +45,9 @@ export function ServerDetailTitle({
   return (
     <DetailHeader
       backHref={from === "favorites" ? "/favorites" : "/catalog"}
-      backLabel={from === "favorites" ? "返回工作台" : "返回 MCP 目录"}
+      backLabel={from === "favorites" ? "返回工作台" : "返回目录"}
       title={serverName}
+      mark="mcp"
       subtitle={publisher ? `由 ${publisher} 提交` : undefined}
       badges={badges}
     />

@@ -135,7 +135,7 @@ export function SkillsWrapper({
 
   return (
     <div className="-mr-8 flex h-full flex-col overflow-y-auto pr-8">
-      <PageHeader title="技能目录" />
+      <PageHeader title="技能" />
 
       {/* 陈列馆展台：hero + 组合轨 + 工具栏同坐一个浅色分区，卡片浮于其上 */}
       <div className="mb-4 rounded-2xl bg-secondary/40 p-4">

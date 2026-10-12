@@ -28,10 +28,10 @@ export default function NotFound() {
             </CardHeader>
             <CardFooter className="flex justify-center gap-3">
               <Button variant="outline" size="sm" asChild>
-                <Link href="/catalog">返回 MCP 目录</Link>
+                <Link href="/catalog">返回目录</Link>
               </Button>
               <Button variant="outline" size="sm" asChild>
-                <Link href="/skills">返回技能目录</Link>
+                <Link href="/skills">去技能页</Link>
               </Button>
             </CardFooter>
           </Card>

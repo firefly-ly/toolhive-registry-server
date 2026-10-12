@@ -104,6 +104,7 @@ export function SkillDetailView({
         backHref={backHref}
         backLabel={backLabel}
         title={skill.name}
+        mark="skill"
         subtitle={
           <>
             <span>由 {skill.owner || "未知"} 提交</span>
@@ -181,7 +182,7 @@ export function SkillDetailView({
             </Button>
 
             <Button variant="outline" size="lg" asChild>
-              <Link href="/skills">在技能目录打开</Link>
+              <Link href="/skills">在技能页打开</Link>
             </Button>
           </div>
 

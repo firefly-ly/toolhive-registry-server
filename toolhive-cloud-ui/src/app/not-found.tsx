@@ -8,7 +8,7 @@ export default async function NotFound() {
       title="页面不存在"
       actions={
         <Button asChild variant="action">
-          <Link href="/catalog">浏览 MCP 目录</Link>
+          <Link href="/catalog">浏览目录</Link>
         </Button>
       }
     >

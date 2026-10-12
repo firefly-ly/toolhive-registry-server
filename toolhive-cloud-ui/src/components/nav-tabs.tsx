@@ -12,8 +12,9 @@ export interface NavTabItem {
 }
 
 /**
- * 页级导航 Tab（下划线式）：图标 + 文案 + 计数徽章，选中项红脊压底。
- * 替代旧的圆角胶囊盒分段控件——大页面层级用下划线更轻、更贴内容。
+ * 页级导航 Tab（下划线式）：图标 + 文案 + 计数徽章。
+ * 包豪斯纪律：选中脊/图标/计数全部走结构黑（实心黑=结构与选中，
+ * 品牌强调色不进导航层级）。
  */
 export function NavTabs({
   tabs,
@@ -49,7 +50,7 @@ export function NavTabs({
                 className={cn(
                   "size-4 transition-colors",
                   active
-                    ? "text-primary"
+                    ? "text-foreground"
                     : "text-muted-foreground/70 group-hover:text-muted-foreground",
                 )}
               />
@@ -60,7 +61,7 @@ export function NavTabs({
                 className={cn(
                   "ml-0.5 rounded-full px-1.5 py-0.5 text-xs leading-none",
                   active
-                    ? "bg-primary/10 font-medium text-primary"
+                    ? "bg-foreground/10 font-medium text-foreground"
                     : "bg-muted text-muted-foreground",
                 )}
               >
@@ -70,7 +71,7 @@ export function NavTabs({
             <span
               className={cn(
                 "absolute inset-x-0 -bottom-px h-0.5 rounded-full transition-colors",
-                active ? "bg-primary" : "bg-transparent",
+                active ? "bg-foreground" : "bg-transparent",
               )}
             />
           </Link>

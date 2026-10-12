@@ -45,6 +45,7 @@ export function McpServerDetail({
         backHref={backHref}
         backLabel={backLabel}
         title={mcp.name}
+        mark="mcp"
         subtitle={`由 ${mcp.owner} 提交`}
         actions={actions}
         badges={

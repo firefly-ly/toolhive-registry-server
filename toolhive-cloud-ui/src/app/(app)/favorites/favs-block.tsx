@@ -69,9 +69,9 @@ export function FavsBlock({
       <EmptyState
         icon={Star}
         title="还没有收藏"
-        description="在 MCP 目录或技能目录点星标收藏，常用的条目会集中在这里。"
+        description="在目录里点星标收藏，常用的条目会集中在这里。"
         actionHref="/catalog"
-        actionLabel="去 MCP 目录逛逛"
+        actionLabel="去目录逛逛"
       />
     );
   }
