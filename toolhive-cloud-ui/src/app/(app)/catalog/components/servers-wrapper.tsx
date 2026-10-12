@@ -1,8 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useMemo, useState } from "react";
-import { PageHeader } from "@/components/header-page";
+import { useEffect, useMemo, useState } from "react";
 import type {
   GithubComStacklokToolhiveRegistryServerInternalServiceRegistryInfo,
   V0ServerJson,
@@ -31,6 +30,11 @@ interface ServersWrapperProps {
   skills?: Skill[];
   skillFavoritedRefs?: string[];
   skillSiblingGroups?: Record<string, Skill[]>;
+  /** hero KPI（效果图 01）：今日调用与较昨日 ±%（服务端趋势计算，缺省回落累计） */
+  todayCalls?: number;
+  deltaPct?: number | null;
+  /** 活跃用户（近 7 天，去重 upper bound） */
+  activeUsers7?: number;
 }
 
 type MixedItem =
@@ -39,11 +43,15 @@ type MixedItem =
   | { type: "skill"; data: Skill };
 
 type TypeFilter = "all" | "mcp" | "skill";
+type StatusFilter = "all" | "running";
+type SortFilter = "default" | "hot";
 
 /**
  * Wrapper that connects catalog filters and pagination to the server list view.
  * 方案 C：搜索/视图/页码全在客户端完成（零网络往返，体感即时）；
  * 仅注册表切换需要服务端换数据源，走 URL 导航。
+ * 效果图 01 版式：hero 通栏在顶（无页头标题），工具栏 = 类型/状态/排序 + 视图切换，
+ * 搜索入口在顶栏（?q= 同步到本页搜索状态）。
  */
 export function ServersWrapper({
   servers,
@@ -55,11 +63,15 @@ export function ServersWrapper({
   skills = [],
   skillFavoritedRefs = [],
   skillSiblingGroups = {},
+  todayCalls,
+  deltaPct,
+  activeUsers7,
 }: ServersWrapperProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const selectedRegistry =
     searchParams.get("registryName") || registries[0]?.name || "";
+  const qParam = searchParams.get("q") || "";
 
   const {
     viewMode,
@@ -71,8 +83,17 @@ export function ServersWrapper({
     setPage,
   } = useCatalogFilters();
 
+  // 顶栏搜索（效果图 01：搜索在顶栏）→ /catalog?q= → 同步到本页搜索状态
+  useEffect(() => {
+    if (qParam && qParam !== search) handleSearchChange(qParam);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [qParam]);
+
   // 类型筛选：IA 合并后目录一页承载 MCP + Skill
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
+  // 效果图 01 工具栏：状态（全部/运行中）与排序（默认/热度）
+  const [statusF, setStatusF] = useState<StatusFilter>("all");
+  const [sortF, setSortF] = useState<SortFilter>("default");
 
   // 页容量 = 实际列数 × 3 行：宽窄屏列数不同，固定页容量会出现「有空缺就换页」
   const { ref: gridMeasureRef, pageSize: measuredPageSize } =
@@ -110,25 +131,44 @@ export function ServersWrapper({
     );
   }, [skills, search]);
 
-  // 合并后统一分页：registry + 用户提交 MCP + Skill 混排，类型筛选在此收敛
+  // 合并后统一分页：registry + 用户提交 MCP + Skill 混排，类型/状态筛选在此收敛
   const allItems: MixedItem[] = useMemo(() => {
     const items: MixedItem[] = [];
     if (typeFilter !== "skill") {
+      if (statusF === "all") {
+        items.push(
+          ...filteredServers.map((s) => ({
+            type: "registry" as const,
+            data: s,
+          })),
+        );
+      }
+      // 状态=运行中：registry 条目无健康探测数据，仅保留探测在线的已提交 MCP
       items.push(
-        ...filteredServers.map((s) => ({ type: "registry" as const, data: s })),
-        ...filteredSubmitted.map((m) => ({
-          type: "submitted" as const,
-          data: m,
-        })),
+        ...filteredSubmitted
+          .filter((m) => statusF === "all" || (m.healthy && m.public_endpoint))
+          .map((m) => ({ type: "submitted" as const, data: m })),
       );
     }
-    if (typeFilter !== "mcp") {
+    if (typeFilter !== "mcp" && statusF === "all") {
       items.push(
         ...filteredSkills.map((s) => ({ type: "skill" as const, data: s })),
       );
     }
     return items;
-  }, [typeFilter, filteredServers, filteredSubmitted, filteredSkills]);
+  }, [typeFilter, statusF, filteredServers, filteredSubmitted, filteredSkills]);
+
+  // 排序：热度 = 调用/下载次数降序（默认 = 服务端顺序）
+  const sortedItems = useMemo(() => {
+    if (sortF === "default") return allItems;
+    const callsOf = (i: MixedItem) =>
+      i.type === "registry"
+        ? callsByRef[i.data.name ?? ""] || 0
+        : i.type === "submitted"
+          ? i.data.call_count || callsByRef[i.data.id] || 0
+          : i.data.download_count || 0;
+    return [...allItems].sort((a, b) => callsOf(b) - callsOf(a));
+  }, [allItems, sortF, callsByRef]);
 
   // 类型分段控件的计数（跟随搜索联动）
   const typeCounts = useMemo(
@@ -142,10 +182,10 @@ export function ServersWrapper({
     }),
     [filteredServers, filteredSubmitted, filteredSkills],
   );
-  const totalPages = Math.max(1, Math.ceil(allItems.length / pageSize));
+  const totalPages = Math.max(1, Math.ceil(sortedItems.length / pageSize));
   // 搜索/过滤后页码可能越界，收敛到最后一页
   const safePage = Math.min(page, totalPages - 1);
-  const pageItems = allItems.slice(
+  const pageItems = sortedItems.slice(
     safePage * pageSize,
     (safePage + 1) * pageSize,
   );
@@ -203,76 +243,61 @@ export function ServersWrapper({
     );
     return sorted[0] ?? null;
   }, [heroPool]);
-  // 精选轮播「热度最高」：调用/下载次数最高的候选条目
+  // 精选带「热度最高」：调用/下载次数最高的候选条目
   const heroHottest = useMemo(() => {
     const sorted = [...heroPool].sort(
       (a, b) => (b.calls || 0) - (a.calls || 0),
     );
     return sorted[0] ?? null;
   }, [heroPool]);
-  const heroFeed = useMemo(
-    () =>
-      heroPool
-        .filter((m) => m.id !== heroItem?.id && m.id !== heroHottest?.id)
-        .sort((a, b) => +new Date(b.created_at) - +new Date(a.created_at))
-        .slice(0, 3),
-    [heroPool, heroItem, heroHottest],
-  );
-  // KPI 矩阵（效果图 01 右侧 2×2）：累计调用 / 在线服务 / 可用技能 / 我的收藏
-  const kpis = useMemo(
-    () => ({
-      totalCalls:
-        Object.values(callsByRef).reduce((a, b) => a + b, 0) +
-        submittedMcps.reduce((a, m) => a + (m.call_count || 0), 0) +
-        skills.reduce((a, s) => a + (s.download_count || 0), 0),
-      services: servers.length + submittedMcps.length,
-      skills: skills.length,
-      favorites: favoritedRefs.length + skillFavoritedRefs.length,
-    }),
-    [
-      callsByRef,
-      submittedMcps,
-      skills,
-      servers.length,
-      favoritedRefs,
-      skillFavoritedRefs,
-    ],
-  );
+
+  // KPI 嵌拼矩阵（效果图 01 右侧）：今日(或累计)调用蓝主块 / 在线服务 / 可用技能 / 活跃用户
+  const totalCalls =
+    Object.values(callsByRef).reduce((a, b) => a + b, 0) +
+    submittedMcps.reduce((a, m) => a + (m.call_count || 0), 0) +
+    skills.reduce((a, s) => a + (s.download_count || 0), 0);
+  const runningCount = submittedMcps.filter(
+    (m) => m.healthy && m.public_endpoint,
+  ).length;
+  const kpis = {
+    calls: todayCalls ?? totalCalls,
+    callsLabel: todayCalls === undefined ? "累计调用" : "今日调用",
+    deltaPct,
+    services: servers.length + submittedMcps.length,
+    running: runningCount,
+    skills: skills.length,
+    favorites: favoritedRefs.length + skillFavoritedRefs.length,
+    activeUsers7,
+  };
 
   return (
     <div className="-mr-8 flex h-full flex-col overflow-y-auto pr-8">
-      <PageHeader title="目录" />
+      {/* 效果图 01：hero 通栏在顶，无页头标题；搜索时隐藏避免干扰检索 */}
+      {!search && (
+        <CatalogHero
+          newest={heroItem}
+          hottest={heroHottest}
+          showSubmitCta
+          kpis={kpis}
+        />
+      )}
 
-      {/* 陈列馆展台：hero + 工具栏同坐一个浅色分区，卡片浮于其上；搜索时隐藏 hero */}
-      <div className="mb-4 rounded-2xl bg-secondary/40 p-4">
-        {!search && (
-          <div className="@container mb-4">
-            <CatalogHero
-              newest={heroItem}
-              hottest={heroHottest}
-              feed={heroFeed}
-              showSubmitCta
-              kpis={kpis}
-            />
-          </div>
-        )}
-
-        {/* 工具栏独立成行：左类型筛选/搜索/数据源，右视图切换 */}
-        <div className="w-full">
-          <ServerFilters
-            registries={registries}
-            selectedRegistry={selectedRegistry}
-            onRegistryChange={handleRegistryChange}
-            viewMode={viewMode}
-            onViewModeChange={handleViewModeChange}
-            searchQuery={search}
-            onSearchChange={handleSearchChange}
-            onClearSearch={handleClearSearch}
-            typeFilter={typeFilter}
-            onTypeFilterChange={setTypeFilter}
-            typeCounts={typeCounts}
-          />
-        </div>
+      {/* 工具栏：左类型/状态/排序/数据源，右视图切换（搜索在顶栏） */}
+      <div className="py-4" id="catalog-grid">
+        <ServerFilters
+          registries={registries}
+          selectedRegistry={selectedRegistry}
+          onRegistryChange={handleRegistryChange}
+          viewMode={viewMode}
+          onViewModeChange={handleViewModeChange}
+          typeFilter={typeFilter}
+          onTypeFilterChange={setTypeFilter}
+          typeCounts={typeCounts}
+          statusFilter={statusF}
+          onStatusFilterChange={setStatusF}
+          sortFilter={sortF}
+          onSortFilterChange={setSortF}
+        />
       </div>
 
       <div className="flex-1" ref={gridMeasureRef}>

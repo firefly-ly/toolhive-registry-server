@@ -13,26 +13,34 @@ export interface HeroItem {
   version?: string;
   owner?: string;
   created_at: string;
-  /** 调用/下载次数：精选轮播「热度最高」模式的排序依据 */
+  /** 调用/下载次数：精选带「热度最高」模式的排序依据 */
   calls?: number;
-  /** 条目类型：IA 合并后 hero 池混排，类型色随条目走（缺省回落 accent） */
+  /** 条目类型：hero 池混排，类型色随条目走（缺省回落 accent） */
   type?: "mcp" | "skill";
 }
 
-/** KPI 矩阵数据（效果图 01 右侧 2×2） */
+/** KPI 嵌拼矩阵（效果图 01 右侧） */
 export interface HeroKpis {
-  /** 累计调用/下载总数（蓝色主块） */
-  totalCalls: number;
-  /** 在线服务条目数（registry + 用户提交 MCP）；技能页视角无此格则省略 */
+  /** 主块数值：今日调用（有趋势数据）或回落为累计调用 */
+  calls: number;
+  /** 主块标签：今日调用 / 累计调用 */
+  callsLabel: string;
+  /** 较昨日 ±%（无数据省略） */
+  deltaPct?: number | null;
+  /** 在线服务条目数 */
   services?: number;
+  /** 其中运行中（在线服务 subline「运行中 / 共 M」） */
+  running?: number;
   /** 可用技能数 */
   skills: number;
-  /** 我的收藏数 */
+  /** 活跃用户（近 7 天，去重 upper bound）；无数据时第四格回落「我的收藏」 */
+  activeUsers7?: number;
   favorites: number;
 }
 
 interface FeaturedMode {
   key: string;
+  tag: string;
   label: string;
   item: HeroItem;
 }
@@ -40,14 +48,15 @@ interface FeaturedMode {
 const ROTATE_MS = 5000;
 
 /**
- * 目录门面（效果图 01 完整版式）：
- * 上层 = 左主张区（几何三件套 + 大标题 + CTA）/ 右 KPI 2×2 矩阵（一格实色主块）；
- * 下层 = 精选轮播卡（最新上架/热度最高 5s 轮换、悬停暂停、类型色进度条）+ 最近更新。
+ * 目录门面（效果图 01 逐像素版）：
+ * 上层 = 左主张区（几何三件套 + 琥珀高亮大标题 + 双 CTA）/ 右 KPI 嵌拼矩阵
+ *（蓝色实色主块 + 白格，1px 分界线、无圆角、与 hero 同高）；
+ * 下层 = 精选带（左大几何字形 + 模式标签 + pills，右模式切换 + 黑色查看钮，
+ * 底部全宽红色进度条）。全部通栏白底，只有 1px 结构线，无卡片圆角堆叠。
  */
 export function CatalogHero({
   newest,
   hottest,
-  feed,
   routePrefix = "/mcp",
   accent = "info",
   showSubmitCta = false,
@@ -55,7 +64,8 @@ export function CatalogHero({
 }: {
   newest: HeroItem | null;
   hottest?: HeroItem | null;
-  feed: HeroItem[];
+  /** 效果图 01 精确版式中无「最近更新」面板，保留参数兼容旧调用但不渲染 */
+  feed?: HeroItem[];
   routePrefix?: string;
   accent?: "info" | "success";
   showSubmitCta?: boolean;
@@ -63,9 +73,16 @@ export function CatalogHero({
 }) {
   const router = useRouter();
   const modes: FeaturedMode[] = [];
-  if (newest) modes.push({ key: "latest", label: "最新上架", item: newest });
+  if (newest) {
+    modes.push({
+      key: "latest",
+      tag: "LATEST",
+      label: "最新上架",
+      item: newest,
+    });
+  }
   if (hottest && newest && hottest.id !== newest.id) {
-    modes.push({ key: "hot", label: "热度最高", item: hottest });
+    modes.push({ key: "hot", tag: "HOT", label: "热度最高", item: hottest });
   }
 
   const [idx, setIdx] = useState(0);
@@ -80,116 +97,194 @@ export function CatalogHero({
     return () => clearInterval(timer);
   }, [modes.length, paused]);
 
-  // idx 越界保护（轮播模式数变化时收敛）
   const safeIdx = modes.length ? idx % modes.length : 0;
   const cur = modes[safeIdx];
 
-  // 类型色随当前条目走（IA 合并后 hero 池混排 MCP/Skill；缺省回落 accent）
   const isTeal =
     (cur?.item.type ?? (accent === "success" ? "skill" : "mcp")) === "skill";
-  const accentHex = isTeal ? "hsl(var(--success))" : "hsl(var(--info))";
-  const typeCls = isTeal
-    ? "bg-success/10 text-success"
-    : "bg-info/10 text-info";
-  const typeText = isTeal ? "Skill" : "MCP";
+  const typeHex = isTeal ? "hsl(var(--success))" : "hsl(var(--info))";
+  const modeTone = cur?.key === "hot" ? "text-primary" : "text-info";
 
   const go = (id: string) =>
     router.push(`${routePrefix}/${encodeURIComponent(id)}`);
-  const fmtDate = (iso: string) =>
-    new Date(iso).toLocaleDateString("zh-CN", {
-      month: "2-digit",
-      day: "2-digit",
-    });
 
-  const kpiCell =
-    "rounded-lg border bg-card px-4 py-3.5 [&_dd]:font-mono [&_dd]:text-2xl [&_dd]:font-semibold [&_dd]:leading-tight [&_dt]:text-xs [&_dt]:text-muted-foreground";
+  // KPI 格定义：蓝主块恒在首位，其余白格按数据有无组装
+  const cells: {
+    label: string;
+    value: string;
+    sub?: string;
+    accent?: boolean;
+  }[] = [
+    {
+      label: kpis.callsLabel,
+      value: kpis.calls.toLocaleString(),
+      sub:
+        typeof kpis.deltaPct === "number"
+          ? `较昨日 ${kpis.deltaPct >= 0 ? "+" : ""}${kpis.deltaPct}%`
+          : undefined,
+      accent: true,
+    },
+  ];
+  if (kpis.services !== undefined) {
+    cells.push({
+      label: "在线服务",
+      value: String(kpis.services),
+      sub:
+        typeof kpis.running === "number"
+          ? `运行中 / 共 ${kpis.services}`
+          : undefined,
+    });
+  }
+  cells.push({ label: "可用技能", value: String(kpis.skills) });
+  cells.push({
+    label: typeof kpis.activeUsers7 === "number" ? "活跃用户" : "我的收藏",
+    value: String(
+      typeof kpis.activeUsers7 === "number"
+        ? kpis.activeUsers7
+        : kpis.favorites,
+    ),
+    sub: typeof kpis.activeUsers7 === "number" ? "近 7 天" : undefined,
+  });
 
   return (
-    <div className="space-y-3">
-      {/* ── 上层：主张区 + KPI 矩阵 ── */}
-      <div className="grid grid-cols-1 gap-3 @[900px]:grid-cols-[minmax(440px,1.25fr)_minmax(320px,1fr)]">
-        <div className="flex flex-col justify-center rounded-xl border bg-card px-6 py-6">
-          {/* 几何三件套：拱 / 圆 / 山（与品牌标同源） */}
-          <div aria-hidden className="mb-4 flex items-end gap-1.5">
-            <span className="h-8 w-6 rounded-t-full bg-info" />
-            <span className="size-8 rounded-full bg-success" />
-            <span className="mt-4 h-4 w-8 bg-highlight [clip-path:polygon(0_100%,50%_0,100%_100%)]" />
+    <div>
+      {/* ── 上层：主张区 + KPI 嵌拼矩阵（通栏，1px 分界） ── */}
+      <div className="grid grid-cols-1 border-b lg:grid-cols-[1.55fr_1fr]">
+        {/* 左主张区 */}
+        <div className="relative overflow-hidden px-1 py-10 lg:pr-10">
+          {/* 左下角淡奶油几何衬底 */}
+          <span
+            aria-hidden
+            className="pointer-events-none absolute bottom-0 left-0 h-24 w-40 rounded-tr-full bg-highlight/20"
+          />
+          <div aria-hidden className="mb-5 flex items-end gap-2">
+            <span className="h-9 w-7 rounded-t-full bg-info" />
+            <span className="size-9 rounded-full bg-primary" />
+            <span className="mb-0.5 h-4 w-9 bg-highlight [clip-path:polygon(0_100%,50%_0,100%_100%)]" />
           </div>
-          <h2 className="text-3xl font-semibold leading-snug tracking-tight">
+          <h1 className="text-[40px] leading-[1.15] font-semibold tracking-tight">
             找到你要的
             <br />
-            每一件工具
-          </h2>
-          <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-            MCP 服务与 Skill 技能，全部经安全扫描与审批上架。
+            每一件
+            <span className="relative inline-block">
+              工具
+              <span
+                aria-hidden
+                className="absolute inset-x-0 bottom-1 -z-10 h-3 bg-highlight/70"
+              />
+            </span>
+          </h1>
+          <p className="mt-4 max-w-md text-sm leading-6 text-muted-foreground">
+            MCP 服务与 Skill
+            技能，全部经安全扫描与审批上架。按你的权限，即插即用。
           </p>
-          {showSubmitCta && (
-            <div className="mt-5">
-              <Button type="button" size="sm" asChild className="h-9 px-5">
-                <Link href="/submissions">提交新工具 →</Link>
+          <div className="mt-6 flex items-center gap-3">
+            <Button type="button" size="sm" asChild className="h-10 px-6">
+              <Link href="#catalog-grid">开始浏览 →</Link>
+            </Button>
+            {showSubmitCta && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                asChild
+                className="h-10 border-foreground px-6 hover:bg-foreground hover:text-background"
+              >
+                <Link href="/submissions">提交新工具</Link>
               </Button>
-            </div>
-          )}
+            )}
+          </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          {/* 累计调用：唯一实色主块（每屏至多一枚色块纪律） */}
-          <div className="rounded-lg bg-info px-4 py-3.5 text-white">
-            <dd className="font-mono text-2xl leading-tight font-semibold">
-              {kpis.totalCalls.toLocaleString()}
-            </dd>
-            <dt className="mt-1 text-xs opacity-80">累计调用</dt>
-          </div>
-          {kpis.services !== undefined && (
-            <dl className={kpiCell}>
-              <dt>在线服务</dt>
-              <dd>{kpis.services}</dd>
-            </dl>
-          )}
-          <dl className={kpiCell}>
-            <dt>可用技能</dt>
-            <dd>{kpis.skills}</dd>
-          </dl>
-          <dl className={kpiCell}>
-            <dt>我的收藏</dt>
-            <dd>{kpis.favorites}</dd>
-          </dl>
+        {/* 右 KPI 嵌拼矩阵：无圆角、1px 分界线、与左区同高 */}
+        <div className="grid grid-cols-2 grid-rows-2 border-t lg:border-t-0 lg:border-l">
+          {cells.map((c, i) => (
+            <div
+              key={c.label}
+              className={
+                c.accent
+                  ? "flex flex-col justify-center bg-info px-7 py-6 text-white [&_dd]:font-mono [&_dd]:text-[32px] [&_dd]:leading-none [&_dd]:font-bold [&_dt]:text-xs [&_dt]:opacity-80 [&_span]:mt-1.5 [&_span]:text-xs [&_span]:opacity-75"
+                  : `flex flex-col justify-center px-7 py-6 [&_dd]:font-mono [&_dd]:text-[28px] [&_dd]:leading-none [&_dd]:font-bold [&_dt]:text-xs [&_dt]:text-muted-foreground [&_span]:mt-1 [&_span]:text-xs [&_span]:text-muted-foreground ${i >= 2 ? "border-t" : ""} ${i % 2 === 1 ? "border-l" : ""}`
+              }
+            >
+              <dt>{c.label}</dt>
+              <dd>{c.value}</dd>
+              {c.sub && <span>{c.sub}</span>}
+            </div>
+          ))}
         </div>
       </div>
 
-      {/* ── 下层：精选轮播 + 最近更新 ── */}
-      <div className="grid grid-cols-1 gap-3 @[900px]:grid-cols-[minmax(480px,2fr)_minmax(280px,1fr)]">
-        {cur && (
-          <div
-            className="relative flex flex-col justify-between overflow-hidden rounded-xl border bg-card px-5 py-4"
-            onMouseEnter={() => setPaused(true)}
-            onMouseLeave={() => setPaused(false)}
-          >
-            {/* 拱形几何品牌位（右上，随模式切换换色） */}
-            <span
-              aria-hidden
-              className="absolute top-5 right-5 h-12 w-9 rounded-t-full opacity-90 transition-colors duration-300"
-              style={{ background: accentHex }}
-            />
-            <span
-              aria-hidden
-              className="absolute top-9 right-8 size-4 rounded-full opacity-90"
-              style={{ background: "hsl(var(--highlight))" }}
-            />
+      {/* ── 下层：精选带（左字形 + 内容，右切换 + 黑 CTA，底全宽进度条） ── */}
+      {cur && (
+        <div
+          className="relative border-b"
+          onMouseEnter={() => setPaused(true)}
+          onMouseLeave={() => setPaused(false)}
+        >
+          <div className="flex items-center gap-6 py-6 pr-2">
+            {/* 大几何字形：MCP=拱（同心） / Skill=圆（同心），中心琥珀点 */}
+            <div aria-hidden className="relative shrink-0">
+              {isTeal ? (
+                <span
+                  className="flex size-16 items-center justify-center rounded-full"
+                  style={{ background: typeHex }}
+                >
+                  <span className="size-9 rounded-full bg-white/25" />
+                </span>
+              ) : (
+                <span
+                  className="flex h-16 w-13 items-center justify-center rounded-t-full"
+                  style={{ background: typeHex }}
+                >
+                  <span className="mt-5 flex h-9 w-7 items-center justify-center rounded-t-full bg-white/25">
+                    <span className="size-3 rounded-full bg-highlight" />
+                  </span>
+                </span>
+              )}
+            </div>
 
-            <div className="relative">
+            <div className="min-w-0 flex-1">
+              <p className={`text-xs font-semibold tracking-wide ${modeTone}`}>
+                {cur.tag} · {cur.label}
+              </p>
+              <p className="mt-1 truncate text-2xl font-semibold">
+                {cur.item.name}
+              </p>
+              <p className="mt-1 truncate text-sm text-muted-foreground">
+                {cur.item.description || "暂无描述"}
+              </p>
+              <div className="mt-2.5 flex flex-wrap items-center gap-2">
+                {cur.item.version && (
+                  <span className="rounded-full border px-2.5 py-0.5 font-mono text-xs text-muted-foreground">
+                    v{cur.item.version}
+                  </span>
+                )}
+                {typeof cur.item.calls === "number" && (
+                  <span className="rounded-full bg-success/10 px-2.5 py-0.5 font-mono text-xs text-success">
+                    {cur.item.calls.toLocaleString()} 次
+                    {isTeal ? "下载" : "调用"}
+                  </span>
+                )}
+                <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs text-muted-foreground">
+                  {cur.item.owner || "内部提交"}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex shrink-0 flex-col items-end gap-3">
               {modes.length > 1 && (
-                <div className="mb-2 flex items-center gap-1.5">
+                <div className="flex items-center gap-1">
                   {modes.map((m, i) => (
                     <button
                       key={m.key}
                       type="button"
                       onClick={() => setIdx(i)}
                       aria-pressed={i === safeIdx}
-                      className={`cursor-pointer rounded-full border px-2.5 py-0.5 text-[11px] font-medium transition-colors ${
+                      className={`cursor-pointer rounded-full px-3 py-1 text-xs transition-colors ${
                         i === safeIdx
-                          ? "border-foreground bg-foreground text-background"
-                          : "border-border text-muted-foreground hover:text-foreground"
+                          ? "bg-foreground text-background"
+                          : "text-muted-foreground hover:text-foreground"
                       }`}
                     >
                       {m.label}
@@ -197,101 +292,34 @@ export function CatalogHero({
                   ))}
                 </div>
               )}
-              <p className="truncate text-xl font-medium">{cur.item.name}</p>
-              <p className="mt-1 line-clamp-2 text-sm leading-relaxed text-muted-foreground">
-                {cur.item.description || "暂无描述"}
-              </p>
-            </div>
-
-            <div className="relative mt-3 flex items-center gap-2">
-              {cur.item.version && (
-                <span className="rounded-md border px-2 py-0.5 font-mono text-xs text-muted-foreground">
-                  v{cur.item.version}
-                </span>
-              )}
-              <span className={`rounded-md px-2 py-0.5 text-xs ${typeCls}`}>
-                {typeText}
-              </span>
-              {typeof cur.item.calls === "number" && (
-                <span className="font-mono text-xs text-muted-foreground">
-                  {cur.item.calls.toLocaleString()} 次{isTeal ? "下载" : "调用"}
-                </span>
-              )}
-              <span className="truncate text-xs text-muted-foreground">
-                {cur.item.owner || "内部提交"}
-              </span>
-              <span className="ml-auto flex shrink-0 items-center gap-2">
-                {!showSubmitCta && (
-                  <Button type="button" variant="outline" size="sm" asChild>
-                    <Link href="/submissions">提交新工具</Link>
-                  </Button>
-                )}
-                <Button
-                  type="button"
-                  size="sm"
-                  style={{ background: accentHex, color: "#fff" }}
-                  className="hover:opacity-90"
-                  onClick={() => go(cur.item.id)}
-                >
-                  查看详情
-                </Button>
-              </span>
-            </div>
-
-            {/* 轮播进度条：类型色，悬停暂停 */}
-            {modes.length > 1 && (
-              <span
-                aria-hidden
-                className="absolute bottom-0 left-0 h-0.5 w-full overflow-hidden"
+              <Button
+                type="button"
+                className="h-9 bg-foreground px-5 text-background hover:bg-foreground/85"
+                onClick={() => go(cur.item.id)}
               >
-                <span
-                  key={`${safeIdx}`}
-                  className="block h-full"
-                  style={{
-                    background: accentHex,
-                    animation: `featured-progress ${ROTATE_MS}ms linear both`,
-                    animationPlayState: paused ? "paused" : "running",
-                  }}
-                />
-              </span>
-            )}
-          </div>
-        )}
-
-        {/* 最近更新 feed：不足 2 条则隐藏（避免空壳占位） */}
-        {feed.length >= 2 && (
-          <div className="rounded-xl border bg-card px-4 py-3.5">
-            <p className="mb-2 text-xs font-medium text-muted-foreground">
-              最近更新
-            </p>
-            <div className="space-y-2">
-              {feed.map((m) => (
-                <button
-                  key={m.id}
-                  type="button"
-                  onClick={() => go(m.id)}
-                  className="flex w-full cursor-pointer items-center gap-2 rounded-md px-1 py-0.5 text-left transition-colors hover:bg-muted/50"
-                >
-                  <span
-                    className={`size-1.5 shrink-0 rounded-full ${
-                      (m.type ?? (accent === "success" ? "skill" : "mcp")) ===
-                      "skill"
-                        ? "bg-success"
-                        : "bg-info"
-                    }`}
-                  />
-                  <span className="min-w-0 flex-1 truncate text-sm">
-                    {m.name} {m.version ? `v${m.version}` : ""}
-                  </span>
-                  <span className="shrink-0 text-xs text-muted-foreground">
-                    {fmtDate(m.created_at)}
-                  </span>
-                </button>
-              ))}
+                查看详情
+              </Button>
             </div>
           </div>
-        )}
-      </div>
+
+          {/* 全宽进度条（橙红），悬停暂停 */}
+          {modes.length > 1 && (
+            <span
+              aria-hidden
+              className="absolute bottom-0 left-0 h-0.5 w-full overflow-hidden"
+            >
+              <span
+                key={`${safeIdx}`}
+                className="block h-full bg-primary"
+                style={{
+                  animation: `featured-progress ${ROTATE_MS}ms linear both`,
+                  animationPlayState: paused ? "paused" : "running",
+                }}
+              />
+            </span>
+          )}
+        </div>
+      )}
     </div>
   );
 }

@@ -6,6 +6,8 @@ import {
   getMcpServers,
   getSkillById,
   getSkills,
+  getTrend,
+  getUniqueUsers,
   listFavorites,
   listGroupVersions,
   type McpServer,
@@ -164,6 +166,30 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
     console.error("[catalog.page] 收藏/计数/版本聚合失败:", error);
   }
 
+  // hero KPI 扩展数据（效果图 01）：今日调用+较昨日 / 活跃用户（近7天）。
+  // 全部 safe() 包裹，取不到时 hero 自动回落（累计调用 / 我的收藏）。
+  const emptyTrend = {
+    days: [] as string[],
+    series: [] as { data: number[] }[],
+  };
+  const [trend7, unique7] = await Promise.all([
+    safe(getTrend(7), emptyTrend, "catalog.getTrend"),
+    safe(getUniqueUsers(7), [], "catalog.getUniqueUsers"),
+  ]);
+  const daySums = (trend7.days || []).map((_, i) =>
+    (trend7.series || []).reduce((a, s) => a + (s.data?.[i] || 0), 0),
+  );
+  const todayCalls = daySums.at(-1);
+  const yestCalls = daySums.at(-2);
+  const deltaPct =
+    typeof todayCalls === "number" &&
+    typeof yestCalls === "number" &&
+    yestCalls > 0
+      ? Math.round(((todayCalls - yestCalls) / yestCalls) * 100)
+      : null;
+  // 活跃用户（近7天）：各条目去重用户数之和（跨条目重复计入，作 upper bound）
+  const activeUsers7 = unique7.reduce((a, u) => a + (u.u || 0), 0);
+
   return (
     <ServersWrapper
       servers={allRegistryServers}
@@ -175,6 +201,9 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
       skills={skillsList}
       skillFavoritedRefs={skillFavoritedRefs}
       skillSiblingGroups={skillSiblingGroups}
+      todayCalls={typeof todayCalls === "number" ? todayCalls : undefined}
+      deltaPct={deltaPct}
+      activeUsers7={activeUsers7 || undefined}
     />
   );
 }

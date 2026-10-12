@@ -180,7 +180,7 @@ export function SubmittedMcpCard({
       <div className="relative z-10 flex flex-1 flex-col p-4 pt-8">
         <div className="flex items-center gap-2">
           <span
-            className="min-w-0 flex-1 truncate text-[15px] font-medium"
+            className="min-w-0 flex-1 truncate text-base font-semibold"
             title={cur.name}
           >
             {cur.name}
@@ -212,26 +212,16 @@ export function SubmittedMcpCard({
         </p>
 
         <div className="mt-auto flex items-center justify-between gap-2 border-t pt-3">
-          <div className="flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
-            {starButton}
-            <span className="shrink-0">
-              {cur.id === mcp.id ? callCount : cur.call_count || 0} 次调用
-            </span>
+          <div className="min-w-0 truncate font-mono text-xs text-muted-foreground">
+            {cur.version ? `v${cur.version}` : ""} ·{" "}
+            {cur.id === mcp.id ? callCount : cur.call_count || 0} 次调用
           </div>
-          <div className="flex shrink-0 items-center gap-2">
-            {/* 部署且实例在线才显示「接入」按钮；点击弹出客户端接入配置（与 registry 卡一致） */}
-            {cur.public_endpoint && cur.healthy && (
-              <CopyMcpConfigDialog
-                serverName={cur.name}
-                config={{ url: cur.public_endpoint, headers: cur.mcp_headers }}
-                triggerLabel="接入"
-                className="rounded-full"
-              />
-            )}
+          <div className="flex shrink-0 items-center gap-1">
+            {starButton}
             <Button
               type="button"
               size="sm"
-              className="bg-info text-white hover:bg-info/90"
+              className="bg-foreground px-4 text-background hover:bg-foreground/85"
               onClick={goDetail}
             >
               查看

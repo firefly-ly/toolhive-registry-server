@@ -148,7 +148,7 @@ export function SkillCard({
       <div className="relative z-10 flex flex-1 flex-col p-4 pt-8">
         <div className="flex items-center gap-2">
           <span
-            className="min-w-0 flex-1 truncate text-[15px] font-medium"
+            className="min-w-0 flex-1 truncate text-base font-semibold"
             title={cur.name}
           >
             {cur.name}
@@ -163,16 +163,17 @@ export function SkillCard({
         </p>
 
         <div className="mt-auto flex items-center justify-between gap-2 border-t pt-3">
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            {starButton}
-            <span className="shrink-0">{cur.download_count || 0} 次下载</span>
+          <div className="min-w-0 truncate font-mono text-xs text-muted-foreground">
+            {cur.version ? `v${cur.version}` : ""} · {cur.download_count || 0}{" "}
+            次下载
           </div>
-          <div className="flex shrink-0 items-center gap-2">
+          <div className="flex shrink-0 items-center gap-1">
+            {starButton}
             <SkillDownloadDialog skill={cur} />
             <Button
               type="button"
               size="sm"
-              className="bg-success text-white hover:bg-success/90"
+              className="bg-foreground px-4 text-background hover:bg-foreground/85"
               onClick={() => onClick?.(cur.id)}
             >
               查看

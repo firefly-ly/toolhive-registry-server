@@ -136,7 +136,7 @@ export function Servers({
           {skills.map((s) => renderSkillCard(s, "list"))}
         </div>
       ) : (
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(340px,1fr))] gap-3 pb-3">
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(380px,1fr))] gap-4 pb-3">
           {servers.map((server) => (
             <ServerCard
               key={server.name}

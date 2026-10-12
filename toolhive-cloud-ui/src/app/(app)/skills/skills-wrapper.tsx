@@ -117,10 +117,10 @@ export function SkillsWrapper({
     const top = sorted[0];
     return { ...top, calls: top.download_count || 0 };
   }, [heroCandidates]);
-  // KPI 矩阵：技能页视角（累计下载 / 在线服务=0 / 可用技能 / 我的收藏）
+  // KPI 嵌拼矩阵：技能页视角（累计下载主块 / 可用技能 / 我的收藏）
   const kpis = {
-    totalCalls: skills.reduce((a, s) => a + (s.download_count || 0), 0),
-    services: 0,
+    calls: skills.reduce((a, s) => a + (s.download_count || 0), 0),
+    callsLabel: "累计下载",
     skills: skills.length,
     favorites: favoritedRefs.length,
   };

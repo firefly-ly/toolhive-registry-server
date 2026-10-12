@@ -134,7 +134,7 @@ export function ServerCard({
       <div className="relative z-10 flex flex-1 flex-col p-4 pt-8">
         <div className="flex items-center gap-2">
           <span
-            className="min-w-0 flex-1 truncate text-[15px] font-medium"
+            className="min-w-0 flex-1 truncate text-base font-semibold"
             title={server.title ?? name}
           >
             {server.title ?? name}
@@ -153,33 +153,15 @@ export function ServerCard({
         </p>
 
         <div className="mt-auto flex items-center justify-between gap-2 border-t pt-3">
-          <div className="flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
-            {server.version && (
-              <span className="shrink-0 rounded border border-border px-1.5 py-0.5 font-mono">
-                v{server.version}
-              </span>
-            )}
-            <span className="shrink-0">{callCount} 次调用</span>
-            {author && (
-              <span className="truncate" title={author}>
-                {author}
-              </span>
-            )}
+          <div className="min-w-0 truncate font-mono text-xs text-muted-foreground">
+            {server.version ? `v${server.version}` : ""} · {callCount} 次调用
           </div>
-          <div className="flex shrink-0 items-center gap-2">
+          <div className="flex shrink-0 items-center gap-1">
             {starButton}
-            {serverUrl && (
-              <CopyMcpConfigDialog
-                serverName={server.title ?? name ?? ""}
-                config={{ url: serverUrl }}
-                triggerLabel="接入"
-                className="rounded-full"
-              />
-            )}
             <Button
               type="button"
               size="sm"
-              className="bg-info text-white hover:bg-info/90"
+              className="bg-foreground px-4 text-background hover:bg-foreground/85"
               onClick={(e) => {
                 e.stopPropagation();
                 onClick?.();

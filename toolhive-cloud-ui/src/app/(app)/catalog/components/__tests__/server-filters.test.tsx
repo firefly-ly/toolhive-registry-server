@@ -10,8 +10,13 @@ describe("ServerFilters", () => {
     onRegistryChange: vi.fn(),
     viewMode: "grid" as const,
     onViewModeChange: vi.fn(),
-    searchQuery: "",
-    onSearchChange: vi.fn(),
+    typeFilter: "all" as const,
+    onTypeFilterChange: vi.fn(),
+    typeCounts: { all: 10, mcp: 8, skill: 2 },
+    statusFilter: "all" as const,
+    onStatusFilterChange: vi.fn(),
+    sortFilter: "default" as const,
+    onSortFilterChange: vi.fn(),
   };
 
   it("calls onViewModeChange when list button is clicked", async () => {
@@ -44,25 +49,6 @@ describe("ServerFilters", () => {
     expect(onViewModeChange).toHaveBeenCalledWith("grid");
   });
 
-  it("calls onSearchChange when typing in search input", async () => {
-    const user = userEvent.setup();
-    const onSearchChange = vi.fn();
-
-    render(<ServerFilters {...defaultProps} onSearchChange={onSearchChange} />);
-
-    const searchInput = screen.getByPlaceholderText("搜索 MCP…");
-    await user.type(searchInput, "test");
-
-    expect(onSearchChange).toHaveBeenCalled();
-  });
-
-  it("displays search query value", () => {
-    render(<ServerFilters {...defaultProps} searchQuery="aws" />);
-
-    const searchInput = screen.getByPlaceholderText("搜索 MCP…");
-    expect(searchInput).toHaveValue("aws");
-  });
-
   it("marks grid button as checked when grid mode is selected", () => {
     render(<ServerFilters {...defaultProps} viewMode="grid" />);
 
@@ -81,5 +67,12 @@ describe("ServerFilters", () => {
     render(<ServerFilters {...defaultProps} />);
 
     expect(screen.getByLabelText("选择注册表")).toBeVisible();
+  });
+
+  it("renders status and sort selects with current values", () => {
+    render(<ServerFilters {...defaultProps} />);
+
+    expect(screen.getByLabelText("按运行状态筛选")).toBeVisible();
+    expect(screen.getByLabelText("排序方式")).toBeVisible();
   });
 });
