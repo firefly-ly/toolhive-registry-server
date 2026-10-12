@@ -21,7 +21,7 @@ interface MobileNavProps {
 }
 
 /**
- * 移动端（<md）导航抽屉；桌面端由固定侧栏（AppSidebar）接管，
+ * 移动端（<md）导航抽屉；桌面端由顶栏胶囊（NavPills）接管，
  * 触发按钮 md:hidden。选中项后关闭抽屉完成跳转。
  */
 export function MobileNav({ isAdmin }: MobileNavProps) {

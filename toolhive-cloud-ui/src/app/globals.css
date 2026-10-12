@@ -11,110 +11,111 @@ html {
 }
 
 /* ============================================================
-   设计令牌 · 东鹏品牌版（B 方向：纸感浅色 + 品牌红点睛）
-   品牌色来源：logo 像素聚类实测——品牌红 #DC0A10 / 墨黑 #201614
-   纪律：红为高唤醒色，全站占比 <10%，只出现在主按钮/焦点环/
-   选中态/悬停晕；destructive 用降明度酒红 #A32D2D 区隔。
+   设计令牌 · 包豪斯版（全站重设计 2026-10）
+   语言：白纸 + 结构黑描边 + 类型色块（MCP info 蓝 / Skill success 绿）
+   + CTA 强调橙红 + 琥珀高亮；数字走等宽，线重分级 2px/1.5px/发丝。
+   色值来源：效果图包 design-mockups/全站效果图（用户已拍板）。
+   纪律：红=强调与危险提示，不承担「通过」语义；类型色管「是什么」。
    三格式归一口径：:root/.dark 存裸 HSL 三元组，@theme inline
    统一以 hsl(var(--x)) 包裹（仅 oklch 全色值如 avatar 例外直引）。
    ============================================================ */
 :root {
-  /* 纸面与墨色：暖纸白 + 品牌墨黑（冷蓝/纯白不再使用） */
-  --background: 40 23% 97.5%;
-  --foreground: 20 22% 11%;
+  /* 纸面：页面底为浅灰幕布，卡片/顶栏浮于白色纸上 */
+  --background: 60 13% 90%;
+  --foreground: 0 0% 10%;
   --card: 0 0% 100%;
-  --card-foreground: 20 22% 11%;
+  --card-foreground: 0 0% 10%;
   --popover: 0 0% 100%;
-  --popover-foreground: 20 22% 11%;
+  --popover-foreground: 0 0% 10%;
 
-  /* 品牌红：按钮/链接/焦点环唯一来源（#DC0A10，配白字 5.1:1 AA） */
-  --primary: 358 91% 45%;
+  /* CTA 强调橙红（#CA4E23，白字 ≈4.6:1 AA；#D85A30 的深半档） */
+  --primary: 15 70% 47%;
   --primary-foreground: 0 0% 100%;
-  --ring: 358 91% 45%;
+  --ring: 15 70% 47%;
 
-  /* 中性层（此前 :root 缺失，浅色下 muted/secondary/accent 实际失效，本次补齐） */
-  --secondary: 40 15% 93%;
-  --secondary-foreground: 20 22% 15%;
-  --muted: 40 18% 94.5%;
-  --muted-foreground: 25 8% 42%;
-  --accent: 358 70% 96.5%;
-  --accent-foreground: 358 80% 30%;
+  /* 中性层：冷调纸灰 */
+  --secondary: 60 12% 93%;
+  --secondary-foreground: 0 0% 12%;
+  --muted: 60 14% 96%;
+  --muted-foreground: 60 4% 42%;
+  --accent: 60 20% 97%;
+  --accent-foreground: 0 0% 12%;
 
   /* 状态色 */
   --destructive: 0 57% 41%;
   --destructive-foreground: 0 0% 98%;
-  --success: 160 74% 26%;
+  --success: 87 65% 30%;
 
-  /* 语义点缀：收藏星（金黄，保红<10%纪律）/ 警示琥珀 / 信息蓝
-     warning/info 浅色下加深两档保小字号徽章对比（原 44%/55% 对比约 3.2/3.7:1，
-     39%/48% 提至约 4.0/4.5:1；暗色为浅字深底，维持原值） */
-  --star: 48 96% 53%;
-  --warning: 32 95% 39%;
-  --info: 217 91% 48%;
+  /* 语义点缀：收藏星/高亮琥珀（#EF9F27 与 #FAC775）/ 警示琥珀 / 信息蓝 */
+  --star: 38 86% 52%;
+  --highlight: 40 92% 73%;
+  --warning: 33 85% 30%;
+  --info: 210 75% 37%;
 
-  /* 边框与输入 */
-  --border: 35 14% 88.5%;
-  --input: 35 14% 85%;
+  /* 边框与输入：发丝线 #E4E4DC 系 */
+  --border: 60 13% 88%;
+  --input: 60 10% 84%;
 
-  /* 导航/登录页品牌面：品牌红加深（#8F0008），白 logo/白字直接可用 */
-  --nav-background: 357 100% 28%;
-  --nav-border: 357 55% 38%;
-  --nav-button-active-bg: 357 100% 21%;
+  /* 导航/登录页品牌面：结构黑（#1A1A1A），白字/几何彩标直接可用 */
+  --nav-background: 0 0% 10%;
+  --nav-border: 0 0% 24%;
+  --nav-button-active-bg: 0 0% 22%;
   --nav-button-active-text: 0 0% 100%;
   --avatar-background: oklch(0.696 0 0 / 89.8%);
 
-  /* 内容区底色：与 --background 同一张纸，全站一致 */
-  --sidebar: 40 23% 97.5%;
-  --sidebar-foreground: 25 8% 30%;
-  --sidebar-primary: 358 91% 45%;
+  /* 顶栏与内容区：同一张白纸 */
+  --sidebar: 0 0% 100%;
+  --sidebar-foreground: 60 4% 42%;
+  --sidebar-primary: 15 70% 47%;
   --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 358 70% 96%;
-  --sidebar-accent-foreground: 358 80% 30%;
-  --sidebar-border: 35 14% 89%;
-  --sidebar-ring: 358 91% 45%;
+  --sidebar-accent: 60 20% 97%;
+  --sidebar-accent-foreground: 0 0% 12%;
+  --sidebar-border: 60 13% 88%;
+  --sidebar-ring: 15 70% 47%;
 
   --radius: 0.75rem;
 }
 
 .dark {
-  /* 暗色 = 暖调近黑（呼应墨色），品牌红提亮保对比。图表等硬编码色
-     尚未令牌化，暗色下为尽力而为（best-effort），阶段 4 收编后再承诺完美 */
-  --background: 20 18% 8%;
-  --foreground: 40 20% 96%;
-  --card: 20 14% 11.5%;
-  --card-foreground: 40 20% 96%;
-  --popover: 20 14% 11.5%;
-  --popover-foreground: 40 20% 96%;
-  --primary: 358 85% 58%;
+  /* 暗色 = 中性近黑 + 同色相提亮（包豪斯色相不变，明度适配）。
+     图表等硬编码色尚未令牌化，暗色下为尽力而为（best-effort） */
+  --background: 0 0% 7%;
+  --foreground: 0 0% 96%;
+  --card: 0 0% 10.5%;
+  --card-foreground: 0 0% 96%;
+  --popover: 0 0% 10.5%;
+  --popover-foreground: 0 0% 96%;
+  --primary: 15 78% 58%;
   --primary-foreground: 0 0% 100%;
-  --secondary: 20 12% 17%;
-  --secondary-foreground: 40 20% 96%;
-  --muted: 20 12% 16%;
-  --muted-foreground: 30 8% 66%;
-  --accent: 358 45% 20%;
-  --accent-foreground: 358 90% 88%;
+  --secondary: 0 0% 14%;
+  --secondary-foreground: 0 0% 96%;
+  --muted: 0 0% 13%;
+  --muted-foreground: 0 0% 66%;
+  --accent: 0 0% 16%;
+  --accent-foreground: 0 0% 94%;
   --destructive: 0 48% 55%;
   --destructive-foreground: 0 0% 98%;
-  --success: 160 55% 45%;
-  --star: 48 96% 58%;
-  --warning: 38 92% 54%;
-  --info: 217 90% 65%;
-  --border: 20 12% 19%;
-  --input: 20 12% 22%;
-  --ring: 358 85% 58%;
+  --success: 87 55% 52%;
+  --star: 38 92% 60%;
+  --highlight: 40 92% 66%;
+  --warning: 33 80% 58%;
+  --info: 210 80% 62%;
+  --border: 0 0% 18%;
+  --input: 0 0% 22%;
+  --ring: 15 78% 58%;
   --avatar-background: oklch(0.696 0 0 / 89.8%);
-  --nav-background: 357 70% 13%;
-  --nav-border: 357 45% 24%;
-  --nav-button-active-bg: 358 80% 26%;
+  --nav-background: 0 0% 10%;
+  --nav-border: 0 0% 22%;
+  --nav-button-active-bg: 0 0% 24%;
   --nav-button-active-text: 0 0% 100%;
-  --sidebar: 20 18% 8%;
-  --sidebar-foreground: 30 10% 78%;
-  --sidebar-primary: 358 85% 58%;
+  --sidebar: 0 0% 10.5%;
+  --sidebar-foreground: 0 0% 78%;
+  --sidebar-primary: 15 78% 58%;
   --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 358 45% 19%;
-  --sidebar-accent-foreground: 358 90% 88%;
-  --sidebar-border: 20 12% 19%;
-  --sidebar-ring: 358 85% 58%;
+  --sidebar-accent: 0 0% 16%;
+  --sidebar-accent-foreground: 0 0% 94%;
+  --sidebar-border: 0 0% 18%;
+  --sidebar-ring: 15 78% 58%;
 }
 
 @theme inline {
@@ -159,6 +160,7 @@ html {
   --color-nav-button-active-text: hsl(var(--nav-button-active-text));
   --color-success: hsl(var(--success));
   --color-star: hsl(var(--star));
+  --color-highlight: hsl(var(--highlight));
   --color-warning: hsl(var(--warning));
   --color-info: hsl(var(--info));
 }

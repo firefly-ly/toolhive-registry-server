@@ -1,6 +1,5 @@
 "use client";
 
-import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
@@ -10,26 +9,19 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-  CommandSeparator,
 } from "@/components/ui/command";
 import { navItemsFor } from "@/lib/nav-items";
 
 interface CommandPaletteProps {
   isAdmin: boolean;
-  collapsed: boolean;
-  onToggleSidebar: () => void;
 }
 
 /**
  * ⌘K / Ctrl+K 全局命令面板：页面跳转 + 常用操作。
- * 导航项与桌面侧栏共用 nav-items 唯一数据源（新增入口只改 NAV_ITEMS）。
+ * 导航项与顶栏共用 nav-items 唯一数据源（新增入口只改 NAV_ITEMS）。
  * AppShell 挂载，全站任意页面可用。
  */
-export function CommandPalette({
-  isAdmin,
-  collapsed,
-  onToggleSidebar,
-}: CommandPaletteProps) {
+export function CommandPalette({ isAdmin }: CommandPaletteProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
 
@@ -66,16 +58,6 @@ export function CommandPalette({
               <span>{item.label}</span>
             </CommandItem>
           ))}
-        </CommandGroup>
-        <CommandSeparator />
-        <CommandGroup heading="操作">
-          <CommandItem
-            value="收起侧栏 展开侧栏 折叠"
-            onSelect={() => run(onToggleSidebar)}
-          >
-            {collapsed ? <PanelLeftOpen /> : <PanelLeftClose />}
-            <span>{collapsed ? "展开侧栏" : "收起侧栏"}</span>
-          </CommandItem>
         </CommandGroup>
       </CommandList>
     </CommandDialog>
