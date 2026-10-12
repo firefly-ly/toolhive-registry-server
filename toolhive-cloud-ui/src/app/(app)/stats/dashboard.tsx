@@ -79,8 +79,14 @@ export function StatsDashboard({
 
   return (
     <div className="space-y-5">
-      {/* KPI */}
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+      {/* KPI：首格 info 蓝色块主卡（包豪斯），其余白格 */}
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
+        <Kpi
+          l="总使用（调用+下载）"
+          v={items.reduce((a, b) => a + b.usage, 0)}
+          s="全部条目累计"
+          accent
+        />
         <Kpi
           l="能力项"
           v={kpis.total}
@@ -133,12 +139,14 @@ export function StatsDashboard({
               className={cn(
                 "rounded-xl border p-2.5 text-left transition-colors cursor-pointer",
                 retMode === "users"
-                  ? "border-primary/40 bg-primary/10 text-primary"
-                  : "border-border bg-card hover:border-primary/40",
+                  ? "border-foreground bg-foreground text-background"
+                  : "border-border bg-card hover:border-foreground/40",
               )}
             >
               <p className="text-xs opacity-85">平均唯一用户 · 近一月</p>
-              <p className="text-3xl font-extrabold">{Math.round(avgU)}</p>
+              <p className="font-mono text-3xl font-semibold">
+                {Math.round(avgU)}
+              </p>
               <p className="text-xs opacity-75">人 / 项 · 去重真实用户</p>
             </button>
             <button
@@ -147,12 +155,14 @@ export function StatsDashboard({
               className={cn(
                 "rounded-xl border p-2.5 text-left transition-colors cursor-pointer",
                 retMode === "ppc"
-                  ? "border-primary/40 bg-primary/10 text-primary"
-                  : "border-border bg-card hover:border-primary/40",
+                  ? "border-foreground bg-foreground text-background"
+                  : "border-border bg-card hover:border-foreground/40",
               )}
             >
               <p className="text-xs opacity-85">人均使用 · 近一周</p>
-              <p className="text-3xl font-extrabold">{perCapita(items)}</p>
+              <p className="font-mono text-3xl font-semibold">
+                {perCapita(items)}
+              </p>
               <p className="text-xs opacity-75">次 / 人 · 近 7 天</p>
             </button>
           </div>
@@ -220,9 +230,9 @@ export function StatsDashboard({
       <Card className="p-4">
         <CardHead title="逐项明细" sub="调用/下载、收藏、去重用户与综合分" />
         <div className="max-h-[360px] overflow-auto">
-          <table className="w-full border-collapse text-base">
+          <table className="w-full border-collapse text-sm">
             <thead className="sticky top-0 bg-card">
-              <tr className="text-left text-sm uppercase tracking-wide text-muted-foreground">
+              <tr className="text-left text-xs tracking-wide text-muted-foreground">
                 <th className="p-3">名称</th>
                 <th className="p-3">类型</th>
                 <th className="p-3 text-right">使用</th>
@@ -244,17 +254,17 @@ export function StatsDashboard({
                     <td className="p-3">
                       <TypePill t={it.type} />
                     </td>
-                    <td className="p-3 text-right">{it.usage}</td>
-                    <td className="p-3 text-right">{it.favs}</td>
-                    <td className="p-3 text-right">{it.u30}</td>
-                    <td className="p-3 text-right">
+                    <td className="p-3 text-right font-mono">{it.usage}</td>
+                    <td className="p-3 text-right font-mono">{it.favs}</td>
+                    <td className="p-3 text-right font-mono">{it.u30}</td>
+                    <td className="p-3 text-right font-mono">
                       {Math.round(it.dim.adopt)}
                     </td>
-                    <td className="p-3 text-right">
+                    <td className="p-3 text-right font-mono">
                       {Math.round(it.dim.active)}
                     </td>
                     <td
-                      className="p-3 text-right font-bold"
+                      className="p-3 text-right font-mono font-semibold"
                       style={{ color: gradeColor(it.score) }}
                     >
                       {it.score}
@@ -271,7 +281,7 @@ export function StatsDashboard({
                     </td>
                     <td className="p-3 text-right">
                       <Link
-                        className="text-primary hover:underline"
+                        className="font-medium text-info hover:underline"
                         href={it.href}
                       >
                         查看

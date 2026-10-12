@@ -44,7 +44,7 @@ export const SKILL = "hsl(var(--success))";
 
 export function TypePill({ t }: { t: "mcp" | "skill" }) {
   return t === "mcp" ? (
-    <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary dark:bg-primary/20">
+    <span className="rounded-full bg-info/10 px-2 py-0.5 text-xs font-semibold text-info">
       MCP
     </span>
   ) : (
@@ -54,7 +54,7 @@ export function TypePill({ t }: { t: "mcp" | "skill" }) {
   );
 }
 
-// 类型过滤分段控件（右上角，各自独立）
+// 类型过滤分段控件（右上角，各自独立）：黑胶囊选中态，与目录页类型筛选同款
 export function Seg({
   on,
   onChange,
@@ -68,16 +68,16 @@ export function Seg({
     { k: "skill", l: "Skill" },
   ];
   return (
-    <div className="inline-flex shrink-0 rounded-lg border border-border bg-muted/50 p-1">
+    <div className="inline-flex shrink-0 rounded-lg border border-foreground bg-card p-0.5">
       {opts.map((o) => (
         <button
           key={o.k}
           type="button"
           onClick={() => onChange(o.k)}
           className={cn(
-            "rounded-md px-4 py-1 text-base transition-colors cursor-pointer",
+            "cursor-pointer rounded-md px-3.5 py-1 text-sm font-semibold transition-colors",
             on === o.k
-              ? "bg-primary/10 text-primary"
+              ? "bg-foreground text-background"
               : "text-muted-foreground hover:text-foreground",
           )}
         >
@@ -153,19 +153,46 @@ export function Kpi({
   v,
   s,
   c,
+  accent,
 }: {
   l: string;
   v: number;
   s?: string;
   c?: string;
+  /** 包豪斯色块主卡：info 蓝底白字（每行至多一枚） */
+  accent?: boolean;
 }) {
   return (
-    <Card className="p-5">
-      <p className="text-sm text-muted-foreground">{l}</p>
-      <p className="mt-1 text-4xl font-extrabold" style={{ color: c }}>
+    <Card
+      className={cn(
+        "p-4",
+        accent && "border-none bg-info text-white dark:bg-info/90",
+      )}
+    >
+      <p
+        className={cn(
+          "text-xs",
+          accent ? "opacity-75" : "text-muted-foreground",
+        )}
+      >
+        {l}
+      </p>
+      <p
+        className="mt-1 font-mono text-3xl font-semibold"
+        style={c && !accent ? { color: c } : undefined}
+      >
         {v}
       </p>
-      {s && <p className="text-xs text-muted-foreground">{s}</p>}
+      {s && (
+        <p
+          className={cn(
+            "font-mono text-[11px]",
+            accent ? "opacity-60" : "text-muted-foreground",
+          )}
+        >
+          {s}
+        </p>
+      )}
     </Card>
   );
 }
@@ -173,11 +200,11 @@ export function Kpi({
 export function RankRow({ it, rank }: { it: ItemStat; rank: number }) {
   const rkCls =
     rank === 1
-      ? "bg-amber-300 text-amber-900"
+      ? "bg-highlight text-foreground"
       : rank === 2
         ? "bg-muted text-foreground"
         : rank === 3
-          ? "bg-orange-200 text-orange-800"
+          ? "bg-highlight/40 text-foreground"
           : "bg-muted text-muted-foreground";
   const dims =
     it.type === "mcp"
