@@ -124,17 +124,17 @@ export function ServerCard({
 
   return (
     <div
-      className="card-hover group relative flex h-full w-full cursor-pointer flex-col overflow-hidden rounded-xl border bg-card transition-colors"
+      className="group relative flex h-full w-full cursor-pointer flex-col overflow-hidden bg-card px-6 pt-9 pb-5 transition-[background,transform] duration-150 [border-bottom-width:1.5px] [border-right-width:1.5px] border-border hover:-translate-y-[3px] hover:bg-muted/40"
       onClick={onClick ? () => onClick() : undefined}
     >
-      {/* 包豪斯：类型垂片 + 右下几何角饰（替代整条色带横幅） */}
+      {/* 效果图 01：类型垂片 + 右下几何角饰（无缝拼贴单元格，边框由单元格自带） */}
       <CardTypeTab type="mcp" />
       <CardCornerDeco type="mcp" />
 
-      <div className="relative z-10 flex flex-1 flex-col p-4 pt-8">
+      <div className="relative z-10 flex flex-1 flex-col">
         <div className="flex items-center gap-2">
           <span
-            className="min-w-0 flex-1 truncate text-base font-semibold"
+            className="min-w-0 flex-1 truncate text-[15.5px] font-semibold transition-transform duration-200 group-hover:translate-x-[3px]"
             title={server.title ?? name}
           >
             {server.title ?? name}
@@ -148,28 +148,29 @@ export function ServerCard({
             </Badge>
           )}
         </div>
-        <p className="mt-1.5 line-clamp-2 text-sm leading-snug text-muted-foreground">
+        <p className="mt-2 line-clamp-2 max-w-[88%] min-h-10 text-xs leading-[1.7] text-muted-foreground">
           {description || "暂无描述"}
         </p>
 
-        <div className="mt-auto flex items-center justify-between gap-2 border-t pt-3">
-          <div className="min-w-0 truncate font-mono text-xs text-muted-foreground">
-            {server.version ? `v${server.version}` : ""} · {callCount} 次调用
-          </div>
-          <div className="flex shrink-0 items-center gap-1">
-            {starButton}
-            <Button
-              type="button"
-              size="sm"
-              className="bg-foreground px-4 text-background hover:bg-foreground/85"
-              onClick={(e) => {
-                e.stopPropagation();
-                onClick?.();
-              }}
-            >
-              查看
-            </Button>
-          </div>
+        <div className="mt-auto flex items-center pt-4">
+          <span className="shrink-0 font-mono text-[11px] text-muted-foreground">
+            {server.version ? `v${server.version}` : ""}
+          </span>
+          <span className="ml-2.5 shrink-0 text-[11px] text-muted-foreground">
+            {callCount} 次调用
+          </span>
+          <span className="ml-auto mr-3 shrink-0">{starButton}</span>
+          <Button
+            type="button"
+            size="sm"
+            className="h-8 rounded-lg border-[1.5px] border-foreground bg-card px-4 text-xs font-semibold text-foreground group-hover:bg-foreground group-hover:text-background"
+            onClick={(e) => {
+              e.stopPropagation();
+              onClick?.();
+            }}
+          >
+            查看
+          </Button>
         </div>
       </div>
     </div>

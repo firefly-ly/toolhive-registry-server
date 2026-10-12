@@ -1,13 +1,13 @@
 "use client";
 
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
-
 interface CatalogPaginationProps {
   /** 当前页（0 起） */
   page: number;
   totalPages: number;
   onPageChange: (page: number) => void;
+  /** 总条目数与页容量：左侧「共 N 件 · 每页 M 件」（效果图 01 footer） */
+  totalItems?: number;
+  pageSize?: number;
 }
 
 type PageItem = number | "ellipsis";
@@ -36,66 +36,69 @@ function buildPageList(current: number, total: number): PageItem[] {
   return list;
 }
 
+/**
+ * 分页 footer（效果图 01 精确规格）：左「共 N 件 · 每页 M 件」，
+ * 右 30px 方形页码（1.5px 发丝边、选中黑底白字）+ 末尾「→」翻页。
+ */
 export function CatalogPagination({
   page,
   totalPages,
   onPageChange,
+  totalItems,
+  pageSize,
 }: CatalogPaginationProps) {
-  if (totalPages <= 1) return null;
-
   const current = page + 1; // 展示用 1 起
   const items = buildPageList(current, totalPages);
 
-  return (
-    <nav
-      aria-label="分页"
-      className="mx-auto mt-4 flex w-fit items-center gap-1"
-    >
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={() => onPageChange(page - 1)}
-        disabled={page === 0}
-        aria-label="上一页"
-        className="size-8 cursor-pointer"
-      >
-        <ChevronLeft className="size-4" />
-      </Button>
+  const pgCls = (active: boolean) =>
+    `flex size-[30px] cursor-pointer items-center justify-center rounded-lg text-xs tabular-nums transition-colors border-[1.5px] ${
+      active
+        ? "border-foreground bg-foreground font-semibold text-background"
+        : "border-border text-muted-foreground hover:border-foreground hover:text-foreground"
+    }`;
 
-      {items.map((item, i) =>
-        item === "ellipsis" ? (
-          <span
-            key={`ellipsis-${items.slice(0, i).filter((x) => x === "ellipsis").length}`}
-            aria-hidden
-            className="flex size-8 items-center justify-center text-sm text-muted-foreground select-none"
-          >
-            …
-          </span>
-        ) : (
-          <Button
-            key={item}
-            variant={item === current ? "outline" : "ghost"}
-            size="icon"
-            onClick={() => onPageChange(item - 1)}
-            aria-label={`第 ${item} 页`}
-            aria-current={item === current ? "page" : undefined}
-            className="size-8 cursor-pointer text-sm tabular-nums"
-          >
-            {item}
-          </Button>
-        ),
+  return (
+    <nav aria-label="分页" className="flex items-center py-4">
+      {typeof totalItems === "number" && (
+        <span className="text-xs text-muted-foreground">
+          共 {totalItems} 件
+          {typeof pageSize === "number" ? ` · 每页 ${pageSize} 件` : ""}
+        </span>
       )}
 
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={() => onPageChange(page + 1)}
-        disabled={page >= totalPages - 1}
-        aria-label="下一页"
-        className="size-8 cursor-pointer"
-      >
-        <ChevronRight className="size-4" />
-      </Button>
+      <div className="ml-auto flex items-center gap-1.5">
+        {items.map((item, i) =>
+          item === "ellipsis" ? (
+            <span
+              key={`ellipsis-${items.slice(0, i).filter((x) => x === "ellipsis").length}`}
+              aria-hidden
+              className="flex size-[30px] items-center justify-center text-xs text-muted-foreground select-none"
+            >
+              …
+            </span>
+          ) : (
+            <button
+              key={item}
+              type="button"
+              onClick={() => onPageChange(item - 1)}
+              aria-label={`第 ${item} 页`}
+              aria-current={item === current ? "page" : undefined}
+              className={pgCls(item === current)}
+            >
+              {item}
+            </button>
+          ),
+        )}
+        <button
+          type="button"
+          onClick={() => onPageChange(page + 1)}
+          disabled={page >= totalPages - 1}
+          aria-label="下一页"
+          className="flex size-[30px] cursor-pointer items-center justify-center rounded-lg text-xs text-muted-foreground transition-colors hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
+        >
+          →
+        </button>
+      </div>
     </nav>
   );
 }

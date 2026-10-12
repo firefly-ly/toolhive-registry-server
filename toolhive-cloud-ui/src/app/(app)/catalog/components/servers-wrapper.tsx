@@ -282,8 +282,8 @@ export function ServersWrapper({
         />
       )}
 
-      {/* 工具栏：左类型/状态/排序/数据源，右视图切换（搜索在顶栏） */}
-      <div className="py-4" id="catalog-grid">
+      {/* 工具栏：左类型/状态/排序/数据源，右视图切换（搜索在顶栏）；底 1.5px 发丝线 */}
+      <div className="border-b-[1.5px] border-border py-3.5" id="catalog-grid">
         <ServerFilters
           registries={registries}
           selectedRegistry={selectedRegistry}
@@ -321,6 +321,8 @@ export function ServersWrapper({
         page={safePage}
         totalPages={totalPages}
         onPageChange={setPage}
+        totalItems={sortedItems.length}
+        pageSize={pageSize}
       />
     </div>
   );

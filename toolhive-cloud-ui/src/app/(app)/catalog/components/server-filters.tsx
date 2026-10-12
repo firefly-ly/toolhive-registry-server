@@ -142,27 +142,27 @@ export function ServerFilters({
         )}
       </div>
 
-      {/* 右：视图切换 */}
+      {/* 右：视图切换（效果图 01：34px 方钮、发丝边、选中琥珀底黑字） */}
       <ToggleGroup
         type="single"
         value={viewMode}
         onValueChange={(value) => {
           if (value) onViewModeChange(value as "grid" | "list");
         }}
-        spacing={1}
-        className="gap-2"
+        spacing={1.5}
+        className="gap-0"
       >
         <ToggleGroupItem
           value="list"
           aria-label="列表视图"
-          className="size-9 rounded-md data-[state=on]:bg-accent data-[state=on]:shadow-none"
+          className="size-[34px] rounded-lg border-[1.5px] border-border bg-card text-muted-foreground data-[state=on]:border-foreground data-[state=on]:bg-highlight data-[state=on]:text-foreground data-[state=on]:shadow-none"
         >
           <List className="size-4" />
         </ToggleGroupItem>
         <ToggleGroupItem
           value="grid"
           aria-label="网格视图"
-          className="size-9 rounded-md data-[state=on]:bg-accent data-[state=on]:shadow-none"
+          className="size-[34px] rounded-lg border-[1.5px] border-border bg-card text-muted-foreground data-[state=on]:border-foreground data-[state=on]:bg-highlight data-[state=on]:text-foreground data-[state=on]:shadow-none"
         >
           <LayoutGrid className="size-4" />
         </ToggleGroupItem>

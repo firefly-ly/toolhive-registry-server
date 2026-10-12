@@ -140,45 +140,42 @@ export function SkillCard({
   }
 
   return (
-    <div className="card-hover group relative flex h-full w-full flex-col overflow-hidden rounded-xl border bg-card transition-colors">
-      {/* 包豪斯：类型垂片 + 右下几何角饰（替代整条色带横幅） */}
+    <div className="group relative flex h-full w-full flex-col overflow-hidden bg-card px-6 pt-9 pb-5 transition-[background,transform] duration-150 [border-bottom-width:1.5px] [border-right-width:1.5px] border-border hover:-translate-y-[3px] hover:bg-muted/40">
+      {/* 效果图 01：类型垂片 + 右下几何角饰（无缝拼贴单元格） */}
       <CardTypeTab type="skill" />
       <CardCornerDeco type="skill" />
 
-      <div className="relative z-10 flex flex-1 flex-col p-4 pt-8">
+      <div className="relative z-10 flex flex-1 flex-col">
         <div className="flex items-center gap-2">
           <span
-            className="min-w-0 flex-1 truncate text-base font-semibold"
+            className="min-w-0 flex-1 truncate text-[15.5px] font-semibold transition-transform duration-200 group-hover:translate-x-[3px]"
             title={cur.name}
           >
             {cur.name}
           </span>
           {canSwitch && versionSwitcher}
         </div>
-        <p className="mt-1.5 line-clamp-2 text-sm leading-snug text-muted-foreground">
+        <p className="mt-2 line-clamp-2 max-w-[88%] min-h-10 text-xs leading-[1.7] text-muted-foreground">
           {cur.description || "暂无描述"}
         </p>
-        <p className="mt-1.5 truncate text-xs text-muted-foreground">
-          提交者：{cur.owner || skill.owner}
-        </p>
 
-        <div className="mt-auto flex items-center justify-between gap-2 border-t pt-3">
-          <div className="min-w-0 truncate font-mono text-xs text-muted-foreground">
-            {cur.version ? `v${cur.version}` : ""} · {cur.download_count || 0}{" "}
-            次下载
-          </div>
-          <div className="flex shrink-0 items-center gap-1">
-            {starButton}
-            <SkillDownloadDialog skill={cur} />
-            <Button
-              type="button"
-              size="sm"
-              className="bg-foreground px-4 text-background hover:bg-foreground/85"
-              onClick={() => onClick?.(cur.id)}
-            >
-              查看
-            </Button>
-          </div>
+        <div className="mt-auto flex items-center pt-4">
+          <span className="shrink-0 font-mono text-[11px] text-muted-foreground">
+            {cur.version ? `v${cur.version}` : ""}
+          </span>
+          <span className="ml-2.5 shrink-0 text-[11px] text-muted-foreground">
+            {cur.download_count || 0} 次下载
+          </span>
+          <span className="ml-auto mr-3 shrink-0">{starButton}</span>
+          <SkillDownloadDialog skill={cur} />
+          <Button
+            type="button"
+            size="sm"
+            className="h-8 rounded-lg border-[1.5px] border-foreground bg-card px-4 text-xs font-semibold text-foreground group-hover:bg-foreground group-hover:text-background"
+            onClick={() => onClick?.(cur.id)}
+          >
+            查看
+          </Button>
         </div>
       </div>
     </div>

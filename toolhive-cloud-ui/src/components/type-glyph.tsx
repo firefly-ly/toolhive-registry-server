@@ -43,11 +43,11 @@ export function SkillGlyph({ size = 16 }: { size?: number }) {
   );
 }
 
-/** 卡片类型垂片（包豪斯）：左上角色块，白字 MCP / SKILL——类型即角标，不再占用整条横幅 */
+/** 卡片类型垂片（效果图 01）：左上角悬挂色块（left-6、圆底角、10px 加宽字距） */
 export function CardTypeTab({ type }: { type: "mcp" | "skill" }) {
   return (
     <span
-      className={`absolute top-0 left-4 z-10 rounded-b-md px-2.5 py-1 text-[11px] font-semibold tracking-[0.18em] text-white ${
+      className={`absolute top-0 left-6 z-10 rounded-b-lg px-3 py-1 text-[10px] font-semibold tracking-[0.12em] text-white ${
         type === "mcp" ? "bg-info" : "bg-success"
       }`}
     >
@@ -57,17 +57,18 @@ export function CardTypeTab({ type }: { type: "mcp" | "skill" }) {
 }
 
 /**
- * 卡片几何角饰（包豪斯）：MCP=右下四分之一圆（info），Skill=右下半圆（success）。
- * 纯装饰：pointer-events-none；配合父级 group 悬停放大 1.5 倍。
+ * 卡片几何角饰（效果图 01 精确规格）：
+ * MCP=右下 52px 四分之一圆（浅蓝底 + 上/左 1.5px 同色系描边），
+ * Skill=右下 52×26 半圆（浅绿底 + 顶部描边）；悬停放大 1.55 倍并加深。
  */
 export function CardCornerDeco({ type }: { type: "mcp" | "skill" }) {
   return (
     <span
       aria-hidden
-      className={`pointer-events-none absolute right-0 bottom-0 origin-bottom-right transition-transform duration-200 ease-out group-hover:scale-150 ${
+      className={`pointer-events-none absolute right-0 bottom-0 origin-bottom-right transition-transform duration-300 [transition-timing-function:cubic-bezier(.2,.8,.2,1)] group-hover:scale-[1.55] ${
         type === "mcp"
-          ? "size-12 rounded-tl-full bg-info/10"
-          : "h-6 w-12 rounded-t-full bg-success/10"
+          ? "size-13 rounded-tl-full border-t-[1.5px] border-l-[1.5px] border-info/40 bg-info/10 group-hover:bg-info/30"
+          : "h-6.5 w-13 rounded-t-full border-t-[1.5px] border-success/40 bg-success/10 group-hover:bg-success/30"
       }`}
     />
   );
