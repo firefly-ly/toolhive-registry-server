@@ -34,12 +34,7 @@ export function Navbar({ user, isAdmin }: NavbarProps) {
         </Link>
       </div>
       <div className="flex h-full shrink-0 items-center">
-        {user?.name && <UserMenu userName={user.name} />}
-        {user?.email && (
-          <span className="ml-2 text-xs text-sidebar-foreground/60">
-            {user.email}
-          </span>
-        )}
+        {user?.name && <UserMenu userName={user.name} email={user.email} />}
         {isAdmin && (
           <span className="ml-1.5 rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
             管理员

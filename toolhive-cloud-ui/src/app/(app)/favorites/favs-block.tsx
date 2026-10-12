@@ -1,6 +1,6 @@
 "use client";
 
-import { Star } from "lucide-react";
+import { Activity, Star } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { EmptyState } from "@/components/header-page";
@@ -179,9 +179,9 @@ export function FavsBlock({
                         size="sm"
                         className="h-8 gap-1 px-2 text-muted-foreground hover:text-foreground"
                         aria-label="取消收藏"
+                        title="取消收藏"
                       >
                         <Star className="size-3.5 fill-star text-star" />
-                        取消收藏
                       </Button>
                     </form>
                     {/* href 为空 = 条目已不可达（下线/无权限），不渲染查看入口 */}
@@ -213,9 +213,15 @@ export function FavsBlock({
             </span>
           </p>
           {activity.length === 0 ? (
-            <p className="py-6 text-sm text-muted-foreground">
-              近两周没有使用记录——从磁贴进入调用后，动态会出现在这里。
-            </p>
+            <div className="flex flex-col items-center gap-1.5 rounded-xl bg-muted/40 py-8 text-center">
+              <Activity className="size-5 text-muted-foreground/70" />
+              <p className="text-sm text-muted-foreground">
+                近两周没有使用记录
+              </p>
+              <p className="text-xs text-muted-foreground/70">
+                从磁贴进入调用后，动态会出现在这里
+              </p>
+            </div>
           ) : (
             <div className="space-y-0">
               {activity.map((a, i) => (

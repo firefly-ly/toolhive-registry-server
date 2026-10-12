@@ -20,7 +20,6 @@ import {
 } from "../../submissions/actions";
 import {
   DEPLOY_LABEL,
-  groupKey,
   isOnShelf,
   isRestricted,
   parseMeta,

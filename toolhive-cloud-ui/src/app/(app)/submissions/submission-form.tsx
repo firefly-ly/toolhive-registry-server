@@ -342,7 +342,7 @@ export function SubmissionForm({ action }: SubmissionFormProps) {
                 className={cn(
                   "flex size-7 items-center justify-center rounded-full text-xs font-medium",
                   step === s.n
-                    ? "bg-primary text-primary-foreground"
+                    ? "bg-primary/10 text-primary"
                     : step > s.n
                       ? "bg-success/15 text-success"
                       : "border border-border text-muted-foreground",

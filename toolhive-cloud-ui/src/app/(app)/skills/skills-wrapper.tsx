@@ -101,6 +101,13 @@ export function SkillsWrapper({
     safePage * pageSize + pageSize,
   );
   const showHero = !search && !comboActive;
+  // hero 门面兜底：无描述的条目不上门面
+  const heroCandidates = useMemo(
+    () => sortedSkills.filter((m) => (m.description ?? "").trim() !== ""),
+    [sortedSkills],
+  );
+  const heroItem = heroCandidates[0] ?? null;
+  const heroFeed = heroCandidates.slice(1, 4);
 
   const renderCard = (s: Skill) => {
     const gk =
@@ -121,91 +128,93 @@ export function SkillsWrapper({
     <div className="-mr-8 flex h-full flex-col overflow-y-auto pr-8">
       <PageHeader title="技能目录" />
 
-      {/* 陈列馆门面：搜索/组合过滤时隐藏 */}
-      {showHero && (
-        <div className="mb-4 w-full @container">
-          <CatalogHero
-            newest={sortedSkills[0] ?? null}
-            feed={sortedSkills.slice(1, 4)}
-            routePrefix="/skills"
-            typeLabel="Skill"
-            accent="success"
-          />
-        </div>
-      )}
+      {/* 陈列馆展台：hero + 组合轨 + 工具栏同坐一个浅色分区，卡片浮于其上 */}
+      <div className="mb-4 rounded-2xl bg-secondary/40 p-4">
+        {showHero && (
+          <div className="@container mb-4">
+            <CatalogHero
+              newest={heroItem}
+              feed={heroFeed}
+              routePrefix="/skills"
+              typeLabel="Skill"
+              accent="success"
+            />
+          </div>
+        )}
 
-      {/* 热门组合轨：命中不足的组合自动隐藏；点击进入组合过滤，再点退出 */}
-      {visibleCombos.length > 0 && (
-        <div className="mb-4 flex flex-wrap items-center gap-2">
-          <span className="text-xs text-muted-foreground">热门组合</span>
-          {visibleCombos.map((c) => (
-            <button
-              key={c.label}
-              type="button"
-              onClick={() => {
-                setComboActive(comboActive === c.label ? null : c.label);
-                setPage(0);
-              }}
-              className={`cursor-pointer rounded-full border px-3 py-1.5 text-sm transition-colors ${
-                comboActive === c.label
-                  ? "border-success/50 bg-success/10 font-medium text-success"
-                  : "hover:border-success/40"
-              }`}
-            >
-              {c.label}{" "}
-              <span className="text-success">{c.matched.length} 项</span>
-            </button>
-          ))}
-        </div>
-      )}
+        {/* 热门组合轨：命中不足的组合自动隐藏；点击进入组合过滤，再点退出 */}
+        {visibleCombos.length > 0 && (
+          <div className="mb-4 flex flex-wrap items-center gap-2">
+            <span className="text-xs text-muted-foreground">热门组合</span>
+            {visibleCombos.map((c) => (
+              <button
+                key={c.label}
+                type="button"
+                onClick={() => {
+                  setComboActive(comboActive === c.label ? null : c.label);
+                  setPage(0);
+                }}
+                className={`cursor-pointer rounded-full border px-3 py-1.5 text-sm transition-colors ${
+                  comboActive === c.label
+                    ? "border-success/50 bg-success/10 font-medium text-success"
+                    : "hover:border-success/40"
+                }`}
+              >
+                {c.label}{" "}
+                <span className="text-success">{c.matched.length} 项</span>
+              </button>
+            ))}
+          </div>
+        )}
 
-      {/* 工具栏独立成行：左搜索，右视图切换（与 MCP 目录同款） */}
-      <div className="mb-4 flex w-full flex-wrap items-center justify-between gap-3">
-        <div className="relative w-72 max-w-full">
-          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            type="text"
-            placeholder="搜索技能名称或描述…"
-            value={search}
-            onChange={(e) => handleSearch(e.target.value)}
-            className="h-9 px-9 bg-card"
-          />
-          {search && (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => handleSearch("")}
-              className="absolute top-1/2 right-1 size-7 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              aria-label="清除搜索"
+        {/* 工具栏独立成行：左搜索，右视图切换（与 MCP 目录同款） */}
+        <div className="flex w-full flex-wrap items-center justify-between gap-3">
+          <div className="relative w-72 max-w-full">
+            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder="搜索技能名称或描述…"
+              value={search}
+              onChange={(e) => handleSearch(e.target.value)}
+              className="h-9 px-9 bg-card"
+            />
+            {search && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => handleSearch("")}
+                className="absolute top-1/2 right-1 size-7 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                aria-label="清除搜索"
+              >
+                <X className="size-4" />
+              </Button>
+            )}
+          </div>
+          <ToggleGroup
+            type="single"
+            value={viewMode}
+            onValueChange={(value) => {
+              if (value) setViewMode(value as "grid" | "list");
+            }}
+            spacing={1}
+            className="gap-2"
+          >
+            <ToggleGroupItem
+              value="list"
+              aria-label="列表视图"
+              className="size-9 rounded-md data-[state=on]:bg-accent data-[state=on]:shadow-none"
             >
-              <X className="size-4" />
-            </Button>
-          )}
+              <List className="size-4" />
+            </ToggleGroupItem>
+            <ToggleGroupItem
+              value="grid"
+              aria-label="网格视图"
+              className="size-9 rounded-md data-[state=on]:bg-accent data-[state=on]:shadow-none"
+            >
+              <LayoutGrid className="size-4" />
+            </ToggleGroupItem>
+          </ToggleGroup>
         </div>
-        <ToggleGroup
-          type="single"
-          value={viewMode}
-          onValueChange={(value) => {
-            if (value) setViewMode(value as "grid" | "list");
-          }}
-          spacing={1}
-          className="gap-2"
-        >
-          <ToggleGroupItem
-            value="list"
-            aria-label="列表视图"
-            className="size-9 rounded-md data-[state=on]:bg-accent data-[state=on]:shadow-none"
-          >
-            <List className="size-4" />
-          </ToggleGroupItem>
-          <ToggleGroupItem
-            value="grid"
-            aria-label="网格视图"
-            className="size-9 rounded-md data-[state=on]:bg-accent data-[state=on]:shadow-none"
-          >
-            <LayoutGrid className="size-4" />
-          </ToggleGroupItem>
-        </ToggleGroup>
       </div>
 
       {skills.length === 0 ? (
