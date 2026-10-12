@@ -218,6 +218,26 @@ export function ServersWrapper({
         .slice(0, 3),
     [heroPool, heroItem, heroHottest],
   );
+  // KPI 矩阵（效果图 01 右侧 2×2）：累计调用 / 在线服务 / 可用技能 / 我的收藏
+  const kpis = useMemo(
+    () => ({
+      totalCalls:
+        Object.values(callsByRef).reduce((a, b) => a + b, 0) +
+        submittedMcps.reduce((a, m) => a + (m.call_count || 0), 0) +
+        skills.reduce((a, s) => a + (s.download_count || 0), 0),
+      services: servers.length + submittedMcps.length,
+      skills: skills.length,
+      favorites: favoritedRefs.length + skillFavoritedRefs.length,
+    }),
+    [
+      callsByRef,
+      submittedMcps,
+      skills,
+      servers.length,
+      favoritedRefs,
+      skillFavoritedRefs,
+    ],
+  );
 
   return (
     <div className="-mr-8 flex h-full flex-col overflow-y-auto pr-8">
@@ -232,6 +252,7 @@ export function ServersWrapper({
               hottest={heroHottest}
               feed={heroFeed}
               showSubmitCta
+              kpis={kpis}
             />
           </div>
         )}

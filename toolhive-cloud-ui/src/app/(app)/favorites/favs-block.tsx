@@ -129,8 +129,18 @@ export function FavsBlock({
               return (
                 <div
                   key={`${r.item_type}-${r.item_ref}`}
-                  className="flex flex-col rounded-xl border bg-card p-4 transition-colors hover:border-primary/40"
+                  className="group/tile relative flex flex-col overflow-hidden rounded-xl border bg-card p-4 transition-colors hover:border-primary/40"
                 >
+                  {/* 几何角饰（对齐效果图 02）：MCP 右下四分之一圆 / Skill 半圆，悬停放大 */}
+                  <span
+                    aria-hidden
+                    className={cn(
+                      "pointer-events-none absolute right-0 bottom-0 size-10 opacity-70 transition-transform duration-300 group-hover/tile:scale-125",
+                      isMcp
+                        ? "rounded-tl-full bg-info/15"
+                        : "rounded-t-full bg-success/15",
+                    )}
+                  />
                   <div className="flex items-center gap-2.5">
                     <span
                       className={cn(
@@ -141,12 +151,14 @@ export function FavsBlock({
                       <span
                         className={cn(
                           "size-2.5 rounded-sm",
-                          isMcp ? "bg-info" : "bg-success",
+                          isMcp
+                            ? "rounded-tl-sm bg-info"
+                            : "rounded-full bg-success",
                         )}
                       />
                     </span>
                     <p
-                      className="min-w-0 flex-1 truncate text-sm font-medium"
+                      className="min-w-0 flex-1 truncate text-sm font-semibold"
                       title={r.title}
                     >
                       {r.title}

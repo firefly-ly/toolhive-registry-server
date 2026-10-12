@@ -97,7 +97,8 @@ export function SubmissionForm({ action }: SubmissionFormProps) {
   const [pending, startTransition] = useTransition();
 
   // 发布通道状态：当前步骤 + 清单所需的基本字段受控值
-  const [step, setStep] = useState(1);
+  // step 0 = 选择类型（效果图 03 分道版）；1/2/3 与原三步一致
+  const [step, setStep] = useState(0);
   const [name, setName] = useState("");
   const [payloadRef, setPayloadRef] = useState("");
   const [desc, setDesc] = useState("");
@@ -321,47 +322,126 @@ export function SubmissionForm({ action }: SubmissionFormProps) {
     >
       <input type="hidden" name="type" value={type} />
 
-      {/* 三站进度轨：可点击跳转，最终提交由第 3 步校验清单把关 */}
-      <div className="flex items-center pb-2">
-        {STEPS.map((s, i) => (
-          <Fragment key={s.n}>
-            {i > 0 && (
-              <div
-                className={cn(
-                  "mx-3 h-px flex-1",
-                  step > s.n ? "bg-primary" : "bg-border",
-                )}
-              />
-            )}
+      {/* ── 第 0 步：选择类型（MCP / Skill 分道，效果图 03）── */}
+      {step === 0 && (
+        <section className="rounded-xl border p-6">
+          <h3 className="text-lg font-semibold">选择提交类型</h3>
+          <p className="mt-1 text-sm text-muted-foreground">
+            两类条目的流程与校验不同，先选类型，后续步骤会按分支展开。
+          </p>
+          <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2">
+            {/* MCP 大卡：蓝拱 + 琥珀圆点 */}
             <button
               type="button"
-              onClick={() => setStep(s.n)}
-              className="flex cursor-pointer items-center gap-2"
+              onClick={() => setType("mcp")}
+              aria-pressed={isMcp}
+              className={cn(
+                "relative cursor-pointer rounded-xl border-2 p-6 text-left transition-colors",
+                isMcp
+                  ? "border-foreground bg-card"
+                  : "border-border bg-card hover:border-muted-foreground/60",
+              )}
             >
-              <span
-                className={cn(
-                  "flex size-7 items-center justify-center rounded-full text-xs font-medium",
-                  step === s.n
-                    ? "bg-primary/10 text-primary"
-                    : step > s.n
-                      ? "bg-success/15 text-success"
-                      : "border border-border text-muted-foreground",
-                )}
-              >
-                {step > s.n ? "✓" : s.n}
+              {isMcp && (
+                <span className="absolute top-0 right-5 -translate-y-1/2 rounded-full bg-highlight px-3 py-0.5 text-xs font-medium text-foreground">
+                  已选
+                </span>
+              )}
+              <span aria-hidden className="flex items-end gap-1.5">
+                <span className="h-9 w-7 rounded-t-full bg-info" />
+                <span className="size-2.5 rounded-full bg-highlight" />
               </span>
-              <span
-                className={cn(
-                  "text-sm",
-                  step === s.n ? "font-medium" : "text-muted-foreground",
-                )}
-              >
-                {s.label}
-              </span>
+              <p className="mt-4 text-base font-semibold">MCP 服务</p>
+              <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                部署在平台运行的
+                工具服务：提供镜像或源码，审批通过后自动构建部署。
+              </p>
+              <p className="mt-3 text-xs text-muted-foreground">
+                流程：基本信息 → 制品来源 → 审批 → 自动部署
+              </p>
             </button>
-          </Fragment>
-        ))}
-      </div>
+            {/* Skill 大卡：绿圆 + 琥珀山形 */}
+            <button
+              type="button"
+              onClick={() => setType("skill")}
+              aria-pressed={!isMcp}
+              className={cn(
+                "relative cursor-pointer rounded-xl border-2 p-6 text-left transition-colors",
+                !isMcp
+                  ? "border-foreground bg-card"
+                  : "border-border bg-card hover:border-muted-foreground/60",
+              )}
+            >
+              {!isMcp && (
+                <span className="absolute top-0 right-5 -translate-y-1/2 rounded-full bg-highlight px-3 py-0.5 text-xs font-medium text-foreground">
+                  已选
+                </span>
+              )}
+              <span aria-hidden className="flex items-end gap-1.5">
+                <span className="size-9 rounded-full bg-success" />
+                <span className="h-4 w-7 bg-highlight [clip-path:polygon(0_100%,50%_0,100%_100%)]" />
+              </span>
+              <p className="mt-4 text-base font-semibold">Skill 技能</p>
+              <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                打包上传的提示词技能：包内含
+                SKILL.md，上传时自动校验，审批通过后上架下载。
+              </p>
+              <p className="mt-3 text-xs text-muted-foreground">
+                流程：基本信息 → 上传技能包 → 审批 → 上架
+              </p>
+            </button>
+          </div>
+          <div className="mt-6 flex justify-end">
+            <Button type="button" size="lg" onClick={() => setStep(1)}>
+              下一步：基本信息 →
+            </Button>
+          </div>
+        </section>
+      )}
+
+      {/* 三站进度轨：可点击跳转，最终提交由第 3 步校验清单把关 */}
+      {step > 0 && (
+        <div className="flex items-center pb-2">
+          {STEPS.map((s, i) => (
+            <Fragment key={s.n}>
+              {i > 0 && (
+                <div
+                  className={cn(
+                    "mx-3 h-px flex-1",
+                    step > s.n ? "bg-primary" : "bg-border",
+                  )}
+                />
+              )}
+              <button
+                type="button"
+                onClick={() => setStep(s.n)}
+                className="flex cursor-pointer items-center gap-2"
+              >
+                <span
+                  className={cn(
+                    "flex size-7 items-center justify-center rounded-full text-xs font-medium",
+                    step === s.n
+                      ? "bg-primary/10 text-primary"
+                      : step > s.n
+                        ? "bg-success/15 text-success"
+                        : "border border-border text-muted-foreground",
+                  )}
+                >
+                  {step > s.n ? "✓" : s.n}
+                </span>
+                <span
+                  className={cn(
+                    "text-sm",
+                    step === s.n ? "font-medium" : "text-muted-foreground",
+                  )}
+                >
+                  {s.n === 2 && !isMcp ? "上传技能包" : s.label}
+                </span>
+              </button>
+            </Fragment>
+          ))}
+        </div>
+      )}
 
       <div className={step !== 1 ? "hidden" : ""}>
         <section className="rounded-xl border p-5">
