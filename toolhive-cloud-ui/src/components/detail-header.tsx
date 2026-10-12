@@ -21,11 +21,10 @@ export function DetailHeader({
 }: DetailHeaderProps) {
   return (
     <div className="flex flex-col gap-4">
-      <NavigateBackButton
-        href={backHref}
-        label={backLabel}
-        className="w-full justify-center"
-      />
+      {/* 返回入口：紧凑胶囊贴左，与面包屑同一视觉层级，不再撑满整行 */}
+      <div className="flex items-center justify-between gap-3">
+        <NavigateBackButton href={backHref} label={backLabel} size="sm" />
+      </div>
 
       <div className="flex flex-col gap-2">
         <div className="flex items-start justify-between gap-3">

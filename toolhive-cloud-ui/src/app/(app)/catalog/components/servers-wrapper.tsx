@@ -9,6 +9,7 @@ import type {
 } from "@/generated/types.gen";
 import type { McpServer } from "@/lib/platform-backend";
 import { CATALOG_PAGE_SIZE } from "../constants";
+import { useAutofillPageSize } from "../hooks/use-autofill-page-size";
 import { useCatalogFilters } from "../hooks/use-catalog-filters";
 import { CatalogHero } from "./catalog-hero";
 import { CatalogPagination } from "./catalog-pagination";
@@ -59,6 +60,11 @@ export function ServersWrapper({
     setPage,
   } = useCatalogFilters();
 
+  // 页容量 = 实际列数 × 3 行：宽窄屏列数不同，固定页容量会出现「有空缺就换页」
+  const { ref: gridMeasureRef, pageSize: measuredPageSize } =
+    useAutofillPageSize();
+  const pageSize = measuredPageSize || CATALOG_PAGE_SIZE;
+
   // 客户端过滤：registry 条目与用户提交 MCP 分别匹配名称/描述
   const filteredServers = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -85,15 +91,12 @@ export function ServersWrapper({
     ...filteredServers.map((s) => ({ type: "registry" as const, data: s })),
     ...filteredSubmitted.map((m) => ({ type: "submitted" as const, data: m })),
   ];
-  const totalPages = Math.max(
-    1,
-    Math.ceil(allItems.length / CATALOG_PAGE_SIZE),
-  );
+  const totalPages = Math.max(1, Math.ceil(allItems.length / pageSize));
   // 搜索/过滤后页码可能越界，收敛到最后一页
   const safePage = Math.min(page, totalPages - 1);
   const pageItems = allItems.slice(
-    safePage * CATALOG_PAGE_SIZE,
-    (safePage + 1) * CATALOG_PAGE_SIZE,
+    safePage * pageSize,
+    (safePage + 1) * pageSize,
   );
   const pageServers = pageItems
     .filter((i): i is Extract<MixedItem, { type: "registry" }> =>
@@ -148,7 +151,7 @@ export function ServersWrapper({
         />
       </div>
 
-      <div className="flex-1">
+      <div className="flex-1" ref={gridMeasureRef}>
         <Servers
           servers={pageServers}
           registryName={selectedRegistry}

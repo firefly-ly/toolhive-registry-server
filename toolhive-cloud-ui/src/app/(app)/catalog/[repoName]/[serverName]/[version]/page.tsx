@@ -21,6 +21,7 @@ interface CatalogDetailPageProps {
   }>;
   searchParams: Promise<{
     registryName?: string;
+    from?: string;
   }>;
 }
 
@@ -29,7 +30,7 @@ export default async function CatalogDetailPage({
   searchParams,
 }: CatalogDetailPageProps) {
   const { repoName, serverName, version } = await params;
-  const { registryName } = await searchParams;
+  const { registryName, from } = await searchParams;
 
   const fullServerName = `${repoName}/${serverName}`;
   const { data: serverResponse, response } = await getServerDetails(
@@ -89,7 +90,7 @@ export default async function CatalogDetailPage({
   return (
     // 详情页统一口径：全宽靠左（与 /mcp/[ref]、/skills/[id] 一致），不做居中限宽
     <div className="flex flex-col gap-5 py-4">
-      <ServerDetailTitle server={server} version={version} />
+      <ServerDetailTitle server={server} version={version} from={from} />
 
       <ServerDetailTabs
         tools={tools}

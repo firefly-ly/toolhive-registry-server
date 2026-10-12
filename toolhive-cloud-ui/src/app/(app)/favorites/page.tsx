@@ -120,7 +120,7 @@ export default async function FavoritesPage() {
     // registry 上游条目走目录的标准详情路由（与目录卡片一致），
     // 平台提交条目走 /mcp/[ref]；两者都未命中 = 已下线/无权限，不给跳转。
     const href = registryServer
-      ? `/catalog/${registryServer.name}/${registryServer.version || "latest"}?registryName=${encodeURIComponent(registryName)}`
+      ? `/catalog/${registryServer.name}/${registryServer.version || "latest"}?registryName=${encodeURIComponent(registryName)}&from=favorites`
       : submitted
         ? `/mcp/${encodeURIComponent(f.item_ref)}?from=favorites`
         : "";

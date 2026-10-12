@@ -59,7 +59,7 @@ export default async function McpDetailPage({
     from === "stats"
       ? "返回统计"
       : from === "favorites"
-        ? "返回收藏"
+        ? "返回工作台"
         : "返回 MCP 市场";
 
   // 并行第一轮：主体、会话、收藏、registry 服务器四路同时发起（原先为 4 段串行）

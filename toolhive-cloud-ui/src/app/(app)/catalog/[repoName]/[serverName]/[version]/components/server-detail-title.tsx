@@ -6,9 +6,15 @@ import { isVirtualMCPServer } from "@/lib/utils";
 interface ServerDetailTitleProps {
   server: V0ServerJson;
   version: string;
+  /** 来源页标识：favorites = 工作台磁贴进入，返回文案与目标随之切换 */
+  from?: string;
 }
 
-export function ServerDetailTitle({ server, version }: ServerDetailTitleProps) {
+export function ServerDetailTitle({
+  server,
+  version,
+  from,
+}: ServerDetailTitleProps) {
   const { name, repository } = server;
   const serverName = server.title ?? name ?? "Unknown server name";
   const publisher = repository?.source;
@@ -38,8 +44,8 @@ export function ServerDetailTitle({ server, version }: ServerDetailTitleProps) {
 
   return (
     <DetailHeader
-      backHref="/catalog"
-      backLabel="返回 MCP 市场"
+      backHref={from === "favorites" ? "/favorites" : "/catalog"}
+      backLabel={from === "favorites" ? "返回工作台" : "返回 MCP 市场"}
       title={serverName}
       subtitle={publisher ? `由 ${publisher} 提交` : undefined}
       badges={badges}

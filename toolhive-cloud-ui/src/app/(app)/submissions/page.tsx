@@ -1,10 +1,10 @@
-import Link from "next/link";
+import { History, NotebookPen } from "lucide-react";
 import { PageHeader } from "@/components/header-page";
+import { NavTabs } from "@/components/nav-tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getAuthContext } from "@/lib/auth/context";
 import { listSubmissions } from "@/lib/platform-backend";
 import { safe } from "@/lib/safe-async";
-import { cn } from "@/lib/utils";
 import { createSubmissionAction } from "./actions";
 import { SubmissionForm } from "./submission-form";
 import { SubmissionsBlock } from "./submissions-block";
@@ -35,32 +35,26 @@ export default async function SubmissionsPage({
     <div className="-mr-8 flex h-full flex-col overflow-y-auto pr-8">
       <PageHeader title="提交管理" />
 
-      {/* 顶部 Tab 切换：新建提交 / 历史提交（分段控件口径） */}
+      {/* 顶部 Tab 切换：下划线式（图标 + 历史计数），URL 驱动 */}
       <div className="pb-4">
-        <div className="inline-flex rounded-lg border bg-card p-1">
-          <Link
-            href="/submissions?tab=new"
-            className={cn(
-              "rounded-md px-4 py-1.5 text-sm transition-colors",
-              tab === "new"
-                ? "bg-primary/10 font-medium text-primary"
-                : "text-muted-foreground hover:text-foreground",
-            )}
-          >
-            新建提交
-          </Link>
-          <Link
-            href="/submissions?tab=history"
-            className={cn(
-              "rounded-md px-4 py-1.5 text-sm transition-colors",
-              tab === "history"
-                ? "bg-primary/10 font-medium text-primary"
-                : "text-muted-foreground hover:text-foreground",
-            )}
-          >
-            历史提交
-          </Link>
-        </div>
+        <NavTabs
+          activeKey={tab}
+          tabs={[
+            {
+              key: "new",
+              label: "新建提交",
+              href: "/submissions?tab=new",
+              icon: NotebookPen,
+            },
+            {
+              key: "history",
+              label: "历史提交",
+              href: "/submissions?tab=history",
+              count: ownSubmissions.length,
+              icon: History,
+            },
+          ]}
+        />
       </div>
 
       <div className="pb-10">

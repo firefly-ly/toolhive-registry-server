@@ -10,6 +10,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import type { Skill } from "@/lib/platform-backend";
 import { CatalogHero } from "../catalog/components/catalog-hero";
 import { CatalogPagination } from "../catalog/components/catalog-pagination";
+import { useAutofillPageSize } from "../catalog/hooks/use-autofill-page-size";
 import { SkillCard } from "./skill-card";
 
 const SKILLS_PAGE_SIZE = 15;
@@ -43,6 +44,11 @@ export function SkillsWrapper({
   const [comboActive, setComboActive] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [page, setPage] = useState(0);
+
+  // 页容量 = 实际列数 × 3 行（与 MCP 目录同款），避免宽窄屏下页尾空缺换页
+  const { ref: gridMeasureRef, pageSize: measuredPageSize } =
+    useAutofillPageSize();
+  const pageSize = measuredPageSize || SKILLS_PAGE_SIZE;
 
   // 热门组合：仅展示当前技能库能命中 ≥2 项的组合（写死数据与实际库解耦）
   const visibleCombos = useMemo(
@@ -88,11 +94,11 @@ export function SkillsWrapper({
     [skills],
   );
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / SKILLS_PAGE_SIZE));
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const safePage = Math.min(page, totalPages - 1);
   const pageItems = filtered.slice(
-    safePage * SKILLS_PAGE_SIZE,
-    safePage * SKILLS_PAGE_SIZE + SKILLS_PAGE_SIZE,
+    safePage * pageSize,
+    safePage * pageSize + pageSize,
   );
   const showHero = !search && !comboActive;
 
@@ -217,15 +223,19 @@ export function SkillsWrapper({
               : `没有找到与「${search}」匹配的技能，试试调整搜索条件。`
           }
         />
-      ) : viewMode === "grid" ? (
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(340px,1fr))] gap-3 pb-3">
-          {pageItems.map(renderCard)}
-        </div>
       ) : (
-        <div className="space-y-3 pb-3">{pageItems.map(renderCard)}</div>
+        <div className="min-w-0" ref={gridMeasureRef}>
+          {viewMode === "grid" ? (
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(340px,1fr))] gap-3 pb-3">
+              {pageItems.map(renderCard)}
+            </div>
+          ) : (
+            <div className="space-y-3 pb-3">{pageItems.map(renderCard)}</div>
+          )}
+        </div>
       )}
 
-      {filtered.length > SKILLS_PAGE_SIZE && (
+      {filtered.length > pageSize && (
         <div className="mt-auto pt-2">
           <CatalogPagination
             page={safePage}

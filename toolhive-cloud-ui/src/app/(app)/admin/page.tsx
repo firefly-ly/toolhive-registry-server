@@ -1,11 +1,11 @@
-import Link from "next/link";
+import { ClipboardCheck, PackageCheck, ScrollText, Trash2 } from "lucide-react";
 import { redirect } from "next/navigation";
 import { ErrorToast } from "@/components/error-toast";
 import { PageHeader } from "@/components/header-page";
+import { NavTabs } from "@/components/nav-tabs";
 import { getAuthContext } from "@/lib/auth/context";
 import type { Submission } from "@/lib/platform-backend";
 import { listSubmissions } from "@/lib/platform-backend";
-import { cn } from "@/lib/utils";
 import { AuditBlock } from "./_components/audit-block";
 import { PublishedBlock } from "./_components/published-block";
 import { RetiredBlock } from "./_components/retired-block";
@@ -93,10 +93,33 @@ export default async function AdminPage({
   ).length;
 
   const TABS = [
-    { key: "reviews", label: "审核队列" },
-    { key: "published", label: "已发布管理" },
-    { key: "retired", label: "已删除 / 已拒绝" },
-    { key: "audit", label: "审计轨迹" },
+    {
+      key: "reviews",
+      label: "审核队列",
+      href: "/admin?tab=reviews",
+      count: pending.length,
+      icon: ClipboardCheck,
+    },
+    {
+      key: "published",
+      label: "已发布管理",
+      href: "/admin?tab=published",
+      count: published.length,
+      icon: PackageCheck,
+    },
+    {
+      key: "retired",
+      label: "已删除 / 已拒绝",
+      href: "/admin?tab=retired",
+      count: retired.length,
+      icon: Trash2,
+    },
+    {
+      key: "audit",
+      label: "审计轨迹",
+      href: "/admin?tab=audit",
+      icon: ScrollText,
+    },
   ] as const;
 
   return (
@@ -112,24 +135,9 @@ export default async function AdminPage({
         </span>
       </PageHeader>
 
-      {/* 分段式 Tab：URL 驱动，选中态淡红 */}
+      {/* 下划线式 Tab：图标 + 计数徽章，URL 驱动，选中红脊 */}
       <div className="px-8 pt-2">
-        <div className="inline-flex rounded-lg border bg-card p-1">
-          {TABS.map((t) => (
-            <Link
-              key={t.key}
-              href={`/admin?tab=${t.key}`}
-              className={cn(
-                "rounded-md px-4 py-1.5 text-sm transition-colors",
-                tab === t.key
-                  ? "bg-primary/10 font-medium text-primary"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              {t.label}
-            </Link>
-          ))}
-        </div>
+        <NavTabs tabs={[...TABS]} activeKey={tab} />
       </div>
 
       {error && (
