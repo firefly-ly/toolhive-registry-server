@@ -321,7 +321,7 @@ export async function AuditBlock({
                         e.result !== "success" && "bg-destructive/5",
                       )}
                     >
-                      <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary">
+                      <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-medium text-muted-foreground">
                         {(e.actor_email || "?").charAt(0).toUpperCase()}
                       </span>
                       <div className="min-w-0 flex-1">

@@ -122,33 +122,39 @@ export function ServersWrapper({
       ),
     [submittedMcps],
   );
+  // hero 门面兜底：无描述的条目不上门面（裸 ref + 「暂无描述」撑不起门面位）
+  const heroCandidates = useMemo(
+    () => sortedSubmitted.filter((m) => (m.description ?? "").trim() !== ""),
+    [sortedSubmitted],
+  );
+  const heroItem = heroCandidates[0] ?? null;
+  const heroFeed = heroCandidates.slice(1, 4);
 
   return (
     <div className="-mr-8 flex h-full flex-col overflow-y-auto pr-8">
       <PageHeader title="MCP 目录" />
 
-      {/* 陈列馆门面：翻页保留，搜索时隐藏避免干扰检索结果 */}
-      {!search && (
-        <div className="mx-auto mb-4 w-full @container">
-          <CatalogHero
-            newest={sortedSubmitted[0] ?? null}
-            feed={sortedSubmitted.slice(1, 4)}
+      {/* 陈列馆展台：hero + 工具栏同坐一个浅色分区，卡片浮于其上；搜索时隐藏 hero */}
+      <div className="mb-4 rounded-2xl bg-secondary/40 p-4">
+        {!search && (
+          <div className="@container mb-4">
+            <CatalogHero newest={heroItem} feed={heroFeed} />
+          </div>
+        )}
+
+        {/* 工具栏独立成行：左搜索/数据源，右视图切换 */}
+        <div className="w-full">
+          <ServerFilters
+            registries={registries}
+            selectedRegistry={selectedRegistry}
+            onRegistryChange={handleRegistryChange}
+            viewMode={viewMode}
+            onViewModeChange={handleViewModeChange}
+            searchQuery={search}
+            onSearchChange={handleSearchChange}
+            onClearSearch={handleClearSearch}
           />
         </div>
-      )}
-
-      {/* 工具栏独立成行：左搜索/数据源，右视图切换 */}
-      <div className="mx-auto mb-4 w-full">
-        <ServerFilters
-          registries={registries}
-          selectedRegistry={selectedRegistry}
-          onRegistryChange={handleRegistryChange}
-          viewMode={viewMode}
-          onViewModeChange={handleViewModeChange}
-          searchQuery={search}
-          onSearchChange={handleSearchChange}
-          onClearSearch={handleClearSearch}
-        />
       </div>
 
       <div className="flex-1" ref={gridMeasureRef}>
