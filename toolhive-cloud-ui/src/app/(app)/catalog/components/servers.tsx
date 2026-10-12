@@ -3,7 +3,8 @@
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import type { V0ServerJson } from "@/generated/types.gen";
-import type { McpServer } from "@/lib/platform-backend";
+import type { McpServer, Skill } from "@/lib/platform-backend";
+import { SkillCard } from "../../skills/skill-card";
 import { EmptyState } from "./empty-state";
 import { ServerCard } from "./server-card";
 import { SubmittedMcpCard } from "./submitted-mcp-card";
@@ -18,13 +19,17 @@ interface ServersProps {
   callsByRef?: Record<string, number>;
   submittedMcps?: McpServer[];
   siblingGroups?: Record<string, McpServer[]>;
+  /** IA 合并：已上架 Skill 与 MCP 混排 */
+  skills?: Skill[];
+  skillFavoritedRefs?: string[];
+  skillSiblingGroups?: Record<string, Skill[]>;
 }
 
 /**
  * Client component that displays servers based on view mode.
  * Filtering is done server-side — this component renders whatever servers are passed in.
- * Approved user-submitted MCPs are mixed into the main grid (grid view) so that
- * they are not visually segregated under a separate heading.
+ * Approved user-submitted MCPs and published Skills are mixed into the same
+ * grid/list so that all catalog entries appear in one unified flow (IA 合并).
  */
 export function Servers({
   servers,
@@ -36,6 +41,9 @@ export function Servers({
   callsByRef = {},
   submittedMcps = [],
   siblingGroups = {},
+  skills = [],
+  skillFavoritedRefs = [],
+  skillSiblingGroups = {},
 }: ServersProps) {
   const router = useRouter();
 
@@ -46,17 +54,30 @@ export function Servers({
     router.push(detailUrl);
   };
 
-  // 用户提交（已审批）的 MCP 也参与客户端检索
-  const q = searchQuery.trim().toLowerCase();
-  const visibleSubmitted = q
-    ? submittedMcps.filter(
-        (m) =>
-          m.name.toLowerCase().includes(q) ||
-          m.description.toLowerCase().includes(q),
-      )
-    : submittedMcps;
+  const handleSkillClick = (id: string) => {
+    router.push(`/skills/${id}`);
+  };
 
-  const hasAnyGridItems = servers.length > 0 || visibleSubmitted.length > 0;
+  // 搜索过滤已在 ServersWrapper 完成，这里直接渲染传入条目
+  const visibleSubmitted = submittedMcps;
+
+  const renderSkillCard = (s: Skill, layout: "grid" | "list") => {
+    const gk =
+      s.group_key || String(s.item_ref || s.name || "").split(":")[0] || "";
+    return (
+      <SkillCard
+        key={s.id}
+        skill={s}
+        favorited={skillFavoritedRefs.includes(s.id)}
+        onClick={handleSkillClick}
+        siblingCards={skillSiblingGroups[gk]}
+        layout={layout}
+      />
+    );
+  };
+
+  const hasAnyGridItems =
+    servers.length > 0 || visibleSubmitted.length > 0 || skills.length > 0;
 
   if (!hasAnyGridItems) {
     if (searchQuery) {
@@ -64,7 +85,7 @@ export function Servers({
         <EmptyState
           variant="no-matching-items"
           title="未找到匹配结果"
-          description={`没有找到与"${searchQuery}"匹配的服务，试试调整搜索条件。`}
+          description={`没有找到与"${searchQuery}"匹配的服务或技能，试试调整搜索条件。`}
           actions={
             <Button variant="outline" onClick={onClearSearch}>
               清除搜索
@@ -76,8 +97,8 @@ export function Servers({
     return (
       <EmptyState
         variant="no-items"
-        title="暂无可用服务"
-        description="目录中还没有 MCP 服务，稍后再来看看。"
+        title="目录还是空的"
+        description="目录中还没有 MCP 服务或 Skill 技能，稍后再来看看。"
       />
     );
   }
@@ -112,6 +133,7 @@ export function Servers({
               />
             );
           })}
+          {skills.map((s) => renderSkillCard(s, "list"))}
         </div>
       ) : (
         <div className="grid grid-cols-[repeat(auto-fill,minmax(340px,1fr))] gap-3 pb-3">
@@ -139,6 +161,7 @@ export function Servers({
               />
             );
           })}
+          {skills.map((s) => renderSkillCard(s, "grid"))}
         </div>
       )}
     </div>

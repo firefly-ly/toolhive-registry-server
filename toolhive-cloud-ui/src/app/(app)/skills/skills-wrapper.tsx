@@ -146,7 +146,6 @@ export function SkillsWrapper({
               hottest={heroHottest}
               feed={heroFeed}
               routePrefix="/skills"
-              typeLabel="Skill"
               accent="success"
               showSubmitCta
             />

@@ -15,6 +15,8 @@ export interface HeroItem {
   created_at: string;
   /** 调用/下载次数：精选轮播「热度最高」模式的排序依据 */
   calls?: number;
+  /** 条目类型：IA 合并后 hero 池混排，类型色随条目走（缺省回落 accent） */
+  type?: "mcp" | "skill";
 }
 
 interface FeaturedMode {
@@ -37,7 +39,6 @@ export function CatalogHero({
   hottest,
   feed,
   routePrefix = "/mcp",
-  typeLabel = "MCP",
   accent = "info",
   showSubmitCta = false,
 }: {
@@ -45,7 +46,6 @@ export function CatalogHero({
   hottest?: HeroItem | null;
   feed: HeroItem[];
   routePrefix?: string;
-  typeLabel?: string;
   accent?: "info" | "success";
   showSubmitCta?: boolean;
 }) {
@@ -73,11 +73,14 @@ export function CatalogHero({
   const cur = modes[safeIdx];
   if (!cur) return null;
 
-  const isTeal = accent === "success";
+  // 类型色随当前条目走（IA 合并后 hero 池混排 MCP/Skill；缺省回落 accent）
+  const isTeal =
+    (cur.item.type ?? (accent === "success" ? "skill" : "mcp")) === "skill";
   const accentHex = isTeal ? "hsl(var(--success))" : "hsl(var(--info))";
   const typeCls = isTeal
     ? "bg-success/10 text-success"
     : "bg-info/10 text-info";
+  const typeText = isTeal ? "Skill" : "MCP";
 
   const go = (id: string) =>
     router.push(`${routePrefix}/${encodeURIComponent(id)}`);
@@ -140,7 +143,7 @@ export function CatalogHero({
             </span>
           )}
           <span className={`rounded-md px-2 py-0.5 text-xs ${typeCls}`}>
-            {typeLabel}
+            {typeText}
           </span>
           {typeof cur.item.calls === "number" && (
             <span className="font-mono text-xs text-muted-foreground">

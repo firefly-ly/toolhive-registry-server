@@ -23,12 +23,22 @@ interface ServerFiltersProps {
   onSearchChange: (query: string) => void;
   /** 清空搜索（由 useCatalogFilters 提供，与输入重置同源） */
   onClearSearch: () => void;
+  /** IA 合并：类型筛选（全部 / MCP 服务 / Skill 技能），黑胶囊选中态 */
+  typeFilter: "all" | "mcp" | "skill";
+  onTypeFilterChange: (filter: "all" | "mcp" | "skill") => void;
+  /** 各类型的条目计数（跟随搜索联动），用于分段控件角标 */
+  typeCounts: { all: number; mcp: number; skill: number };
 }
+
+const TYPE_OPTIONS: { value: "all" | "mcp" | "skill"; label: string }[] = [
+  { value: "all", label: "全部" },
+  { value: "mcp", label: "MCP 服务" },
+  { value: "skill", label: "Skill 技能" },
+];
 
 /**
  * 目录工具栏：两端对齐的单行控件区。
- * 左 = 搜索（最高频，占主位）+ 数据源切换；右 = 列表/网格视图切换。
- * 独立于页头成行，替代原先「塞在标题右侧」的松散排布。
+ * 左 = 类型分段（IA 合并）+ 搜索 + 数据源切换；右 = 列表/网格视图切换。
  */
 export function ServerFilters({
   registries,
@@ -39,16 +49,46 @@ export function ServerFilters({
   searchQuery,
   onSearchChange,
   onClearSearch,
+  typeFilter,
+  onTypeFilterChange,
+  typeCounts,
 }: ServerFiltersProps) {
   return (
     <div className="flex w-full flex-wrap items-center justify-between gap-3">
-      {/* 左：搜索 + 数据源 */}
+      {/* 左：类型分段 + 搜索 + 数据源 */}
       <div className="flex min-w-0 flex-1 items-center gap-3">
-        <div className="relative w-72 max-w-full">
+        <div
+          role="group"
+          aria-label="类型筛选"
+          className="flex shrink-0 items-center rounded-lg border border-foreground bg-card p-0.5"
+        >
+          {TYPE_OPTIONS.map((opt) => {
+            const active = typeFilter === opt.value;
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => onTypeFilterChange(opt.value)}
+                aria-pressed={active}
+                className={`cursor-pointer rounded-md px-3 py-1.5 text-xs font-semibold whitespace-nowrap transition-colors ${
+                  active
+                    ? "bg-foreground text-background"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {opt.label}
+                <span className="ml-1 font-mono opacity-70">
+                  {typeCounts[opt.value]}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+        <div className="relative min-w-0 flex-1 max-w-72">
           <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             type="text"
-            placeholder="搜索 MCP 名称或描述…"
+            placeholder="搜索工具、技能…"
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
             className="h-9 px-9 bg-card"

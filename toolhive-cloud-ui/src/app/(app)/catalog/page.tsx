@@ -4,9 +4,12 @@ import {
   getItemCountsCached,
   getMcpById,
   getMcpServers,
+  getSkillById,
+  getSkills,
   listFavorites,
   listGroupVersions,
   type McpServer,
+  type Skill,
 } from "@/lib/platform-backend";
 import { safe } from "@/lib/safe-async";
 import { getRegistries, getServersByRegistryName } from "./actions";
@@ -19,9 +22,9 @@ interface CatalogPageProps {
 }
 
 /**
- * MCP 目录（方案 C：客户端搜索）。
- * 服务端一次性下发全量条目（registry + 用户提交 MCP）与装饰数据
- * （收藏/调用计数/版本聚合），搜索与分页全部在客户端完成，零网络往返。
+ * 目录（统一入口，IA 合并版）：MCP（registry + 用户提交）与 Skill 一页下发。
+ * 服务端一次性下发全量条目与装饰数据（收藏/调用计数/版本聚合），
+ * 搜索、类型筛选与分页全部在客户端完成，零网络往返。
  * 仅注册表切换通过 ?registryName= 重新走服务端。
  */
 export default async function CatalogPage({ searchParams }: CatalogPageProps) {
@@ -35,11 +38,14 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
     ? await getServersByRegistryName(selectedRegistry)
     : { servers: [] };
 
-  // 从平台后端取当前用户的 MCP 收藏集合 + 各 MCP 的调用次数
+  // 从平台后端取当前用户的收藏集合 + 各 MCP 的调用次数 + 全量条目
   let favoritedRefs: string[] = [];
   let callsByRef: Record<string, number> = {};
   let submittedMcps: McpServer[] = [];
   const siblingGroups: Record<string, McpServer[]> = {};
+  let skillsList: Skill[] = [];
+  let skillFavoritedRefs: string[] = [];
+  const skillSiblingGroups: Record<string, Skill[]> = {};
   try {
     const session = await auth.api.getSession({ headers: await headers() });
     const actor = session?.user?.email ?? session?.user?.name ?? "";
@@ -104,6 +110,55 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
       // 仅当一个 group 有多张（不同版本）卡片时才下发，单版本不打扰
       if (cards.length > 1) siblingGroups[g] = cards;
     }
+
+    // ── Skill 侧：与 MCP 同构聚合（收藏过滤 + 版本组预取），IA 合并后同页下发 ──
+    skillsList = await safe(getSkills(), [], "catalog.getSkills");
+    skillFavoritedRefs = favorites
+      .filter((f) => f.user_id === actor && f.item_type === "skill")
+      .map((f) => f.item_ref);
+    const skillGroupKeys = Array.from(
+      new Set(
+        skillsList.map(
+          (s) =>
+            s.group_key ||
+            String(s.item_ref || s.name || "").split(":")[0] ||
+            "",
+        ),
+      ),
+    ).filter(Boolean);
+    const skillGroupResults = await Promise.all(
+      skillGroupKeys.map(async (g) => {
+        let onShelfIds: string[] = [];
+        try {
+          const r = await listGroupVersions(g);
+          onShelfIds = (r.versions || [])
+            .filter((v) => v.on_shelf !== false && v.id)
+            .map((v) => v.id);
+        } catch (error) {
+          console.error(`[catalog.skillGroupVersions:${g}]`, error);
+        }
+        const activeCards = skillsList.filter(
+          (s) =>
+            (s.group_key ||
+              String(s.item_ref || s.name || "").split(":")[0] ||
+              "") === g,
+        );
+        const have = new Set(activeCards.map((s) => s.id));
+        const siblingIds = onShelfIds.filter((id) => !have.has(id));
+        const fetched = await Promise.all(
+          siblingIds.map((id) =>
+            safe(getSkillById(id), null, `catalog.getSkillById:${id}`),
+          ),
+        );
+        return {
+          g,
+          cards: [...activeCards, ...fetched.filter((x): x is Skill => !!x)],
+        };
+      }),
+    );
+    for (const { g, cards } of skillGroupResults) {
+      if (cards.length > 1) skillSiblingGroups[g] = cards;
+    }
   } catch (error) {
     // 后端不可用时静默降级，卡片照常渲染（无星标/计数），但留痕
     console.error("[catalog.page] 收藏/计数/版本聚合失败:", error);
@@ -117,6 +172,9 @@ export default async function CatalogPage({ searchParams }: CatalogPageProps) {
       callsByRef={callsByRef}
       submittedMcps={submittedMcps}
       siblingGroups={siblingGroups}
+      skills={skillsList}
+      skillFavoritedRefs={skillFavoritedRefs}
+      skillSiblingGroups={skillSiblingGroups}
     />
   );
 }
