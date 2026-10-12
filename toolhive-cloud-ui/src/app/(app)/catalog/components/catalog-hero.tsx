@@ -1,6 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 
 /** hero 条目的最小结构（McpServer / Skill 均天然满足） */
@@ -11,36 +13,71 @@ export interface HeroItem {
   version?: string;
   owner?: string;
   created_at: string;
+  /** 调用/下载次数：精选轮播「热度最高」模式的排序依据 */
+  calls?: number;
 }
 
+interface FeaturedMode {
+  key: string;
+  label: string;
+  item: HeroItem;
+}
+
+const ROTATE_MS = 5000;
+
 /**
- * 「最新上架」主打卡 + 最近更新 feed（陈列馆门面，MCP/Skill 两页共用）。
- * 数据源 = 已上架条目按 created_at 倒序；无条目时整体不渲染，不占位。
- * accent：info 蓝=MCP，success 青绿=Skill（全站类型色觉系统）。
+ * 陈列馆门面（包豪斯版）：精选轮播 + 最近更新 feed。
+ * 轮播两模式——「最新上架」（created_at 倒序首位）与「热度最高」（调用/下载次数
+ * 最高），5s 自动轮换、悬停暂停、底部类型色进度条；单模式时退化为静态门面。
+ * accent：info 蓝=MCP，success 绿=Skill；品牌红不进 hero。
+ * CTA「提交新工具」常驻轮播卡右下（全站唯一提交入口位）。
  */
 export function CatalogHero({
   newest,
+  hottest,
   feed,
   routePrefix = "/mcp",
   typeLabel = "MCP",
   accent = "info",
+  showSubmitCta = false,
 }: {
   newest: HeroItem | null;
+  hottest?: HeroItem | null;
   feed: HeroItem[];
   routePrefix?: string;
   typeLabel?: string;
   accent?: "info" | "success";
+  showSubmitCta?: boolean;
 }) {
   const router = useRouter();
-  if (!newest) return null;
+  const modes: FeaturedMode[] = [];
+  if (newest) modes.push({ key: "latest", label: "最新上架", item: newest });
+  if (hottest && newest && hottest.id !== newest.id) {
+    modes.push({ key: "hot", label: "热度最高", item: hottest });
+  }
+
+  const [idx, setIdx] = useState(0);
+  const [paused, setPaused] = useState(false);
+
+  useEffect(() => {
+    if (modes.length < 2 || paused) return;
+    const timer = setInterval(
+      () => setIdx((i) => (i + 1) % modes.length),
+      ROTATE_MS,
+    );
+    return () => clearInterval(timer);
+  }, [modes.length, paused]);
+
+  // idx 越界保护（轮播模式数变化时收敛）
+  const safeIdx = modes.length ? idx % modes.length : 0;
+  const cur = modes[safeIdx];
+  if (!cur) return null;
 
   const isTeal = accent === "success";
-  // accent 即类型色：MCP=info 蓝、Skill=success 青绿；品牌红不进 hero（避免红蓝混用）
   const accentHex = isTeal ? "hsl(var(--success))" : "hsl(var(--info))";
-  const chipCls = isTeal
+  const typeCls = isTeal
     ? "bg-success/10 text-success"
     : "bg-info/10 text-info";
-  const typeCls = chipCls;
 
   const go = (id: string) =>
     router.push(`${routePrefix}/${encodeURIComponent(id)}`);
@@ -52,43 +89,102 @@ export function CatalogHero({
 
   return (
     <div className="grid grid-cols-1 gap-3 @[900px]:grid-cols-[minmax(480px,2fr)_minmax(280px,1fr)]">
-      {/* 主打卡：色觉书脊 + 最新上架 */}
+      {/* 精选轮播卡：拱形品牌位 + 模式标签 + 进度条 */}
       <div
-        className="flex flex-col justify-between rounded-xl border bg-card px-5 py-4"
-        style={{ borderLeft: `4px solid ${accentHex}` }}
+        className="relative flex flex-col justify-between overflow-hidden rounded-xl border bg-card px-5 py-4"
+        onMouseEnter={() => setPaused(true)}
+        onMouseLeave={() => setPaused(false)}
       >
-        <div>
-          <span
-            className={`mb-2 inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${chipCls}`}
-          >
-            最新上架
-          </span>
-          <p className="truncate text-lg font-medium">{newest.name}</p>
+        {/* 拱形几何品牌位（右上，随模式切换呼吸存在） */}
+        <span
+          aria-hidden
+          className="absolute top-5 right-5 h-12 w-9 rounded-t-full opacity-90 transition-colors duration-300"
+          style={{ background: accentHex }}
+        />
+        <span
+          aria-hidden
+          className="absolute top-9 right-8 size-4 rounded-full opacity-90"
+          style={{ background: "hsl(var(--highlight))" }}
+        />
+
+        <div className="relative">
+          {modes.length > 1 && (
+            <div className="mb-2 flex items-center gap-1.5">
+              {modes.map((m, i) => (
+                <button
+                  key={m.key}
+                  type="button"
+                  onClick={() => setIdx(i)}
+                  aria-pressed={i === safeIdx}
+                  className={`cursor-pointer rounded-full border px-2.5 py-0.5 text-[11px] font-medium transition-colors ${
+                    i === safeIdx
+                      ? "border-foreground bg-foreground text-background"
+                      : "border-border text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {m.label}
+                </button>
+              ))}
+            </div>
+          )}
+          <p className="truncate text-xl font-medium">{cur.item.name}</p>
           <p className="mt-1 line-clamp-2 text-sm leading-relaxed text-muted-foreground">
-            {newest.description || "暂无描述"}
+            {cur.item.description || "暂无描述"}
           </p>
         </div>
-        <div className="mt-3 flex items-center gap-2">
-          {newest.version && (
+
+        <div className="relative mt-3 flex items-center gap-2">
+          {cur.item.version && (
             <span className="rounded-md border px-2 py-0.5 font-mono text-xs text-muted-foreground">
-              v{newest.version}
+              v{cur.item.version}
             </span>
           )}
           <span className={`rounded-md px-2 py-0.5 text-xs ${typeCls}`}>
             {typeLabel}
           </span>
+          {typeof cur.item.calls === "number" && (
+            <span className="font-mono text-xs text-muted-foreground">
+              {cur.item.calls.toLocaleString()} 次{isTeal ? "下载" : "调用"}
+            </span>
+          )}
           <span className="truncate text-xs text-muted-foreground">
-            {newest.owner || "内部提交"}
+            {cur.item.owner || "内部提交"}
           </span>
-          <Button
-            type="button"
-            size="sm"
-            className="ml-auto"
-            onClick={() => go(newest.id)}
-          >
-            查看详情
-          </Button>
+          <span className="ml-auto flex shrink-0 items-center gap-2">
+            {showSubmitCta && (
+              <Button type="button" variant="outline" size="sm" asChild>
+                <Link href="/submissions">提交新工具</Link>
+              </Button>
+            )}
+            <Button
+              type="button"
+              size="sm"
+              style={{ background: accentHex, color: "#fff" }}
+              className="hover:opacity-90"
+              onClick={() => go(cur.item.id)}
+            >
+              查看详情
+            </Button>
+          </span>
         </div>
+
+        {/* 轮播进度条：类型色，悬停暂停 */}
+        {modes.length > 1 && (
+          <span
+            aria-hidden
+            className="absolute bottom-0 left-0 h-0.5 w-full overflow-hidden"
+          >
+            <span
+              key={`${safeIdx}`}
+              className="block h-full"
+              style={{
+                background: accentHex,
+                animation: `featured-progress ${ROTATE_MS}ms linear both`,
+                animationPlayState: paused ? "paused" : "running",
+              }}
+            />
+          </span>
+        )}
       </div>
 
       {/* 最近更新 feed：不足 2 条则隐藏（避免空壳占位） */}

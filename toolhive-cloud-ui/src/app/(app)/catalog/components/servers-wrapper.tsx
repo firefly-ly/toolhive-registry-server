@@ -129,6 +129,17 @@ export function ServersWrapper({
   );
   const heroItem = heroCandidates[0] ?? null;
   const heroFeed = heroCandidates.slice(1, 4);
+  // 精选轮播「热度最高」：调用次数（平台计数优先，registry 计数兜底）最高的有描述条目
+  const heroHottest = useMemo(() => {
+    if (heroCandidates.length === 0) return null;
+    const sorted = [...heroCandidates].sort(
+      (a, b) =>
+        (b.call_count || callsByRef[b.id] || 0) -
+        (a.call_count || callsByRef[a.id] || 0),
+    );
+    const top = sorted[0];
+    return { ...top, calls: top.call_count || callsByRef[top.id] || 0 };
+  }, [heroCandidates, callsByRef]);
 
   return (
     <div className="-mr-8 flex h-full flex-col overflow-y-auto pr-8">
@@ -138,7 +149,12 @@ export function ServersWrapper({
       <div className="mb-4 rounded-2xl bg-secondary/40 p-4">
         {!search && (
           <div className="@container mb-4">
-            <CatalogHero newest={heroItem} feed={heroFeed} />
+            <CatalogHero
+              newest={heroItem}
+              hottest={heroHottest}
+              feed={heroFeed}
+              showSubmitCta
+            />
           </div>
         )}
 

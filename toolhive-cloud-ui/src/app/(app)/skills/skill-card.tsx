@@ -3,7 +3,11 @@
 import { ChevronDown, Star } from "lucide-react";
 import { useState } from "react";
 import { SkillDownloadDialog } from "@/components/skill-download-dialog";
-import { SkillGlyph } from "@/components/type-glyph";
+import {
+  CardCornerDeco,
+  CardTypeTab,
+  SkillGlyph,
+} from "@/components/type-glyph";
 import { Button } from "@/components/ui/button";
 import { toggleFavoriteAction } from "@/lib/platform-actions";
 import type { Skill } from "@/lib/platform-backend";
@@ -136,21 +140,22 @@ export function SkillCard({
   }
 
   return (
-    <div className="card-hover flex h-full w-full flex-col overflow-hidden rounded-xl border bg-card transition-colors hover:border-success/40">
-      {/* 色带横幅：符号 + 名称 + 版本切换（标题截断，下拉 shrink-0） */}
-      <div className="flex items-center gap-2 bg-success/10 px-4 py-2.5">
-        <SkillGlyph />
-        <span
-          className="min-w-0 flex-1 truncate text-sm font-medium"
-          title={cur.name}
-        >
-          {cur.name}
-        </span>
-        {canSwitch && versionSwitcher}
-      </div>
+    <div className="card-hover group relative flex h-full w-full flex-col overflow-hidden rounded-xl border bg-card transition-colors">
+      {/* 包豪斯：类型垂片 + 右下几何角饰（替代整条色带横幅） */}
+      <CardTypeTab type="skill" />
+      <CardCornerDeco type="skill" />
 
-      <div className="flex flex-1 flex-col p-4">
-        <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+      <div className="relative z-10 flex flex-1 flex-col p-4 pt-8">
+        <div className="flex items-center gap-2">
+          <span
+            className="min-w-0 flex-1 truncate text-[15px] font-medium"
+            title={cur.name}
+          >
+            {cur.name}
+          </span>
+          {canSwitch && versionSwitcher}
+        </div>
+        <p className="mt-1.5 line-clamp-2 text-sm leading-snug text-muted-foreground">
           {cur.description || "暂无描述"}
         </p>
         <p className="mt-1.5 truncate text-xs text-muted-foreground">
@@ -166,8 +171,8 @@ export function SkillCard({
             <SkillDownloadDialog skill={cur} />
             <Button
               type="button"
-              variant="outline"
               size="sm"
+              className="bg-success text-white hover:bg-success/90"
               onClick={() => onClick?.(cur.id)}
             >
               查看

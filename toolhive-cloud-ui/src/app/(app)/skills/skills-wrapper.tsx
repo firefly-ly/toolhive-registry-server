@@ -108,6 +108,15 @@ export function SkillsWrapper({
   );
   const heroItem = heroCandidates[0] ?? null;
   const heroFeed = heroCandidates.slice(1, 4);
+  // 精选轮播「热度最高」：下载次数最高的有描述条目
+  const heroHottest = useMemo(() => {
+    if (heroCandidates.length === 0) return null;
+    const sorted = [...heroCandidates].sort(
+      (a, b) => (b.download_count || 0) - (a.download_count || 0),
+    );
+    const top = sorted[0];
+    return { ...top, calls: top.download_count || 0 };
+  }, [heroCandidates]);
 
   const renderCard = (s: Skill) => {
     const gk =
@@ -134,10 +143,12 @@ export function SkillsWrapper({
           <div className="@container mb-4">
             <CatalogHero
               newest={heroItem}
+              hottest={heroHottest}
               feed={heroFeed}
               routePrefix="/skills"
               typeLabel="Skill"
               accent="success"
+              showSubmitCta
             />
           </div>
         )}

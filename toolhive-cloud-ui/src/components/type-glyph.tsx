@@ -42,3 +42,33 @@ export function SkillGlyph({ size = 16 }: { size?: number }) {
     </svg>
   );
 }
+
+/** 卡片类型垂片（包豪斯）：左上角色块，白字 MCP / SKILL——类型即角标，不再占用整条横幅 */
+export function CardTypeTab({ type }: { type: "mcp" | "skill" }) {
+  return (
+    <span
+      className={`absolute top-0 left-4 z-10 rounded-b-md px-2.5 py-1 text-[11px] font-semibold tracking-[0.18em] text-white ${
+        type === "mcp" ? "bg-info" : "bg-success"
+      }`}
+    >
+      {type === "mcp" ? "MCP" : "SKILL"}
+    </span>
+  );
+}
+
+/**
+ * 卡片几何角饰（包豪斯）：MCP=右下四分之一圆（info），Skill=右下半圆（success）。
+ * 纯装饰：pointer-events-none；配合父级 group 悬停放大 1.5 倍。
+ */
+export function CardCornerDeco({ type }: { type: "mcp" | "skill" }) {
+  return (
+    <span
+      aria-hidden
+      className={`pointer-events-none absolute right-0 bottom-0 origin-bottom-right transition-transform duration-200 ease-out group-hover:scale-150 ${
+        type === "mcp"
+          ? "size-12 rounded-tl-full bg-info/10"
+          : "h-6 w-12 rounded-t-full bg-success/10"
+      }`}
+    />
+  );
+}

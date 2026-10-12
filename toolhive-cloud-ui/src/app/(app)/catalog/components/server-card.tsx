@@ -2,7 +2,7 @@
 
 import { Star } from "lucide-react";
 import { CopyMcpConfigDialog } from "@/components/copy-mcp-config-dialog";
-import { McpGlyph } from "@/components/type-glyph";
+import { CardCornerDeco, CardTypeTab, McpGlyph } from "@/components/type-glyph";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { V0ServerJson } from "@/generated/types.gen";
@@ -124,37 +124,38 @@ export function ServerCard({
 
   return (
     <div
-      className="card-hover flex h-full w-full cursor-pointer flex-col overflow-hidden rounded-xl border bg-card transition-colors hover:border-primary/40"
+      className="card-hover group relative flex h-full w-full cursor-pointer flex-col overflow-hidden rounded-xl border bg-card transition-colors"
       onClick={onClick ? () => onClick() : undefined}
     >
-      {/* 色带横幅：符号 + 名称 */}
-      <div className="flex items-center gap-2 bg-info/10 px-4 py-2.5">
-        <McpGlyph />
-        <span
-          className="min-w-0 flex-1 truncate text-sm font-medium"
-          title={server.title ?? name}
-        >
-          {server.title ?? name}
-        </span>
-        {isVirtualMCP && (
-          <Badge
-            variant="secondary"
-            className="shrink-0 bg-background/70 text-xs font-semibold leading-4"
-          >
-            Virtual MCP
-          </Badge>
-        )}
-      </div>
+      {/* 包豪斯：类型垂片 + 右下几何角饰（替代整条色带横幅） */}
+      <CardTypeTab type="mcp" />
+      <CardCornerDeco type="mcp" />
 
-      <div className="flex flex-1 flex-col p-4">
-        <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+      <div className="relative z-10 flex flex-1 flex-col p-4 pt-8">
+        <div className="flex items-center gap-2">
+          <span
+            className="min-w-0 flex-1 truncate text-[15px] font-medium"
+            title={server.title ?? name}
+          >
+            {server.title ?? name}
+          </span>
+          {isVirtualMCP && (
+            <Badge
+              variant="secondary"
+              className="shrink-0 text-xs font-semibold leading-4"
+            >
+              Virtual MCP
+            </Badge>
+          )}
+        </div>
+        <p className="mt-1.5 line-clamp-2 text-sm leading-snug text-muted-foreground">
           {description || "暂无描述"}
         </p>
 
         <div className="mt-auto flex items-center justify-between gap-2 border-t pt-3">
           <div className="flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
             {server.version && (
-              <span className="shrink-0 rounded border border-border px-1.5 py-0.5">
+              <span className="shrink-0 rounded border border-border px-1.5 py-0.5 font-mono">
                 v{server.version}
               </span>
             )}
@@ -177,8 +178,8 @@ export function ServerCard({
             )}
             <Button
               type="button"
-              variant="outline"
               size="sm"
+              className="bg-info text-white hover:bg-info/90"
               onClick={(e) => {
                 e.stopPropagation();
                 onClick?.();

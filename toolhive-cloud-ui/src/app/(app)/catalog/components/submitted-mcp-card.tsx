@@ -4,7 +4,7 @@ import { ChevronDown, Star } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { CopyMcpConfigDialog } from "@/components/copy-mcp-config-dialog";
-import { McpGlyph } from "@/components/type-glyph";
+import { CardCornerDeco, CardTypeTab, McpGlyph } from "@/components/type-glyph";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -172,21 +172,36 @@ export function SubmittedMcpCard({
   }
 
   return (
-    <div className="card-hover flex h-full w-full flex-col overflow-hidden rounded-xl border bg-card transition-colors hover:border-primary/40">
-      {/* 色带横幅：符号 + 名称 + 版本切换（标题 min-w-0 截断，下拉 shrink-0，不再互相顶开） */}
-      <div className="flex items-center gap-2 bg-info/10 px-4 py-2.5">
-        <McpGlyph />
-        <span
-          className="min-w-0 flex-1 truncate text-sm font-medium"
-          title={cur.name}
-        >
-          {cur.name}
-        </span>
-        {canSwitch && versionSwitcher}
-      </div>
+    <div className="card-hover group relative flex h-full w-full flex-col overflow-hidden rounded-xl border bg-card transition-colors">
+      {/* 包豪斯：类型垂片 + 右下几何角饰（替代整条色带横幅） */}
+      <CardTypeTab type="mcp" />
+      <CardCornerDeco type="mcp" />
 
-      <div className="flex flex-1 flex-col p-4">
-        <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+      <div className="relative z-10 flex flex-1 flex-col p-4 pt-8">
+        <div className="flex items-center gap-2">
+          <span
+            className="min-w-0 flex-1 truncate text-[15px] font-medium"
+            title={cur.name}
+          >
+            {cur.name}
+          </span>
+          {canSwitch && versionSwitcher}
+          {/* 运行态是名称行的关键状态：未运行时随标题展示 */}
+          {!(cur.public_endpoint && cur.healthy) && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Badge
+                  variant="outline"
+                  className="shrink-0 gap-1 border-warning/40 text-xs font-medium text-warning"
+                >
+                  未运行
+                </Badge>
+              </TooltipTrigger>
+              <TooltipContent>该版本尚未部署，实例未在平台运行</TooltipContent>
+            </Tooltip>
+          )}
+        </div>
+        <p className="mt-1.5 line-clamp-2 text-sm leading-snug text-muted-foreground">
           {cur.description || "暂无描述"}
         </p>
         <p className="mt-1.5 flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -205,32 +220,18 @@ export function SubmittedMcpCard({
           </div>
           <div className="flex shrink-0 items-center gap-2">
             {/* 部署且实例在线才显示「接入」按钮；点击弹出客户端接入配置（与 registry 卡一致） */}
-            {cur.public_endpoint && cur.healthy ? (
+            {cur.public_endpoint && cur.healthy && (
               <CopyMcpConfigDialog
                 serverName={cur.name}
                 config={{ url: cur.public_endpoint, headers: cur.mcp_headers }}
                 triggerLabel="接入"
                 className="rounded-full"
               />
-            ) : (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Badge
-                    variant="outline"
-                    className="gap-1 border-warning/40 text-xs font-medium text-warning"
-                  >
-                    未运行
-                  </Badge>
-                </TooltipTrigger>
-                <TooltipContent>
-                  该版本尚未部署，实例未在平台运行
-                </TooltipContent>
-              </Tooltip>
             )}
             <Button
               type="button"
-              variant="outline"
               size="sm"
+              className="bg-info text-white hover:bg-info/90"
               onClick={goDetail}
             >
               查看
