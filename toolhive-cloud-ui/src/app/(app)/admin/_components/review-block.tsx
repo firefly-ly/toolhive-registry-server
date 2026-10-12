@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import type { Submission } from "@/lib/platform-backend";
 import { cn } from "@/lib/utils";
-import { groupKey, parseMeta, versionOf } from "./submission-groups";
+import { groupKey, parseMeta, versionOf } from "./group-utils";
 
 const FILTERS: { key: "all" | "mcp" | "skill"; label: string }[] = [
   { key: "all", label: "全部" },

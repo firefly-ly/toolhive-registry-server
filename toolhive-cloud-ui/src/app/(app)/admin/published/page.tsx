@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getAuthContext } from "@/lib/auth/context";
 import { listSubmissions } from "@/lib/platform-backend";
-import { buildGroups, GroupRow } from "../_components/submission-groups";
+import { buildGroups } from "../_components/group-utils";
+import { GroupRow } from "../_components/submission-groups";
 
 export default async function AdminPublishedPage() {
   const { isAdmin } = await getAuthContext();

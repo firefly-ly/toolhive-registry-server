@@ -97,21 +97,46 @@ export function ScanBadge({
   extra?: string;
 }) {
   const s = status ?? "skipped";
-  const { variant, text } =
+  // 色彩语义对齐全站纪律：绿=通过、琥珀=有提示、红=需人工/失败、灰=未扫描。
+  // clean 不用 default（实心品牌红）——「红=通过」与「红=危险」语义冲突。
+  const { variant, className, text } =
     s === "clean"
-      ? { variant: "default" as const, text: "通过" }
+      ? {
+          variant: "outline" as const,
+          className: "border-success/40 bg-success/10 text-success",
+          text: "通过",
+        }
       : s === "warn"
-        ? { variant: "outline" as const, text: "有提示" }
+        ? {
+            variant: "outline" as const,
+            className: "border-warning/40 bg-warning/10 text-warning",
+            text: "有提示",
+          }
         : s === "critical" || s === "alert"
-          ? { variant: "destructive" as const, text: "需人工确认" }
+          ? {
+              variant: "destructive" as const,
+              className: "",
+              text: "需人工确认",
+            }
           : s === "error"
-            ? { variant: "destructive" as const, text: "扫描失败" }
+            ? {
+                variant: "destructive" as const,
+                className: "",
+                text: "扫描失败",
+              }
             : s === "scanning"
-              ? { variant: "outline" as const, text: "扫描中" }
-              : { variant: "secondary" as const, text: "未扫描" };
+              ? { variant: "outline" as const, className: "", text: "扫描中" }
+              : {
+                  variant: "secondary" as const,
+                  className: "",
+                  text: "未扫描",
+                };
   return (
     <span className="flex items-center gap-1.5">
-      <Badge variant={variant}>{`${label}: ${text}`}</Badge>
+      <Badge
+        variant={variant}
+        className={className}
+      >{`${label}: ${text}`}</Badge>
       {extra && <span className="text-xs text-muted-foreground">{extra}</span>}
     </span>
   );
