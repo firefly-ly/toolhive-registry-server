@@ -2,15 +2,9 @@
 
 import { Star } from "lucide-react";
 import { CopyMcpConfigDialog } from "@/components/copy-mcp-config-dialog";
+import { McpGlyph } from "@/components/type-glyph";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import type { V0ServerJson } from "@/generated/types.gen";
 import { toggleFavoriteAction } from "@/lib/platform-actions";
 import { isVirtualMCPServer } from "@/lib/utils";
@@ -24,9 +18,8 @@ interface ServerCardProps {
 }
 
 /**
- * Server card component that displays MCP server information
- * from the catalog. Adds a GitHub-style star (favorite toggle) and
- * a call-count stat at the bottom-right.
+ * Registry 上游 MCP 卡片（变体 B「色带横幅」）：
+ * 卡顶一条 info 色横幅装符号 + 名称，下方白底描述与元信息行。
  */
 export function ServerCard({
   server,
@@ -43,36 +36,49 @@ export function ServerCard({
   const toggleFav = toggleFavoriteAction.bind(null, "mcp", itemRef, favorited);
 
   return (
-    <Card
-      className="card-hover flex h-full w-full flex-col gap-4 py-4 transition-colors hover:border-primary/40"
+    <div
+      className="card-hover flex h-full w-full cursor-pointer flex-col overflow-hidden rounded-xl border bg-card transition-colors hover:border-primary/40"
       onClick={onClick ? () => onClick() : undefined}
     >
-      <CardHeader className="cursor-pointer gap-1">
-        <CardTitle
-          className="truncate text-xl font-semibold leading-7 tracking-tight"
+      {/* 色带横幅：符号 + 名称 */}
+      <div className="flex items-center gap-2 bg-info/10 px-4 py-2.5">
+        <McpGlyph />
+        <span
+          className="min-w-0 flex-1 truncate text-sm font-medium"
           title={server.title ?? name}
         >
           {server.title ?? name}
-        </CardTitle>
-        <CardDescription className="flex items-center gap-1.5 text-xs leading-5">
-          {author && <span>{author}</span>}
-          {isVirtualMCP && (
-            <Badge
-              variant="secondary"
-              className="text-xs font-semibold leading-4"
-            >
-              Virtual MCP
-            </Badge>
-          )}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="flex flex-1 flex-col gap-3">
-        <p className="line-clamp-3 text-sm leading-[18px] text-muted-foreground cursor-pointer">
+        </span>
+        {isVirtualMCP && (
+          <Badge
+            variant="secondary"
+            className="shrink-0 bg-background/70 text-xs font-semibold leading-4"
+          >
+            Virtual MCP
+          </Badge>
+        )}
+      </div>
+
+      <div className="flex flex-1 flex-col p-4">
+        <p className="line-clamp-2 text-sm leading-[18px] text-muted-foreground">
           {description || "暂无描述"}
         </p>
-        {/* 收藏星标 + 调用次数统计（GitHub 式） */}
-        <div className="mt-auto flex items-center justify-between border-t pt-3">
-          <div className="flex items-center gap-3">
+
+        <div className="mt-auto flex items-center justify-between gap-2 border-t pt-3">
+          <div className="flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
+            {server.version && (
+              <span className="shrink-0 rounded border border-border px-1.5 py-0.5">
+                v{server.version}
+              </span>
+            )}
+            <span className="shrink-0">{callCount} 次调用</span>
+            {author && (
+              <span className="truncate" title={author}>
+                {author}
+              </span>
+            )}
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
             {/* biome-ignore lint/a11y/useKeyWithClickEvents: 仅阻止点击冒泡到卡片，非交互元素 */}
             <form action={toggleFav} onClick={(e) => e.stopPropagation()}>
               <Button
@@ -92,12 +98,6 @@ export function ServerCard({
                 />
               </Button>
             </form>
-            <span className="text-xs text-muted-foreground">
-              {server.version ? `v${server.version} · ` : ""}
-              {callCount} 次调用
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
             {serverUrl && (
               <CopyMcpConfigDialog
                 serverName={server.title ?? name ?? ""}
@@ -119,7 +119,7 @@ export function ServerCard({
             </Button>
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

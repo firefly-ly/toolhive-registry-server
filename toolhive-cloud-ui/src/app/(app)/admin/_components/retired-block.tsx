@@ -26,6 +26,9 @@ export function RetiredBlock({ retired }: { retired: Submission[] }) {
       <CardHeader className="flex flex-col gap-3 pb-3 sm:flex-row sm:items-center sm:justify-between">
         <CardTitle className="text-xl">
           已删除 / 已拒绝（{retired.length}）
+          <span className="ml-2 text-xs font-normal text-muted-foreground">
+            删除会清理运行实例与制品文件；如需重新上架请重新提交
+          </span>
         </CardTitle>
         <div className="inline-flex rounded-lg border bg-muted p-1">
           {FILTERS.map(({ key, label }) => (
@@ -34,10 +37,8 @@ export function RetiredBlock({ retired }: { retired: Submission[] }) {
               type="button"
               onClick={() => setFilter(key)}
               className={cn(
-                buttonVariants({
-                  variant: filter === key ? "default" : "ghost",
-                  size: "sm",
-                }),
+                buttonVariants({ variant: "ghost", size: "sm" }),
+                filter === key && "bg-primary/10 text-primary",
                 "cursor-pointer border-none shadow-none",
               )}
             >

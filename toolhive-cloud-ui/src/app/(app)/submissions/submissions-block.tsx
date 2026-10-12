@@ -53,6 +53,7 @@ export function SubmissionsBlock({
           submissions={submissions}
           type={type}
           showActions={false}
+          variant="timeline"
         />
       </CardContent>
     </Card>

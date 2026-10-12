@@ -117,6 +117,68 @@ export function buildGroups(published: Submission[]) {
   return groups;
 }
 
+/** 类型色图标块：MCP 蓝（双环扣）/ Skill 青绿（旋转方块） */
+function GroupGlyph({ isMcp }: { isMcp: boolean }) {
+  return (
+    <span
+      className={cn(
+        "flex size-9 shrink-0 items-center justify-center rounded-lg",
+        isMcp ? "bg-info/10" : "bg-success/10",
+      )}
+    >
+      {isMcp ? (
+        <svg width="18" height="18" viewBox="0 0 20 20" aria-hidden="true">
+          <circle cx="7" cy="10" r="4.5" fill="hsl(var(--info))" />
+          <circle
+            cx="13"
+            cy="10"
+            r="4.5"
+            fill="hsl(var(--info))"
+            fillOpacity="0.5"
+          />
+        </svg>
+      ) : (
+        <svg width="18" height="18" viewBox="0 0 20 20" aria-hidden="true">
+          <rect
+            x="4.5"
+            y="4.5"
+            width="11"
+            height="11"
+            rx="2.5"
+            transform="rotate(45 10 10)"
+            fill="hsl(var(--success))"
+          />
+        </svg>
+      )}
+    </span>
+  );
+}
+
+/** 版本胶囊：上架中实心 / 已下架虚线 / 未上线警示（产品货架的「货格」） */
+function VersionPill({ s }: { s: Submission }) {
+  const onShelf = isOnShelf(s);
+  const deprecated = s.status === "deprecated";
+  if (deprecated) {
+    return (
+      <span className="rounded-full border border-dashed border-border px-3 py-1 text-xs text-muted-foreground">
+        {versionOf(s)} · 已下架
+      </span>
+    );
+  }
+  if (!onShelf) {
+    return (
+      <span className="rounded-full border border-warning/50 bg-warning/10 px-3 py-1 text-xs text-warning">
+        {versionOf(s)} · 未上线
+      </span>
+    );
+  }
+  return (
+    <span className="rounded-full border border-success/40 bg-success/10 px-3 py-1 text-xs font-medium text-success">
+      {versionOf(s)} · 上架中
+    </span>
+  );
+}
+
 export function GroupRow({
   group_key,
   items,
@@ -134,38 +196,31 @@ export function GroupRow({
     <Card>
       <CardContent className="py-4">
         <div className="flex items-start justify-between gap-4">
-          <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <span className="truncate font-medium">{title}</span>
-              <Badge variant="outline" className="text-xs">
-                {isMcp ? "MCP" : "Skill"}
-              </Badge>
-              <Badge variant="default" className="text-xs">
-                最新版：{versionOf(activeItem)}
-              </Badge>
-              {activeItem.status === "deprecated" && (
-                <Badge variant="secondary" className="text-xs">
-                  已下架
+          <div className="flex min-w-0 items-start gap-3">
+            <GroupGlyph isMcp={isMcp} />
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="truncate font-medium" title={title}>
+                  {title}
+                </span>
+                <Badge variant="outline" className="shrink-0 text-xs">
+                  {isMcp ? "MCP" : "Skill"}
                 </Badge>
-              )}
-              {isRestricted(activeItem) && (
-                <Badge variant="secondary" className="gap-1 text-xs">
-                  <Eye className="size-3" />
-                  受限可见
-                </Badge>
-              )}
-              {!isOnShelf(activeItem) && (
-                <Badge
-                  variant="outline"
-                  className="gap-1 border-warning/50 text-warning text-xs"
-                >
-                  未上线
-                </Badge>
-              )}
-            </div>
-            <div className="truncate text-sm text-muted-foreground">
-              {group_key} · 共 {items.length} 个版本 · 提交者{" "}
-              {activeItem.user_id}
+                {activeItem.status === "deprecated" && (
+                  <Badge variant="secondary" className="shrink-0 text-xs">
+                    已下架
+                  </Badge>
+                )}
+                {isRestricted(activeItem) && (
+                  <Badge variant="secondary" className="shrink-0 gap-1 text-xs">
+                    <Eye className="size-3" />
+                    受限可见
+                  </Badge>
+                )}
+              </div>
+              <div className="truncate text-sm text-muted-foreground">
+                {group_key} · 提交者 {activeItem.user_id}
+              </div>
             </div>
           </div>
           <div className="flex shrink-0 flex-wrap justify-end gap-2">
@@ -173,9 +228,16 @@ export function GroupRow({
           </div>
         </div>
 
-        <details className="mt-4 group">
+        {/* 版本胶囊行：每格一个版本的状态一览 */}
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          {items.map((s) => (
+            <VersionPill key={s.id} s={s} />
+          ))}
+        </div>
+
+        <details className="mt-3 group">
           <summary className="cursor-pointer text-sm text-muted-foreground hover:text-foreground">
-            查看所有版本
+            版本操作（部署 / 下架 / 删除…）
           </summary>
           <div className="mt-3 space-y-2 border-t pt-3">
             {items.map((s) => (
@@ -464,34 +526,45 @@ export function RetiredRow({ s }: { s: Submission }) {
   const isMcp = s.type === "mcp";
   const deploy = meta.deploy_status || "unborn";
   // 此区域当前仅展示 removed / rejected；deprecated 已迁移到「已发布」区域管理
-  const statusLabel =
-    s.status === "removed"
-      ? "已删除"
-      : s.status === "rejected"
-        ? "已拒绝"
-        : s.status;
+  const rejected = s.status === "rejected";
+  const statusLabel = rejected ? "已拒绝" : "已删除";
   return (
-    <Card>
-      <CardContent className="flex items-center justify-between gap-4 py-4">
-        <div className="min-w-0">
-          <div className="truncate font-medium">
-            {meta.name || s.payload_ref}{" "}
-            <span className="text-xs text-muted-foreground">
-              ({versionOf(s)})
-            </span>
-          </div>
-          <div className="truncate text-sm text-muted-foreground">
-            {s.payload_ref} · {s.type} · 提交者 {s.user_id}
-          </div>
-        </div>
-        <div className="flex shrink-0 items-center gap-2">
-          <span className="shrink-0 text-sm text-muted-foreground">
-            {isMcp ? `${DEPLOY_LABEL[deploy] ?? deploy} · ` : ""}
+    <div
+      className={cn(
+        "flex items-center justify-between gap-4 rounded-md border bg-card px-4 py-3",
+        rejected ? "border-l-[3px] border-l-destructive" : "border-l-[3px]",
+      )}
+    >
+      <div className="min-w-0">
+        <div className="flex items-center gap-2">
+          <span
+            className="truncate font-medium"
+            title={meta.name || s.payload_ref}
+          >
+            {meta.name || s.payload_ref}
+          </span>
+          <span
+            className={cn(
+              "shrink-0 rounded px-1.5 py-0.5 text-[11px] font-medium",
+              rejected
+                ? "bg-destructive/10 text-destructive"
+                : "bg-muted text-muted-foreground",
+            )}
+          >
             {statusLabel}
           </span>
         </div>
-      </CardContent>
-    </Card>
+        <div className="truncate text-sm text-muted-foreground">
+          {s.payload_ref} ·{" "}
+          {isMcp ? `${DEPLOY_LABEL[deploy] ?? deploy} · ` : ""}
+          提交者 {s.user_id} ·{" "}
+          {new Date(s.created_at).toLocaleDateString("zh-CN")}
+        </div>
+      </div>
+      <span className="shrink-0 font-mono text-xs text-muted-foreground/70">
+        {versionOf(s)}
+      </span>
+    </div>
   );
 }
 

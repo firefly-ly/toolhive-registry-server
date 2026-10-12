@@ -47,28 +47,6 @@ function resultBadge(result: string) {
   );
 }
 
-/** 操作人列：邮箱 + （管理员时）角色小标 */
-function actorCell(email: string, admin: number) {
-  return (
-    <span className="inline-flex items-center gap-1.5">
-      <span className="text-sm">{email}</span>
-      {!!admin && (
-        <span className="rounded bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary">
-          管理员
-        </span>
-      )}
-    </span>
-  );
-}
-
-function formatTs(ts: string): string {
-  try {
-    return new Date(ts).toLocaleString("zh-CN", { hour12: false });
-  } catch {
-    return ts;
-  }
-}
-
 function safeParseDetail(detail: string): Record<string, unknown> {
   try {
     return JSON.parse(detail) as Record<string, unknown>;
@@ -276,89 +254,115 @@ export async function AuditBlock({
 
       {error && <ErrorToast message={`审计查询失败：${error}`} />}
 
-      {!error && (
+      {!error && items.length === 0 && (
+        <div className="flex-1 rounded-xl border py-10 text-center text-muted-foreground">
+          没有符合条件的审计记录
+        </div>
+      )}
+
+      {!error && items.length > 0 && (
         <div className="min-h-0 flex-1 overflow-y-auto rounded-xl border">
-          <table className="w-full text-left text-base">
-            <thead className="sticky top-0 z-10 bg-muted text-sm text-muted-foreground">
-              <tr>
-                <th className="px-3 py-2 font-medium">时间</th>
-                <th className="px-3 py-2 font-medium">操作人</th>
-                <th className="px-3 py-2 font-medium">动作</th>
-                <th className="px-3 py-2 font-medium">对象</th>
-                <th className="px-3 py-2 font-medium">结果</th>
-                <th className="px-3 py-2 font-medium">详情</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.length === 0 && (
-                <tr>
-                  <td
-                    colSpan={6}
-                    className="px-3 py-8 text-center text-muted-foreground"
-                  >
-                    没有符合条件的审计记录
-                  </td>
-                </tr>
-              )}
-              {items.map((e) => {
-                const detail = safeParseDetail(e.detail);
-                const niceName = e.target_id
-                  ? nameMap.get(e.target_id)
-                  : undefined;
-                return (
-                  <tr
-                    key={e.id}
-                    className={cn(
-                      "border-t align-top",
-                      e.result !== "success" && "bg-destructive/5",
-                    )}
-                  >
-                    <td className="whitespace-nowrap px-3 py-2 font-mono text-sm">
-                      {formatTs(e.ts)}
-                    </td>
-                    <td className="px-3 py-2">
-                      {actorCell(e.actor_email, e.actor_admin)}
-                    </td>
-                    <td className="px-3 py-2 whitespace-nowrap">
-                      {actionLabel(e.action)}
-                    </td>
-                    <td className="max-w-[16rem] px-3 py-2">
-                      {niceName ? (
-                        <div className="min-w-0">
-                          <div className="truncate text-sm font-medium">
-                            {niceName}
-                          </div>
-                          <div
-                            className="truncate font-mono text-xs text-muted-foreground"
-                            title={`${e.target_type} ${e.target_id}`}
-                          >
-                            {e.target_type} {e.target_id}
-                          </div>
-                        </div>
-                      ) : (
-                        <span className="font-mono text-sm text-muted-foreground">
-                          {e.target_type} {e.target_id || "—"}
-                        </span>
+          {/* 流水 + 站台：按日期分组插「站台」行，行内操作者首字圆点 + 动作一句话 */}
+          {(() => {
+            const today = new Date();
+            const yest = new Date(today.getTime() - 86400000);
+            const dayKey = (d: Date) =>
+              `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+            const groups: { label: string; rows: AuditEntry[] }[] = [];
+            for (const e of items) {
+              const d = new Date(e.ts);
+              const key = Number.isNaN(+d) ? e.ts.slice(0, 10) : dayKey(d);
+              const last = groups[groups.length - 1];
+              if (last && last.label === key) {
+                last.rows.push(e);
+              } else {
+                groups.push({ label: key, rows: [e] });
+              }
+            }
+            const labelOf = (key: string) => {
+              const m = key.match(/^(\d+)-(\d+)-(\d+)$/);
+              if (!m) return key;
+              const [, y, mo, d] = m;
+              if (key === dayKey(today)) return `今天 · ${+mo}月${+d}日`;
+              if (key === dayKey(yest)) return `昨天 · ${+mo}月${+d}日`;
+              return `${+mo}月${+d}日`;
+            };
+            return groups.map((g) => (
+              <div key={g.label}>
+                <div className="sticky top-0 z-10 border-b bg-muted/60 px-4 py-1.5 text-xs text-muted-foreground backdrop-blur-none">
+                  {labelOf(g.label)}
+                </div>
+                {g.rows.map((e) => {
+                  const detail = safeParseDetail(e.detail);
+                  const niceName = e.target_id
+                    ? nameMap.get(e.target_id)
+                    : undefined;
+                  const time = (() => {
+                    try {
+                      return new Date(e.ts).toLocaleTimeString("zh-CN", {
+                        hour12: false,
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      });
+                    } catch {
+                      return "";
+                    }
+                  })();
+                  return (
+                    <div
+                      key={e.id}
+                      className={cn(
+                        "flex items-center gap-3 border-t px-4 py-2",
+                        e.result !== "success" && "bg-destructive/5",
                       )}
-                    </td>
-                    <td className="px-3 py-2 whitespace-nowrap">
-                      {resultBadge(e.result)}
-                    </td>
-                    <td className="px-3 py-2">
-                      <details>
-                        <summary className="cursor-pointer text-sm text-primary">
-                          展开
-                        </summary>
-                        <pre className="mt-1 max-w-lg overflow-x-auto whitespace-pre-wrap rounded bg-muted/40 p-2 text-sm">
-                          {JSON.stringify(detail, null, 2)}
-                        </pre>
-                      </details>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                    >
+                      <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-medium text-primary">
+                        {(e.actor_email || "?").charAt(0).toUpperCase()}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm">
+                          <span className="text-foreground">
+                            {e.actor_email}
+                          </span>
+                          {!!e.actor_admin && (
+                            <span className="ml-1.5 rounded bg-primary/10 px-1 py-0.5 text-[11px] text-primary">
+                              管理员
+                            </span>
+                          )}
+                          <span className="text-muted-foreground">
+                            {" "}
+                            {actionLabel(e.action)}{" "}
+                          </span>
+                          <span className="font-medium">
+                            {niceName || e.target_id || "—"}
+                          </span>
+                          {!niceName && e.target_id && (
+                            <span className="ml-1 font-mono text-xs text-muted-foreground">
+                              {e.target_type}
+                            </span>
+                          )}
+                        </p>
+                        <details>
+                          <summary className="cursor-pointer text-xs text-primary">
+                            详情
+                          </summary>
+                          <pre className="mt-1 max-w-lg overflow-x-auto rounded bg-muted/40 p-2 text-xs whitespace-pre-wrap">
+                            {JSON.stringify(detail, null, 2)}
+                          </pre>
+                        </details>
+                      </div>
+                      <div className="flex shrink-0 items-center gap-2">
+                        {resultBadge(e.result)}
+                        <span className="font-mono text-xs text-muted-foreground">
+                          {time}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ));
+          })()}
         </div>
       )}
 
