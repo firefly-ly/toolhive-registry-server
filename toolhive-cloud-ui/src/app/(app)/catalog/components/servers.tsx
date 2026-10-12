@@ -94,6 +94,7 @@ export function Servers({
               favorited={favoritedRefs.includes(server.name ?? "")}
               callCount={callsByRef[server.name ?? ""] ?? 0}
               onClick={() => handleServerClick(server)}
+              layout="list"
             />
           ))}
           {visibleSubmitted.map((m) => {
@@ -107,6 +108,7 @@ export function Servers({
                 favorited={favoritedRefs.includes(m.id)}
                 callCount={callsByRef[m.id] ?? m.call_count}
                 siblingCards={sib}
+                layout="list"
               />
             );
           })}

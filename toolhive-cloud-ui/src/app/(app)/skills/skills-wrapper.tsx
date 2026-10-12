@@ -112,6 +112,7 @@ export function SkillsWrapper({
         favorited={favoritedRefs.includes(s.id)}
         onClick={(id: string) => router.push(`/skills/${id}`)}
         siblingCards={siblingGroups[gk]}
+        layout={viewMode}
       />
     );
   };

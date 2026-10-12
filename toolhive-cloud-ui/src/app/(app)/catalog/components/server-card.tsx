@@ -15,11 +15,14 @@ interface ServerCardProps {
   favorited?: boolean;
   callCount?: number;
   onClick?: () => void;
+  /** grid=紧凑竖排（色带横幅）；list=横向单列（左脊 + 信息三栏） */
+  layout?: "grid" | "list";
 }
 
 /**
  * Registry 上游 MCP 卡片（变体 B「色带横幅」）：
  * 卡顶一条 info 色横幅装符号 + 名称，下方白底描述与元信息行。
+ * 列表视图换横向形态：6px 类型色左脊，标题行/描述/元信息顶格，操作列贴右。
  */
 export function ServerCard({
   server,
@@ -27,6 +30,7 @@ export function ServerCard({
   favorited = false,
   callCount = 0,
   onClick,
+  layout = "grid",
 }: ServerCardProps) {
   const { name, description, repository } = server;
   const author = repository?.id;
@@ -34,6 +38,89 @@ export function ServerCard({
   const itemRef = name ?? "";
 
   const toggleFav = toggleFavoriteAction.bind(null, "mcp", itemRef, favorited);
+
+  const starButton = (
+    <form action={toggleFav} onClick={(e) => e.stopPropagation()}>
+      <Button
+        type="submit"
+        variant="ghost"
+        size="icon"
+        className="h-8 w-8"
+        aria-label={favorited ? "取消收藏" : "收藏"}
+        title={favorited ? "取消收藏" : "收藏"}
+      >
+        <Star
+          className={
+            favorited
+              ? "h-4 w-4 fill-star text-star animate-[star-pop_320ms_ease-out]"
+              : "h-4 w-4 text-muted-foreground"
+          }
+        />
+      </Button>
+    </form>
+  );
+
+  if (layout === "list") {
+    return (
+      <div
+        className="card-hover flex w-full cursor-pointer items-stretch overflow-hidden rounded-xl border bg-card transition-colors"
+        onClick={onClick ? () => onClick() : undefined}
+      >
+        {/* 类型色左脊 */}
+        <span aria-hidden className="w-1.5 shrink-0 bg-info" />
+        <div className="flex min-w-0 flex-1 flex-col justify-center gap-1 py-3.5 pl-5 pr-4">
+          <div className="flex items-center gap-2">
+            <McpGlyph size={14} />
+            <span
+              className="min-w-0 truncate text-sm font-medium"
+              title={server.title ?? name}
+            >
+              {server.title ?? name}
+            </span>
+            {server.version && (
+              <span className="shrink-0 rounded-md bg-info/10 px-2 py-0.5 text-xs text-info">
+                v{server.version}
+              </span>
+            )}
+            {isVirtualMCP && (
+              <Badge variant="secondary" className="shrink-0 text-xs">
+                Virtual MCP
+              </Badge>
+            )}
+          </div>
+          <p className="line-clamp-1 text-sm leading-snug text-muted-foreground">
+            {description || "暂无描述"}
+          </p>
+          <p className="truncate text-xs text-muted-foreground">
+            {callCount} 次调用
+            {author ? ` · ${author}` : ""}
+          </p>
+        </div>
+        <div className="flex shrink-0 items-center gap-1.5 px-5">
+          {starButton}
+          {serverUrl && (
+            <CopyMcpConfigDialog
+              serverName={server.title ?? name ?? ""}
+              config={{ url: serverUrl }}
+              triggerLabel="接入"
+              className="rounded-full"
+            />
+          )}
+          <Button
+            type="button"
+            size="sm"
+            className="bg-info text-white hover:bg-info/90"
+            onClick={(e) => {
+              e.stopPropagation();
+              onClick?.();
+            }}
+          >
+            查看
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -79,25 +166,7 @@ export function ServerCard({
             )}
           </div>
           <div className="flex shrink-0 items-center gap-2">
-            {/* biome-ignore lint/a11y/useKeyWithClickEvents: 仅阻止点击冒泡到卡片，非交互元素 */}
-            <form action={toggleFav} onClick={(e) => e.stopPropagation()}>
-              <Button
-                type="submit"
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8"
-                aria-label={favorited ? "取消收藏" : "收藏"}
-                title={favorited ? "取消收藏" : "收藏"}
-              >
-                <Star
-                  className={
-                    favorited
-                      ? "h-4 w-4 fill-star text-star animate-[star-pop_320ms_ease-out]"
-                      : "h-4 w-4 text-muted-foreground"
-                  }
-                />
-              </Button>
-            </form>
+            {starButton}
             {serverUrl && (
               <CopyMcpConfigDialog
                 serverName={server.title ?? name ?? ""}
