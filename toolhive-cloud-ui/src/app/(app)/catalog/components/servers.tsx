@@ -6,7 +6,6 @@ import type { V0ServerJson } from "@/generated/types.gen";
 import type { McpServer } from "@/lib/platform-backend";
 import { EmptyState } from "./empty-state";
 import { ServerCard } from "./server-card";
-import { ServersTable } from "./servers-table";
 import { SubmittedMcpCard } from "./submitted-mcp-card";
 
 interface ServersProps {
@@ -86,8 +85,31 @@ export function Servers({
   return (
     <div className="space-y-8 pb-6">
       {viewMode === "list" ? (
-        <div className="pb-3">
-          <ServersTable servers={servers} onServerClick={handleServerClick} />
+        <div className="space-y-3 pb-3">
+          {servers.map((server) => (
+            <ServerCard
+              key={server.name}
+              server={server}
+              serverUrl={server.remotes?.[0]?.url}
+              favorited={favoritedRefs.includes(server.name ?? "")}
+              callCount={callsByRef[server.name ?? ""] ?? 0}
+              onClick={() => handleServerClick(server)}
+            />
+          ))}
+          {visibleSubmitted.map((m) => {
+            const gk =
+              m.group_key || String(m.payload_ref || "").split(":")[0] || "";
+            const sib = siblingGroups[gk];
+            return (
+              <SubmittedMcpCard
+                key={m.id}
+                mcp={m}
+                favorited={favoritedRefs.includes(m.id)}
+                callCount={callsByRef[m.id] ?? m.call_count}
+                siblingCards={sib}
+              />
+            );
+          })}
         </div>
       ) : (
         <div className="grid grid-cols-[repeat(auto-fill,minmax(340px,1fr))] gap-3 pb-3">

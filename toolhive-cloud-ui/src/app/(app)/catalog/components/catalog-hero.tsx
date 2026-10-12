@@ -35,13 +35,12 @@ export function CatalogHero({
   if (!newest) return null;
 
   const isTeal = accent === "success";
-  const accentHex = isTeal ? "hsl(var(--success))" : "hsl(var(--primary))";
+  // accent 即类型色：MCP=info 蓝、Skill=success 青绿；品牌红不进 hero（避免红蓝混用）
+  const accentHex = isTeal ? "hsl(var(--success))" : "hsl(var(--info))";
   const chipCls = isTeal
     ? "bg-success/10 text-success"
-    : "bg-primary/10 text-primary";
-  const typeCls = isTeal
-    ? "bg-success/10 text-success"
     : "bg-info/10 text-info";
+  const typeCls = chipCls;
 
   const go = (id: string) =>
     router.push(`${routePrefix}/${encodeURIComponent(id)}`);
@@ -106,7 +105,9 @@ export function CatalogHero({
                 onClick={() => go(m.id)}
                 className="flex w-full cursor-pointer items-center gap-2 rounded-md px-1 py-0.5 text-left transition-colors hover:bg-muted/50"
               >
-                <span className="size-1.5 shrink-0 rounded-full bg-success" />
+                <span
+                  className={`size-1.5 shrink-0 rounded-full ${isTeal ? "bg-success" : "bg-info"}`}
+                />
                 <span className="min-w-0 flex-1 truncate text-sm">
                   {m.name} {m.version ? `v${m.version}` : ""}
                 </span>
