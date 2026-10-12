@@ -19,6 +19,9 @@ const FILTERS: { key: "all" | "mcp" | "skill"; label: string }[] = [
   { key: "skill", label: "Skill" },
 ];
 
+// 提交类型展示名（后端枚举为小写 mcp/skill，直出会露英文原值）
+const TYPE_LABEL: Record<string, string> = { mcp: "MCP", skill: "Skill" };
+
 function parseLoose(v: unknown): Record<string, unknown> {
   return v && typeof v === "object" ? (v as Record<string, unknown>) : {};
 }
@@ -159,11 +162,8 @@ export function ReviewBlock({ pending }: { pending: Submission[] }) {
                   <span className="min-w-0 truncate text-sm font-medium">
                     {name}
                   </span>
-                  <Badge
-                    variant="outline"
-                    className="shrink-0 text-[11px] uppercase"
-                  >
-                    {first.type}
+                  <Badge variant="outline" className="shrink-0 text-[11px]">
+                    {TYPE_LABEL[first.type] ?? first.type}
                   </Badge>
                   <span className="ml-auto shrink-0 text-xs text-muted-foreground">
                     {arr.length} 个版本
@@ -199,8 +199,8 @@ export function ReviewBlock({ pending }: { pending: Submission[] }) {
                     {selected.payload_ref}
                   </p>
                 </div>
-                <Badge variant="outline" className="shrink-0 text-xs uppercase">
-                  {selected.type}
+                <Badge variant="outline" className="shrink-0 text-xs">
+                  {TYPE_LABEL[selected.type] ?? selected.type}
                 </Badge>
               </div>
 

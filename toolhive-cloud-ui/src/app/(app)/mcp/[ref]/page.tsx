@@ -60,7 +60,7 @@ export default async function McpDetailPage({
       ? "返回统计"
       : from === "favorites"
         ? "返回工作台"
-        : "返回 MCP 市场";
+        : "返回 MCP 目录";
 
   // 并行第一轮：主体、会话、收藏、registry 服务器四路同时发起（原先为 4 段串行）
   const [submitted, session, favorites, serversResult] = await Promise.all([
@@ -94,13 +94,13 @@ export default async function McpDetailPage({
                   <CardTitle className="text-xl">MCP 当前不可用</CardTitle>
                   <CardDescription className="text-base">
                     该 MCP 当前不在 MCP
-                    市场中（可能已下线或未运行），无法查看详情。
+                    目录中（可能已下线或未运行），无法查看详情。
                   </CardDescription>
                 </CardHeader>
                 <CardFooter className="flex justify-center gap-3">
                   <NavigateBackButton href={backHref} label={backLabel} />
                   <Button variant="outline" size="sm" asChild>
-                    <Link href="/catalog">返回 MCP 市场</Link>
+                    <Link href="/catalog">返回 MCP 目录</Link>
                   </Button>
                 </CardFooter>
               </Card>

@@ -17,6 +17,12 @@ import { cn } from "@/lib/utils";
 import { ApproveDialog } from "./approve-dialog";
 
 function StatusBadge({ status }: { status: string }) {
+  // 已知五态在 switch 内处理；此处兜底非常见值的展示名，未知原值原样透出
+  const FALLBACK_LABEL: Record<string, string> = {
+    submitted: "已提交",
+    pending_review: "待审批",
+    in_review: "审核中",
+  };
   switch (status) {
     case "approved":
       return <Badge className="text-sm">已通过</Badge>;
@@ -47,7 +53,7 @@ function StatusBadge({ status }: { status: string }) {
     default:
       return (
         <Badge variant="secondary" className="text-sm">
-          {status}
+          {FALLBACK_LABEL[status] ?? status}
         </Badge>
       );
   }
@@ -258,11 +264,12 @@ export function SubmissionList({
                           {subtitle}
                         </span>
                       )}
-                      <Badge
-                        variant="outline"
-                        className="mt-1 w-fit text-xs uppercase"
-                      >
-                        {s.type}
+                      <Badge variant="outline" className="mt-1 w-fit text-xs">
+                        {s.type === "mcp"
+                          ? "MCP"
+                          : s.type === "skill"
+                            ? "Skill"
+                            : s.type}
                       </Badge>
                     </div>
                   </TableCell>

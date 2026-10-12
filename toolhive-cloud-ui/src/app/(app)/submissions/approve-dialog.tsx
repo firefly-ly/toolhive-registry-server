@@ -462,7 +462,11 @@ export function ApproveDialog({
                                 : "bg-warning/15 text-warning",
                             )}
                           >
-                            {h.severity}
+                            {h.severity === "alert"
+                              ? "警报"
+                              : h.severity === "warn"
+                                ? "提示"
+                                : h.severity}
                           </span>
                         </td>
                         <td className="px-2 py-1.5 font-mono">{h.rule_id}</td>

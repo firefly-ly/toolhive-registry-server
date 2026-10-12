@@ -252,7 +252,12 @@ export async function AuditBlock({
         </div>
       </form>
 
-      {error && <ErrorToast message={`审计查询失败：${error}`} />}
+      {error && (
+        <ErrorToast
+          message="审计查询失败，请稍后重试"
+          description={String(error)}
+        />
+      )}
 
       {!error && items.length === 0 && (
         <div className="flex-1 rounded-xl border py-10 text-center text-muted-foreground">

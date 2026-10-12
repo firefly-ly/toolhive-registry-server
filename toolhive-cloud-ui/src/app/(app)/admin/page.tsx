@@ -141,7 +141,10 @@ export default async function AdminPage({
       </div>
 
       {error && (
-        <ErrorToast message={`操作失败：${decodeURIComponent(error)}`} />
+        <ErrorToast
+          message="操作失败，请稍后重试"
+          description={decodeURIComponent(error)}
+        />
       )}
 
       {/* 有界内容区：各 tab 自管滚动，页面级不再滚动 */}

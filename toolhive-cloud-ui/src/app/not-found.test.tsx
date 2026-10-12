@@ -18,7 +18,7 @@ describe("NotFound (root)", () => {
   it("has a link to browse the catalog", async () => {
     render(await NotFound());
 
-    const link = screen.getByRole("link", { name: /浏览 MCP 市场/ });
+    const link = screen.getByRole("link", { name: /浏览 MCP 目录/ });
     expect(link).toHaveAttribute("href", "/catalog");
   });
 

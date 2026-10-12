@@ -181,7 +181,7 @@ export function SkillDetailView({
             </Button>
 
             <Button variant="outline" size="lg" asChild>
-              <Link href="/skills">在技能市场打开</Link>
+              <Link href="/skills">在技能目录打开</Link>
             </Button>
           </div>
 

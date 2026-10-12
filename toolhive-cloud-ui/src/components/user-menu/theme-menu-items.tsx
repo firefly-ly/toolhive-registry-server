@@ -30,18 +30,18 @@ function ThemeMenuItem({ children, theme }: ThemeMenuItemProps) {
 export function ThemeMenuItems() {
   return (
     <>
-      <DropdownMenuLabel>Theme</DropdownMenuLabel>
+      <DropdownMenuLabel>主题</DropdownMenuLabel>
       <ThemeMenuItem theme="light">
         <Sun />
-        Light mode
+        浅色模式
       </ThemeMenuItem>
       <ThemeMenuItem theme="dark">
         <Moon />
-        Dark mode
+        深色模式
       </ThemeMenuItem>
       <ThemeMenuItem theme="system">
         <Monitor />
-        Use system settings
+        跟随系统
       </ThemeMenuItem>
     </>
   );

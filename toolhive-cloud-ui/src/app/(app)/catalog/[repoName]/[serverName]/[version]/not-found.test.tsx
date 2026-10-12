@@ -12,13 +12,13 @@ describe("NotFound", () => {
   it("displays a descriptive message", () => {
     render(<NotFound />);
 
-    expect(screen.getByText(/不存在，或已从 MCP 市场中移除/)).toBeVisible();
+    expect(screen.getByText(/不存在，或已从 MCP 目录中移除/)).toBeVisible();
   });
 
   it("has a link to browse the catalog", () => {
     render(<NotFound />);
 
-    const link = screen.getByRole("link", { name: /浏览 MCP 市场/ });
+    const link = screen.getByRole("link", { name: /浏览 MCP 目录/ });
     expect(link).toHaveAttribute("href", "/catalog");
   });
 

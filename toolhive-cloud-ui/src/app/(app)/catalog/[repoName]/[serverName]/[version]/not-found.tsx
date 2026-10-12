@@ -17,11 +17,11 @@ export default function NotFound() {
         title="未找到该服务"
         actions={
           <Button asChild variant="action">
-            <Link href="/catalog">浏览 MCP 市场</Link>
+            <Link href="/catalog">浏览 MCP 目录</Link>
           </Button>
         }
       >
-        你要找的 MCP 服务不存在，或已从 MCP 市场中移除。
+        你要找的 MCP 服务不存在，或已从 MCP 目录中移除。
       </ErrorPageLayout>
     </div>
   );

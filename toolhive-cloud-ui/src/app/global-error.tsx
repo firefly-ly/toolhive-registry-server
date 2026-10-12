@@ -10,7 +10,7 @@ interface GlobalErrorProps {
 
 export default function GlobalError({ reset }: GlobalErrorProps) {
   return (
-    <html lang="en">
+    <html lang="zh-CN">
       <body className="antialiased bg-background text-foreground">
         <div className="flex flex-col items-center justify-center min-h-screen gap-6">
           <Image

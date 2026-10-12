@@ -41,7 +41,7 @@ function readVisibility(s: Submission): VisibilityData {
 }
 
 const inputClass =
-  "border-input h-10 w-full rounded-md border bg-transparent px-3 text-sm outline-none placeholder:italic placeholder:text-muted-foreground/60 focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]";
+  "border-input h-10 w-full rounded-md border bg-transparent px-3 text-sm outline-none placeholder:text-muted-foreground/60 focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]";
 
 // 管理员配置条目可见范围：全员可见，或仅指定成员（邮箱）/组可见。
 // 提交到 setVisibilityAction（Server Action），后端硬校验管理员身份。

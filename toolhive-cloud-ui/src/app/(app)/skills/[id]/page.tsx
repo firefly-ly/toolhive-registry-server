@@ -43,8 +43,8 @@ export default async function SkillDetailPage({
     from === "stats"
       ? "返回统计"
       : from === "favorites"
-        ? "返回收藏"
-        : "返回技能市场";
+        ? "返回工作台"
+        : "返回技能目录";
   // 按 id 直查详情：区分三种失败——不存在/已下架(404→统一 404 页)、
   // 无权限(403→提示无权访问)、后端不可用(网络/5xx→提示稍后刷新)，不再把失败都伪装成 404
   const result = await getSkillById(id)
