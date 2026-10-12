@@ -258,7 +258,7 @@ export function McpDetailActions({
           )}
           <div>
             <div className="mb-1 text-sm text-muted-foreground">
-              参数（JSON，已按工具定义生成模板）
+              参数（JSON，已生成模板）
             </div>
             <textarea
               value={argsText}

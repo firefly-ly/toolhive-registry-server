@@ -1,8 +1,8 @@
 "use client";
 
-import { HelpCircle } from "lucide-react";
 import { Fragment, useEffect, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
+import { Hint } from "@/components/hint";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -305,7 +305,7 @@ export function SubmissionForm({ action }: SubmissionFormProps) {
       return;
     }
     if (from === 2 && !sourceReady) {
-      setError("制品来源还没就绪——按第 2 步提示补全后再继续");
+      setError("请先在第 2 步补全制品来源");
       return;
     }
     setError("");
@@ -410,7 +410,7 @@ export function SubmissionForm({ action }: SubmissionFormProps) {
                   htmlFor="payload_ref"
                   className="block text-sm font-medium"
                 >
-                  引用（payload_ref）
+                  引用
                 </label>
                 <input
                   id="payload_ref"
@@ -420,13 +420,9 @@ export function SubmissionForm({ action }: SubmissionFormProps) {
                   value={payloadRef}
                   onChange={(e) => setPayloadRef(e.target.value)}
                 />
-                <div
-                  className="inline-flex items-center gap-1 text-xs text-muted-foreground"
-                  title="格式建议：产品名:版本号（如 dws-explorer:1.0.0）。系统据此自动分组并识别版本，同名产品多版本可并存。"
-                >
-                  <HelpCircle className="size-3.5 cursor-help" />
+                <Hint text="提交引用（payload_ref）：产品名:版本号，如 dws-explorer:1.0.0。系统据此自动分组并识别版本，同名产品多版本可并存。">
                   <span>格式建议</span>
-                </div>
+                </Hint>
               </div>
 
               <div className="space-y-2">
@@ -450,7 +446,7 @@ export function SubmissionForm({ action }: SubmissionFormProps) {
                   htmlFor="group_key"
                   className="block text-sm font-medium"
                 >
-                  产品标识 group_key（可选）
+                  产品标识（可选）
                 </label>
                 <input
                   id="group_key"
@@ -461,7 +457,7 @@ export function SubmissionForm({ action }: SubmissionFormProps) {
               </div>
               <div className="space-y-2">
                 <label htmlFor="version" className="block text-sm font-medium">
-                  版本号 version（可选）
+                  版本号（可选）
                 </label>
                 <input
                   id="version"
@@ -477,7 +473,7 @@ export function SubmissionForm({ action }: SubmissionFormProps) {
                 htmlFor="repository_url"
                 className="block text-sm font-medium"
               >
-                仓库地址（repository_url，可选）
+                仓库地址（可选）
               </label>
               <input
                 id="repository_url"
@@ -486,8 +482,8 @@ export function SubmissionForm({ action }: SubmissionFormProps) {
                 className={inputClass}
               />
               <p className="text-xs text-muted-foreground">
-                可选：开源上游仓库地址。填写后详情页展示仓库入口（最新代码 /
-                最新 README）；不填则以上传的源码包为准。
+                填写后详情页会展示仓库入口（最新代码 / 最新
+                README）；不填则以上传的源码包为准。
               </p>
             </div>
           </div>

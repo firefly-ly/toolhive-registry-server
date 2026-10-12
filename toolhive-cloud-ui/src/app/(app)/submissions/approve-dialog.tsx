@@ -529,7 +529,7 @@ export function ApproveDialog({
               <p className="text-sm font-medium">数据源声明</p>
               {!dataSource || dataSource.type === "none" ? (
                 <p className="text-xs text-muted-foreground">
-                  未声明外部数据源。若实际需要连库，应要求提交者重新提交补充声明。
+                  未声明外部数据源；若实际需要连库，请让提交者重新提交并补充声明。
                 </p>
               ) : (
                 <div className="space-y-1.5 text-sm">

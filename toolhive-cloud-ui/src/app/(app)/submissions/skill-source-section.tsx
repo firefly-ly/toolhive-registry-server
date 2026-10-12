@@ -21,9 +21,7 @@ export function SkillSourceSection({
 }: SkillSourceSectionProps) {
   return (
     <div className="space-y-3">
-      <span className="block text-sm font-medium">
-        上传技能包（.zip / .tar.gz / .tgz / .tar）
-      </span>
+      <span className="block text-sm font-medium">上传技能包</span>
       <Tabs
         value={skillSource}
         onValueChange={(v) => onSourceChange(v as "file" | "url")}
@@ -48,7 +46,7 @@ export function SkillSourceSection({
             file={file}
             onFile={onFile}
             dropzone
-            hint="支持 .zip / .tar.gz / .tgz / .tar，包内须含 SKILL.md（顶部 YAML front matter：name / description）"
+            hint="支持 .zip / .tar.gz / .tgz / .tar，包内须含 SKILL.md（顶部含 name / description 声明）"
           />
         </TabsContent>
 
@@ -66,7 +64,7 @@ export function SkillSourceSection({
           <HintIcon text="支持 http/https 下载链接，或本平台可访问的本地绝对路径（含 UNC 共享路径）。" />
         </TabsContent>
       </Tabs>
-      <HintIcon text="把本地写好的 skill 目录打包为 .zip / .tar.gz / .tgz / .tar 上传。包内必须包含 SKILL.md，且 SKILL.md 顶部需有 YAML front matter（name / description），否则会被拒绝。这些格式与 WorkBuddy 添加技能的导入方式兼容，下载后可直接上传使用。" />
+      <HintIcon text="把 skill 目录打包为 .zip / .tar.gz / .tgz / .tar 上传，包内必须包含 SKILL.md（顶部含 name / description 声明），否则会被拒绝。格式与 WorkBuddy 技能导入兼容，下载后可直接使用。" />
     </div>
   );
 }

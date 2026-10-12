@@ -97,7 +97,7 @@ export function McpSourceSection({
 
         <TabsContent value="ghcr" className="mt-3 space-y-2">
           <label htmlFor="image_ref" className="block text-sm font-medium">
-            镜像引用（image_ref）
+            镜像引用
           </label>
           <input
             id="image_ref"
@@ -108,7 +108,7 @@ export function McpSourceSection({
             placeholder="ghcr.io/你的组织/my-mcp:1.0.0"
             className={inputClass}
           />
-          <HintIcon text="填写外部镜像源地址（如 ghcr.io/你的组织/my-mcp:1.0.0）。审批通过后，平台会自动同步到内网仓库并部署；无需事先 push 到平台内网仓库。" />
+          <HintIcon text="填写外部镜像源地址。审批通过后，平台会自动同步到内网仓库并部署，无需事先 push。" />
           {cls && (
             <p
               className={`text-xs ${
@@ -136,7 +136,7 @@ export function McpSourceSection({
                 onChange={(e) => onAutoMirrorChange(e.target.checked)}
                 className="mt-0.5 size-4"
               />
-              <span>审批通过后自动同步到内网仓库并部署（推荐保持勾选）</span>
+              <span>审批通过后自动同步到内网仓库并部署</span>
             </label>
           )}
         </TabsContent>
@@ -153,7 +153,7 @@ export function McpSourceSection({
             file={tarFile}
             onFile={onTarFile}
           />
-          <HintIcon text="在本地执行 docker save 镜像名:版本 -o my-mcp.tar 导出，审批后由平台直接 docker load 运行，不强制推回内网仓库。体积上限默认 2048MB，超出请改用 ghcr 地址提交。" />
+          <HintIcon text="本地执行 docker save 镜像名:版本 -o my-mcp.tar 导出后上传，审批后由平台直接运行。体积上限 2048MB，超出请改用 ghcr 地址提交。" />
         </TabsContent>
 
         <TabsContent value="source" className="mt-3 space-y-4">
@@ -169,7 +169,7 @@ export function McpSourceSection({
               file={sourceFile}
               onFile={onSourceFile}
             />
-            <HintIcon text="源码包内需包含 package.json（Node）或 requirements.txt / pyproject.toml（Python）；平台自动生成 Dockerfile 构建，容器内服务监听 3000 端口。上限 20MB。" />
+            <HintIcon text="源码包内需包含 package.json（Node）或 requirements.txt / pyproject.toml（Python）。平台自动构建镜像，服务监听 3000 端口，上限 20MB。" />
           </div>
 
           <div className="space-y-3">
@@ -183,14 +183,14 @@ export function McpSourceSection({
               file={envFile}
               onFile={onEnvFile}
             />
-            <HintIcon text="API Key、密码等私密配置放这里，不要打进源码包。值经 ToolHive 加密凭据库存储，部署时注入环境变量；平台与审计日志中全程不出现明文。" />
+            <HintIcon text="API Key、密码等私密配置放这里，不要打进源码包。值加密存储、部署时注入环境变量，平台全程不落明文。" />
           </div>
         </TabsContent>
       </Tabs>
 
       <div className="space-y-2">
         <label htmlFor="data_source_type" className="block text-sm font-medium">
-          数据源（声明）
+          数据源声明
         </label>
         <Select
           name="data_source_type"
@@ -235,7 +235,7 @@ export function McpSourceSection({
               placeholder="数据源用途（一句话，供审批人审核）"
               className={inputClass}
             />
-            <HintIcon text="提交容器默认运行在隔离网络内：HTTP(S) 经代理出网，数据库直连不可达。此声明供审批人审核——只有审批时勾选「解除网络隔离」，部署后容器才能直连数据源；公网目标地址会被重点审查。" />
+            <HintIcon text="容器默认在隔离网络内运行，数据库直连不可达。仅当审批时勾选「解除网络隔离」，部署后才能直连数据源；公网地址会被重点审查。" />
             {dataSourceType === "database" && (
               <p className="text-xs text-warning">
                 数据库直连在隔离网内不可达：需审批时解除网络隔离，或改用平台中转
@@ -248,7 +248,7 @@ export function McpSourceSection({
 
       <div className="space-y-2">
         <label htmlFor="transport" className="block text-sm font-medium">
-          传输协议（transport）
+          传输协议
         </label>
         <Select
           name="transport"

@@ -122,8 +122,8 @@ export function ServerDetailTabs({
           </div>
         ) : (
           <p className="rounded-lg border p-4 text-sm text-muted-foreground">
-            暂无可展示的 README。提交源码包时在包内放一个 README 文件，或填写
-            repository_url 即可。
+            暂无可展示的 README。提交源码包时在包内放一个 README
+            文件，或提交时填写仓库地址即可。
           </p>
         )}
       </TabsContent>
