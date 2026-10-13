@@ -91,6 +91,7 @@ export function McpServerDetail({
             serverName={mcp.name}
             serverUrl={mcp.public_endpoint}
             serverHeaders={mcp.mcp_headers}
+            tokenRequired={mcp.mcp_token_required}
             repositoryUrl={mcp.repository_url}
             publisher={mcp.owner}
             type={typeLabel}

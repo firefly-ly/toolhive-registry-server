@@ -69,6 +69,8 @@ export interface Submission {
   registry_synced?: string; // published | error | skipped:no-endpoint | deleted | delete-error | ""
   // restricted 条目的代理调用凭证（Authorization Header 形态，token 不再拼在 URL 上）
   mcp_headers?: Record<string, string>;
+  // D1 成员视角：restricted 条目且当前用户未被签发成员 token 时为 true（mcp_headers 同为空）
+  mcp_token_required?: boolean;
   registry_name?: string;
   visibility?: {
     mode: "all" | "restricted";
@@ -369,6 +371,8 @@ export interface McpServer {
   public_endpoint?: string;
   // restricted 条目的代理调用凭证（Authorization Header 形态，token 不再拼在 URL 上）
   mcp_headers?: Record<string, string>;
+  // D1 成员视角：restricted 条目且当前用户未被签发成员 token 时为 true（mcp_headers 同为空）
+  mcp_token_required?: boolean;
   // 端点真实探活结果（true=可达 / false=有记录但连不通 / undefined=未部署或未探测）
   healthy?: boolean;
   transport?: string;
@@ -475,6 +479,64 @@ export async function rotateMcpToken(id: string): Promise<{ ok: boolean }> {
     method: "POST",
     body: JSON.stringify({}),
   });
+}
+
+// ---- 成员级代理 Token（双轨制 2026-10-13，均仅管理员）----
+
+export interface McpMemberToken {
+  member: string;
+  token: string | null; // null = 未签发
+  created_at: string | null;
+  rotated_at: string | null;
+}
+
+export interface McpMemberTokenList {
+  ok: boolean;
+  mode: "all" | "restricted"; // all = 条目非 restricted，成员 token 无意义
+  members: McpMemberToken[];
+}
+
+// 成员 token 列表：可见范围 users × 各自签发状态
+export async function listMcpMemberTokens(
+  id: string,
+): Promise<McpMemberTokenList> {
+  return request<McpMemberTokenList>(`/submissions/${id}/member-tokens`);
+}
+
+// 签发 / 轮换（已签发即轮换，旧 token 立即作废）
+export async function issueMcpMemberToken(
+  id: string,
+  member: string,
+): Promise<{ ok: boolean; token: string }> {
+  return request<{ ok: boolean; token: string }>(
+    `/submissions/${id}/member-tokens`,
+    { method: "POST", body: JSON.stringify({ member }) },
+  );
+}
+
+// 吊销（该成员接入配置立即 401）
+export async function revokeMcpMemberToken(
+  id: string,
+  member: string,
+): Promise<{ ok: boolean; revoked: boolean }> {
+  return request<{ ok: boolean; revoked: boolean }>(
+    `/submissions/${id}/member-tokens/${encodeURIComponent(member)}`,
+    { method: "DELETE" },
+  );
+}
+
+// 成员专属接入配置（publicEndpointFor + 该成员 Bearer 头），供管理员一键复制分发
+export async function getMcpMemberTokenConfig(
+  id: string,
+  member: string,
+): Promise<{
+  ok: boolean;
+  url: string | null;
+  headers: Record<string, string> | null;
+}> {
+  return request(
+    `/submissions/${id}/member-token-config?member=${encodeURIComponent(member)}`,
+  );
 }
 
 // 重新同步到 Registry Server（同步失败后重试 / 补发布）

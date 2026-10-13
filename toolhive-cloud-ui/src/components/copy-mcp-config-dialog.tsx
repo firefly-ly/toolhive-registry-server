@@ -70,6 +70,12 @@ interface CopyMcpConfigDialogProps {
   size?: ButtonSize;
   className?: string;
   labelClassName?: string;
+  /** D1 成员视角（2026-10-13）：restricted 条目且当前用户未被签发成员 token 时为 true——
+   *  后端此时不下发 mcp_headers，弹窗改为提示「联系管理员签发」，而不是给出必然 403 的配置。 */
+  tokenRequired?: boolean;
+  /** 受控 open（可选）：Token 管理弹窗内复用本组件复制成员专属配置时由外部控制开关 */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 /**
@@ -86,28 +92,39 @@ export function CopyMcpConfigDialog({
   size = "sm",
   className,
   labelClassName,
+  tokenRequired = false,
+  open: controlledOpen,
+  onOpenChange,
 }: CopyMcpConfigDialogProps) {
-  const [open, setOpen] = useState(false);
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
+  const open = controlledOpen ?? uncontrolledOpen;
+  const setOpen = onOpenChange ?? setUncontrolledOpen;
   const name = normalizeServerName(serverName);
 
   const workbuddy = buildWorkbuddyConfig(name, config);
   const claudeCode = buildClaudeCodeCommand(name, config);
   const rawConfig = JSON.stringify(config, null, 2);
 
+  // D1：restricted + 未签发成员 token → 不展示配置（无凭证的配置贴进客户端必然 403）
+  const memberGate = tokenRequired && !("headers" in config && config.headers);
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button
-          variant={variant}
-          size={size}
-          className={cn("cursor-pointer", className)}
-          // 列表卡片整体可点击（跳转详情），此处要阻断冒泡避免误触发
-          onClick={(e) => e.stopPropagation()}
-        >
-          <Clipboard className="size-4" />
-          <span className={cn(labelClassName)}>{triggerLabel}</span>
-        </Button>
-      </DialogTrigger>
+      {/* 受控模式（Token 管理弹窗内复制成员配置）由外部控制开关，不渲染触发钮 */}
+      {controlledOpen === undefined && (
+        <DialogTrigger asChild>
+          <Button
+            variant={variant}
+            size={size}
+            className={cn("cursor-pointer", className)}
+            // 列表卡片整体可点击（跳转详情），此处要阻断冒泡避免误触发
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Clipboard className="size-4" />
+            <span className={cn(labelClassName)}>{triggerLabel}</span>
+          </Button>
+        </DialogTrigger>
+      )}
 
       <DialogContent
         className="sm:max-w-3xl"
@@ -116,42 +133,56 @@ export function CopyMcpConfigDialog({
         <DialogHeader>
           <DialogTitle>在客户端中接入「{serverName}」</DialogTitle>
           <DialogDescription>
-            复制下方配置粘贴到你的客户端配置文件中，即可使用该 MCP。
+            {memberGate
+              ? "该 MCP 为受限访问，尚未为你签发访问凭证。"
+              : "复制下方配置粘贴到你的客户端配置文件中，即可使用该 MCP。"}
           </DialogDescription>
         </DialogHeader>
 
-        <Tabs defaultValue="workbuddy">
-          <TabsList>
-            <TabsTrigger value="workbuddy">WorkBuddy</TabsTrigger>
-            <TabsTrigger value="claude">Claude Code</TabsTrigger>
-            <TabsTrigger value="raw">原始配置</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="workbuddy" className="space-y-2">
-            <div
-              className="inline-flex items-center gap-1 text-sm text-muted-foreground"
-              title="粘贴到 ~/.workbuddy/mcp.json（Windows：C:\\Users\\<你>\\.workbuddy\\mcp.json）。保存后重启 WorkBuddy，在左侧「插件 → MCP 服务器」中信任并启用。"
-            >
-              <HelpCircle className="size-4 cursor-help" />
-              <span>配置位置</span>
-            </div>
-            <CodeBlock code={workbuddy} />
-          </TabsContent>
-
-          <TabsContent value="claude" className="space-y-2">
-            <p className="text-sm text-muted-foreground">
-              在终端执行以下命令即可完成添加。
+        {memberGate ? (
+          <div className="rounded-md border border-warning/40 bg-warning/10 p-4 text-sm leading-6">
+            <p className="font-medium">需要管理员签发访问凭证</p>
+            <p className="mt-1 text-muted-foreground">
+              该 MCP 开启了成员级访问控制：每位成员使用独立
+              Token，轮换或吊销只影响本人，不影响其他成员。
+              请联系管理员在「已发布管理 → Token
+              管理」中为你签发，签发后回到本页重新复制配置。
             </p>
-            <CodeBlock code={claudeCode} />
-          </TabsContent>
+          </div>
+        ) : (
+          <Tabs defaultValue="workbuddy">
+            <TabsList>
+              <TabsTrigger value="workbuddy">WorkBuddy</TabsTrigger>
+              <TabsTrigger value="claude">Claude Code</TabsTrigger>
+              <TabsTrigger value="raw">原始配置</TabsTrigger>
+            </TabsList>
 
-          <TabsContent value="raw" className="space-y-2">
-            <p className="text-sm text-muted-foreground">
-              该 MCP 的原始连接配置，Cursor / VS Code 等客户端可参照填写。
-            </p>
-            <CodeBlock code={rawConfig} />
-          </TabsContent>
-        </Tabs>
+            <TabsContent value="workbuddy" className="space-y-2">
+              <div
+                className="inline-flex items-center gap-1 text-sm text-muted-foreground"
+                title="粘贴到 ~/.workbuddy/mcp.json（Windows：C:\\Users\\<你>\\.workbuddy\\mcp.json）。保存后重启 WorkBuddy，在左侧「插件 → MCP 服务器」中信任并启用。"
+              >
+                <HelpCircle className="size-4 cursor-help" />
+                <span>配置位置</span>
+              </div>
+              <CodeBlock code={workbuddy} />
+            </TabsContent>
+
+            <TabsContent value="claude" className="space-y-2">
+              <p className="text-sm text-muted-foreground">
+                在终端执行以下命令即可完成添加。
+              </p>
+              <CodeBlock code={claudeCode} />
+            </TabsContent>
+
+            <TabsContent value="raw" className="space-y-2">
+              <p className="text-sm text-muted-foreground">
+                该 MCP 的原始连接配置，Cursor / VS Code 等客户端可参照填写。
+              </p>
+              <CodeBlock code={rawConfig} />
+            </TabsContent>
+          </Tabs>
+        )}
       </DialogContent>
     </Dialog>
   );

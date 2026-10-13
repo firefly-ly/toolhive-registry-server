@@ -10,7 +10,6 @@ import type { Submission } from "@/lib/platform-backend";
 import { cn } from "@/lib/utils";
 import {
   deploySubmissionAction,
-  rotateMcpTokenAction,
   setLifecycleAction,
   syncRegistryAction,
   undeploySubmissionAction,
@@ -22,6 +21,7 @@ import {
   REGISTRY_LABEL,
   versionOf,
 } from "./group-utils";
+import { MemberTokenDialog } from "./member-token-dialog";
 import { VisibilityDialog } from "./visibility-dialog";
 
 // 给裸 form 的写操作 Server Action 包一层成功 toast。
@@ -291,21 +291,9 @@ export function VersionActions({ s }: { s: Submission }) {
           待配置可见范围后
         </span>
       )}
-      {/* 按钮顺序：可见范围 → 轮换 Token(仅MCP) → 下架/恢复上架 → 下线/恢复上线 → 重新同步 → 删除(固定在最后) */}
+      {/* 按钮顺序：可见范围 → Token 管理(仅MCP，包级轮换+成员签发/轮换/吊销) → 下架/恢复上架 → 下线/恢复上线 → 重新同步 → 删除(固定在最后) */}
       <VisibilityDialog s={s} />
-      {isMcp && (
-        <ConfirmForm
-          action={rotateMcpTokenAction}
-          fields={{ id: s.id }}
-          title="确认轮换 Token？"
-          description="将生成新的代理访问令牌，旧 Token 立即作废——所有已复制到客户端的接入配置会立刻失效（401），需要重新复制配置。仅影响该 MCP，其他条目不受影响。"
-          confirmText="确认轮换"
-          successToast="Token 已轮换"
-          successDescription="旧令牌已作废，请在各客户端重新复制接入配置"
-        >
-          轮换 Token
-        </ConfirmForm>
-      )}
+      {isMcp && <MemberTokenDialog s={s} />}
       {!deprecated && (
         <ConfirmForm
           action={setLifecycleAction}

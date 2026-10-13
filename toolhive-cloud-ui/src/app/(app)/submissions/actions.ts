@@ -13,7 +13,12 @@ import {
   createSourceSubmission,
   createSubmission,
   deployMcp,
+  getMcpMemberTokenConfig,
+  issueMcpMemberToken,
+  listMcpMemberTokens,
+  type McpMemberTokenList,
   type RegistryClassify,
+  revokeMcpMemberToken,
   rotateMcpToken,
   setSubmissionStatus,
   setSubmissionVisibility,
@@ -397,6 +402,89 @@ export async function rotateMcpTokenAction(formData: FormData) {
   revalidatePath("/mcp/[ref]");
   // 成功后停留原地；用户需在各客户端重新复制接入配置
   return { ok: true };
+}
+
+// ---- 成员级代理 Token（双轨制 2026-10-13）----
+// Token 管理弹窗专用：返回值驱动（不用 redirect），失败由弹窗就地 toast，
+// 与 ConfirmForm 的 redirect 带参模式（整页动作）区分开。
+
+async function requireAdmin(): Promise<string | null> {
+  const { isAdmin } = await getAuthContext();
+  return isAdmin ? null : "仅管理员可管理成员 Token";
+}
+
+// 列表：可见范围 users × 签发状态
+export async function fetchMemberTokensAction(
+  id: string,
+): Promise<
+  { ok: true; data: McpMemberTokenList } | { ok: false; error: string }
+> {
+  const denied = await requireAdmin();
+  if (denied) return { ok: false, error: denied };
+  try {
+    const data = await listMcpMemberTokens(id);
+    return { ok: true, data };
+  } catch (e) {
+    return {
+      ok: false,
+      error: e instanceof Error ? e.message : String(e),
+    };
+  }
+}
+
+// 签发 / 轮换（已签发即轮换，旧 token 立即作废）
+export async function issueMemberTokenAction(
+  id: string,
+  member: string,
+): Promise<{ ok: boolean; error?: string }> {
+  const denied = await requireAdmin();
+  if (denied) return { ok: false, error: denied };
+  try {
+    await issueMcpMemberToken(id, member);
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : String(e) };
+  }
+  revalidatePath("/admin");
+  revalidatePath("/mcp/[ref]");
+  return { ok: true };
+}
+
+// 吊销（该成员接入配置立即 401）
+export async function revokeMemberTokenAction(
+  id: string,
+  member: string,
+): Promise<{ ok: boolean; error?: string }> {
+  const denied = await requireAdmin();
+  if (denied) return { ok: false, error: denied };
+  try {
+    await revokeMcpMemberToken(id, member);
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : String(e) };
+  }
+  revalidatePath("/admin");
+  revalidatePath("/mcp/[ref]");
+  return { ok: true };
+}
+
+// 成员专属接入配置（publicEndpointFor + 该成员 Bearer 头）；url 为 null 表示未部署
+export async function fetchMemberTokenConfigAction(
+  id: string,
+  member: string,
+): Promise<
+  | {
+      ok: true;
+      data: { url: string | null; headers: Record<string, string> | null };
+    }
+  | { ok: false; error: string }
+> {
+  const denied = await requireAdmin();
+  if (denied) return { ok: false, error: denied };
+  try {
+    const data = await getMcpMemberTokenConfig(id, member);
+    return { ok: true, data: { url: data.url, headers: data.headers } };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : String(e) };
+  }
 }
 
 // P4：重新同步到 Registry Server（同步失败后重试 / 补发布）
