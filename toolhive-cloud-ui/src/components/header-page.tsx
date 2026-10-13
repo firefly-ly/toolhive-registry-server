@@ -18,7 +18,7 @@ export function PageHeader({
   return (
     <header className="w-full">
       <div className="mx-auto flex flex-wrap items-end justify-between gap-4 pb-5">
-        <div className="space-y-1">
+        <div className="anim-slide-r space-y-1">
           <h1 className="text-page-title">{title}</h1>
           {description && (
             <p className="text-sm text-muted-foreground">{description}</p>

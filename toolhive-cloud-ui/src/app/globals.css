@@ -290,10 +290,150 @@ body {
   }
 }
 
+/* ============================================================
+   包豪斯动效语言（效果图包 00-12 共用 8 组关键帧）：
+   floatY 几何悬浮 / drawU 标题下划线画入 / popIn 入场上浮 /
+   slideR 左滑入场 / pulseDot 琥珀点呼吸 / rippleRing 涟漪扩散 /
+   driftDeco 背景几何漂移 / featured-progress 轮播进度（上方已有）。
+   统一走工具类绑定，reduced-motion 下一律禁用。
+   ============================================================ */
+@keyframes floatY {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-9px);
+  }
+}
+@keyframes drawU {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+@keyframes popIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes slideR {
+  from {
+    opacity: 0;
+    transform: translateX(-24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+@keyframes pulseDot {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.35);
+    opacity: 0.65;
+  }
+}
+@keyframes rippleRing {
+  0% {
+    transform: scale(0.6);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(2.1);
+    opacity: 0;
+  }
+}
+@keyframes driftDeco {
+  0%,
+  100% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  50% {
+    transform: translate(-18px, 14px) rotate(6deg);
+  }
+}
+
+@layer utilities {
+  .anim-float {
+    animation: floatY 4s ease-in-out infinite;
+  }
+  /* SVG 子元素浮动：以自身包围盒为中心变换 */
+  .svg-float {
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+  .anim-pop {
+    animation: popIn 0.6s ease both;
+  }
+  .anim-pop-d1 {
+    animation: popIn 0.6s 0.15s ease both;
+  }
+  .anim-pop-d2 {
+    animation: popIn 0.6s 0.25s ease both;
+  }
+  .anim-pop-d3 {
+    animation: popIn 0.6s 0.35s ease both;
+  }
+  .anim-pop-d4 {
+    animation: popIn 0.6s 0.45s ease both;
+  }
+  .anim-pop-d5 {
+    animation: popIn 0.6s 0.7s ease both;
+  }
+  .anim-slide-r {
+    animation: slideR 0.5s ease both;
+  }
+  /* 标题琥珀下划线画入（效果图书名号高亮的动态版） */
+  .anim-draw-u {
+    transform-origin: left bottom;
+    animation: drawU 0.8s 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+  .anim-pulse {
+    animation: pulseDot 2.4s ease-in-out infinite;
+  }
+  .anim-ripple {
+    animation: rippleRing 2.4s ease-out infinite;
+  }
+  .anim-drift {
+    animation: driftDeco 12s ease-in-out infinite;
+  }
+  .anim-drift-rev {
+    animation: driftDeco 14s ease-in-out infinite reverse;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .card-hover,
   .card-hover:hover {
     transition: none;
     transform: none;
+  }
+  .anim-float,
+  .anim-pop,
+  .anim-pop-d1,
+  .anim-pop-d2,
+  .anim-pop-d3,
+  .anim-pop-d4,
+  .anim-pop-d5,
+  .anim-slide-r,
+  .anim-draw-u,
+  .anim-pulse,
+  .anim-ripple,
+  .anim-drift,
+  .anim-drift-rev {
+    /* 未分层规则优先级高于 @layer utilities，无需 !important */
+    animation: none;
   }
 }

@@ -353,7 +353,7 @@ export function SubmissionForm({ action }: SubmissionFormProps) {
               <span className="min-w-0">
                 <span
                   className={cn(
-                    "block text-[13.5px] font-semibold",
+                    "block text-[15px] font-semibold",
                     active ? "text-foreground" : "text-muted-foreground",
                   )}
                 >
@@ -362,7 +362,7 @@ export function SubmissionForm({ action }: SubmissionFormProps) {
                 {sub && (
                   <span
                     className={cn(
-                      "mt-0.5 block text-[12.5px]",
+                      "mt-0.5 block text-[14px]",
                       active ? "text-warning" : "text-muted-foreground/80",
                     )}
                   >
@@ -381,7 +381,7 @@ export function SubmissionForm({ action }: SubmissionFormProps) {
         {/* ── 第 0 步：选择类型（MCP / Skill 分道，效果图 03）── */}
         {step === 0 && (
           <section>
-            <p className="mb-3.5 text-[12.5px] font-semibold tracking-[0.15em] text-muted-foreground">
+            <p className="mb-3.5 text-[14px] font-semibold tracking-[0.15em] text-muted-foreground">
               条目类型（决定后续流程，提交后不可更改）
             </p>
             <div className="grid grid-cols-1 gap-3.5 md:grid-cols-2">
@@ -398,7 +398,7 @@ export function SubmissionForm({ action }: SubmissionFormProps) {
                 )}
               >
                 {isMcp && (
-                  <span className="absolute top-0 right-4.5 rounded-b-lg bg-highlight px-3 py-1 text-[11.5px] font-semibold text-foreground">
+                  <span className="absolute top-0 right-4.5 rounded-b-lg bg-highlight px-3 py-1 text-[12.5px] font-semibold text-foreground">
                     已选
                   </span>
                 )}
@@ -408,11 +408,11 @@ export function SubmissionForm({ action }: SubmissionFormProps) {
                 >
                   <span className="absolute top-6.5 left-4 size-5 rounded-full bg-highlight" />
                 </span>
-                <b className="mt-3.5 block text-[17px]">MCP 服务</b>
+                <b className="mt-3.5 block text-[19px]">MCP 服务</b>
                 <p className="mt-1.5 text-xs leading-[1.7] text-muted-foreground">
                   给助手接入外部能力的工具服务：部署运行、被调用、可回滚。
                 </p>
-                <div className="mt-3 flex flex-col gap-1 text-[13px] text-success">
+                <div className="mt-3 flex flex-col gap-1 text-[14.5px] text-success">
                   <span>✓ 镜像地址 / tar 包 / 源码包三种来源</span>
                   <span>✓ 审批通过后自动部署，支持版本回滚</span>
                   <span>✓ 统计调用量 / 延迟 / 失败率</span>
@@ -431,7 +431,7 @@ export function SubmissionForm({ action }: SubmissionFormProps) {
                 )}
               >
                 {!isMcp && (
-                  <span className="absolute top-0 right-4.5 rounded-b-lg bg-highlight px-3 py-1 text-[11.5px] font-semibold text-foreground">
+                  <span className="absolute top-0 right-4.5 rounded-b-lg bg-highlight px-3 py-1 text-[12.5px] font-semibold text-foreground">
                     已选
                   </span>
                 )}
@@ -443,7 +443,7 @@ export function SubmissionForm({ action }: SubmissionFormProps) {
                 </span>
                 <b
                   className={cn(
-                    "mt-3.5 block text-[17px]",
+                    "mt-3.5 block text-[19px]",
                     !isMcp ? "" : "text-muted-foreground",
                   )}
                 >
@@ -452,7 +452,7 @@ export function SubmissionForm({ action }: SubmissionFormProps) {
                 <p className="mt-1.5 text-xs leading-[1.7] text-muted-foreground">
                   打包上传的提示词技能：上传时自动校验，审批通过后上架下载。
                 </p>
-                <div className="mt-3 flex flex-col gap-1 text-[13px] text-success">
+                <div className="mt-3 flex flex-col gap-1 text-[14.5px] text-success">
                   <span>✓ zip / tar.gz 上传，SKILL.md 自动校验</span>
                   <span>✓ 审批通过后上架，按权限下载</span>
                   <span>✓ 统计下载量与版本分布</span>

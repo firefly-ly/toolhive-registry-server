@@ -58,7 +58,7 @@ function DirNode({
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
-          className="group flex w-full items-center gap-1.5 rounded-md py-1.5 pr-2 text-left text-[16px] text-foreground/90 transition-colors hover:bg-accent/60"
+          className="group flex w-full items-center gap-1.5 rounded-md py-1.5 pr-2 text-left text-[18px] text-foreground/90 transition-colors hover:bg-accent/60"
           style={{ paddingLeft: `${depth * 14 + 8}px` }}
         >
           <ChevronRight
@@ -97,7 +97,7 @@ function DirNode({
                   key={path}
                   type="button"
                   onClick={() => onSelect(path)}
-                  className={`flex w-full items-center gap-1.5 rounded-md py-1.5 pr-2 text-left text-[16px] transition-colors ${
+                  className={`flex w-full items-center gap-1.5 rounded-md py-1.5 pr-2 text-left text-[18px] transition-colors ${
                     active
                       ? "bg-primary/10 font-medium text-primary"
                       : "text-foreground/80 hover:bg-accent/60"
@@ -134,7 +134,7 @@ function CodePreview({ path, content }: { path: string; content: string }) {
         </span>
       </div>
       <div className="max-h-[52vh] overflow-auto">
-        <div className="flex min-w-0 font-mono text-[16px] leading-6">
+        <div className="flex min-w-0 font-mono text-[18px] leading-6">
           <div
             aria-hidden
             className="select-none border-r bg-muted/30 px-3 py-3 text-right text-muted-foreground/50"

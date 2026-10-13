@@ -152,15 +152,32 @@ export function CatalogHero({
       <div className="grid grid-cols-1 border-b lg:grid-cols-[1.55fr_1fr]">
         {/* 左主张区 */}
         <div className="relative overflow-hidden px-1 py-10 lg:pr-10">
-          {/* 左下角淡奶油几何衬底 */}
+          {/* 左下角淡奶油几何衬底 + 漂移衬形（效果图 bgdeco 的动态版） */}
           <span
             aria-hidden
-            className="pointer-events-none absolute bottom-0 left-0 h-24 w-40 rounded-tr-full bg-highlight/20"
+            className="anim-drift-rev pointer-events-none absolute bottom-0 left-0 h-24 w-40 rounded-tr-full bg-highlight/20"
+          />
+          <span
+            aria-hidden
+            className="anim-drift pointer-events-none absolute -top-10 right-16 hidden size-32 rounded-full border-2 border-border/60 lg:block"
           />
           <div aria-hidden className="mb-5 flex items-end gap-2">
-            <span className="h-9 w-7 rounded-t-full bg-info" />
-            <span className="size-9 rounded-full bg-primary" />
-            <span className="mb-0.5 h-4 w-9 bg-highlight [clip-path:polygon(0_100%,50%_0,100%_100%)]" />
+            <span
+              className="h-9 w-7 rounded-t-full bg-info"
+              style={{ animation: "floatY 3.2s ease-in-out infinite" }}
+            />
+            <span
+              className="size-9 rounded-full bg-primary"
+              style={{
+                animation: "floatY 3.2s ease-in-out .4s infinite",
+              }}
+            />
+            <span
+              className="mb-0.5 h-4 w-9 bg-highlight [clip-path:polygon(0_100%,50%_0,100%_100%)]"
+              style={{
+                animation: "floatY 3.2s ease-in-out .8s infinite",
+              }}
+            />
           </div>
           <h1 className="text-[40px] leading-[1.15] font-semibold tracking-tight">
             找到你要的
@@ -170,15 +187,15 @@ export function CatalogHero({
               工具
               <span
                 aria-hidden
-                className="absolute inset-x-0 bottom-1 -z-10 h-3 bg-highlight/70"
+                className="anim-draw-u absolute inset-x-0 bottom-1 -z-10 h-3 bg-highlight/70"
               />
             </span>
           </h1>
-          <p className="mt-4 max-w-md text-sm leading-6 text-muted-foreground">
+          <p className="anim-pop-d3 mt-4 max-w-md text-sm leading-6 text-muted-foreground">
             MCP 服务与 Skill
             技能，全部经安全扫描与审批上架。按你的权限，即插即用。
           </p>
-          <div className="mt-6 flex items-center gap-3">
+          <div className="anim-pop-d4 mt-6 flex items-center gap-3">
             <Button type="button" size="sm" asChild className="h-10 px-6">
               <Link href="#catalog-grid">开始浏览 →</Link>
             </Button>
@@ -203,9 +220,11 @@ export function CatalogHero({
               key={c.label}
               className={
                 c.accent
-                  ? "flex flex-col justify-center bg-info px-7 py-6 text-white [&_dd]:font-mono [&_dd]:text-[32px] [&_dd]:leading-none [&_dd]:font-bold [&_dt]:text-xs [&_dt]:opacity-80 [&_span]:mt-1.5 [&_span]:text-xs [&_span]:opacity-75"
-                  : `flex flex-col justify-center px-7 py-6 [&_dd]:font-mono [&_dd]:text-[28px] [&_dd]:leading-none [&_dd]:font-bold [&_dt]:text-xs [&_dt]:text-muted-foreground [&_span]:mt-1 [&_span]:text-xs [&_span]:text-muted-foreground ${i >= 2 ? "border-t" : ""} ${i % 2 === 1 ? "border-l" : ""}`
+                  ? "anim-pop flex flex-col justify-center bg-info px-7 py-6 text-white [&_dd]:font-mono [&_dd]:text-[34px] [&_dd]:leading-none [&_dd]:font-bold [&_dt]:text-xs [&_dt]:opacity-80 [&_span]:mt-1.5 [&_span]:text-xs [&_span]:opacity-75"
+                  : `anim-pop flex flex-col justify-center px-7 py-6 [&_dd]:font-mono [&_dd]:text-[30px] [&_dd]:leading-none [&_dd]:font-bold [&_dt]:text-xs [&_dt]:text-muted-foreground [&_span]:mt-1 [&_span]:text-xs [&_span]:text-muted-foreground ${i >= 2 ? "border-t" : ""} ${i % 2 === 1 ? "border-l" : ""}`
               }
+              /* KPI 格错落入场（效果图 kblock 0.15s 起步、每格 +0.1s） */
+              style={{ animationDelay: `${0.15 + i * 0.1}s` }}
             >
               <dt>{c.label}</dt>
               <dd>{c.value}</dd>
@@ -218,19 +237,25 @@ export function CatalogHero({
       {/* ── 下层：精选带（左字形 + 内容，右切换 + 黑 CTA，底全宽进度条） ── */}
       {cur && (
         <div
-          className="relative border-b"
+          className="anim-pop-d2 relative border-b"
           onMouseEnter={() => setPaused(true)}
           onMouseLeave={() => setPaused(false)}
         >
           <div className="flex items-center gap-6 py-6 pr-2">
-            {/* 大几何字形：MCP=拱（同心） / Skill=圆（同心），中心琥珀点 */}
-            <div aria-hidden className="relative shrink-0">
+            {/* 大几何字形：MCP=拱（同心） / Skill=圆（同心），中心琥珀点呼吸+涟漪 */}
+            <div aria-hidden className="anim-float relative shrink-0">
               {isTeal ? (
                 <span
                   className="flex size-16 items-center justify-center rounded-full"
                   style={{ background: typeHex }}
                 >
-                  <span className="size-9 rounded-full bg-white/25" />
+                  <span className="relative flex size-9 items-center justify-center rounded-full bg-white/25">
+                    <span className="anim-pulse size-3 rounded-full bg-highlight" />
+                    <span
+                      aria-hidden
+                      className="anim-ripple absolute size-3 rounded-full border-2 border-highlight"
+                    />
+                  </span>
                 </span>
               ) : (
                 <span
@@ -238,7 +263,13 @@ export function CatalogHero({
                   style={{ background: typeHex }}
                 >
                   <span className="mt-5 flex h-9 w-7 items-center justify-center rounded-t-full bg-white/25">
-                    <span className="size-3 rounded-full bg-highlight" />
+                    <span className="relative flex items-center justify-center">
+                      <span className="anim-pulse size-3 rounded-full bg-highlight" />
+                      <span
+                        aria-hidden
+                        className="anim-ripple absolute size-3 rounded-full border-2 border-highlight"
+                      />
+                    </span>
                   </span>
                 </span>
               )}

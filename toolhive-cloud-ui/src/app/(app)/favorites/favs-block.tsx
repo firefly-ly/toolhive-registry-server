@@ -58,7 +58,7 @@ export function FavsBlock({
       <div className="min-w-0 py-6 lg:flex-[1.7] lg:border-r-[1.5px] lg:border-border lg:pr-8">
         <div className="mb-4 flex items-baseline">
           <h3 className="text-base font-semibold">我的收藏</h3>
-          <span className="ml-2.5 text-[12.5px] text-muted-foreground">
+          <span className="ml-2.5 text-[14px] text-muted-foreground">
             {count} 件
           </span>
           <Link
@@ -86,7 +86,7 @@ export function FavsBlock({
                 {/* 右上类型徽章（带圆点，效果图 .bdg 规格） */}
                 <span
                   className={cn(
-                    "absolute top-3 right-3.5 inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-[12.5px]",
+                    "absolute top-3 right-3.5 inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-[14px]",
                     isMcp
                       ? "border-info/40 bg-info/10 text-info"
                       : "border-success/40 bg-success/10 text-success",
@@ -109,11 +109,11 @@ export function FavsBlock({
                 <b className="text-sm font-bold" title={r.title}>
                   <span className="line-clamp-1">{r.title}</span>
                 </b>
-                <p className="mt-1.5 line-clamp-1 text-[13px] leading-relaxed text-muted-foreground">
+                <p className="mt-1.5 line-clamp-1 text-[14.5px] leading-relaxed text-muted-foreground">
                   {r.description || "暂无描述"}
                 </p>
 
-                <div className="mt-3.5 flex items-center text-[12.5px] text-muted-foreground">
+                <div className="mt-3.5 flex items-center text-[14px] text-muted-foreground">
                   <span className="font-mono">
                     {r.metric || "暂无使用记录"}
                   </span>
@@ -136,7 +136,7 @@ export function FavsBlock({
                         variant="ghost"
                         size="sm"
                         asChild
-                        className="h-7 rounded-lg bg-foreground px-3.5 text-[13px] font-semibold text-background hover:bg-foreground/85 hover:text-background"
+                        className="h-7 rounded-lg bg-foreground px-3.5 text-[14.5px] font-semibold text-background hover:bg-foreground/85 hover:text-background"
                       >
                         <Link href={r.href}>进入</Link>
                       </Button>
@@ -176,8 +176,8 @@ export function FavsBlock({
                     className={cn("mt-1 size-2.5 shrink-0 rounded-full", tone)}
                   />
                   <div className="min-w-0">
-                    <p className="text-[13.5px] font-semibold">{a.text}</p>
-                    <p className="mt-0.5 font-mono text-[12.5px] text-muted-foreground">
+                    <p className="text-[15px] font-semibold">{a.text}</p>
+                    <p className="mt-0.5 font-mono text-[14px] text-muted-foreground">
                       {a.date}
                       {a.count > 1 ? ` · ${a.count} 次` : ""}
                     </p>
@@ -196,7 +196,7 @@ export function FavsBlock({
               variant="ghost"
               size="sm"
               asChild
-              className="h-7 rounded-lg bg-foreground px-3.5 text-[13px] font-semibold text-background hover:bg-foreground/85 hover:text-background"
+              className="h-7 rounded-lg bg-foreground px-3.5 text-[14.5px] font-semibold text-background hover:bg-foreground/85 hover:text-background"
             >
               <Link href="/submissions">提交新工具</Link>
             </Button>
@@ -204,7 +204,7 @@ export function FavsBlock({
               variant="ghost"
               size="sm"
               asChild
-              className="h-7 rounded-lg border-[1.5px] border-border bg-card px-3.5 text-[13px] font-semibold text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+              className="h-7 rounded-lg border-[1.5px] border-border bg-card px-3.5 text-[14.5px] font-semibold text-muted-foreground hover:bg-muted/50 hover:text-foreground"
             >
               <Link href="/catalog">浏览目录</Link>
             </Button>

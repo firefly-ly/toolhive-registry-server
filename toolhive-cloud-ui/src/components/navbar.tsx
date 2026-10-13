@@ -20,7 +20,7 @@ interface NavbarProps {
  */
 export function Navbar({ user, isAdmin }: NavbarProps) {
   return (
-    <header className="bg-card flex h-14 w-full shrink-0 items-center gap-6 border-b-2 border-foreground pr-4 pl-6">
+    <header className="anim-pop bg-card flex h-14 w-full shrink-0 items-center gap-6 border-b-2 border-foreground pr-4 pl-6">
       <div className="flex items-center gap-3">
         <MobileNav isAdmin={isAdmin} />
         <Link
@@ -29,7 +29,7 @@ export function Navbar({ user, isAdmin }: NavbarProps) {
           className="flex items-center"
         >
           <BrandMark className="h-5 shrink-0" />
-          <span className="ml-2.5 text-[17px] font-semibold tracking-wide">
+          <span className="ml-2.5 text-[19px] font-semibold tracking-wide">
             能力中枢
           </span>
         </Link>

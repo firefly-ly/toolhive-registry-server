@@ -51,7 +51,7 @@ export function CatalogPagination({
   const items = buildPageList(current, totalPages);
 
   const pgCls = (active: boolean) =>
-    `flex size-8 cursor-pointer items-center justify-center rounded-lg text-[13px] tabular-nums transition-colors border-[1.5px] ${
+    `flex size-9 cursor-pointer items-center justify-center rounded-lg text-[14px] tabular-nums transition-colors border-[1.5px] ${
       active
         ? "border-foreground bg-foreground font-semibold text-background"
         : "border-border text-muted-foreground hover:border-foreground hover:text-foreground"
@@ -72,7 +72,7 @@ export function CatalogPagination({
             <span
               key={`ellipsis-${items.slice(0, i).filter((x) => x === "ellipsis").length}`}
               aria-hidden
-              className="flex size-8 items-center justify-center text-[13px] text-muted-foreground select-none"
+              className="flex size-9 items-center justify-center text-[14px] text-muted-foreground select-none"
             >
               …
             </span>
@@ -94,7 +94,7 @@ export function CatalogPagination({
           onClick={() => onPageChange(page + 1)}
           disabled={page >= totalPages - 1}
           aria-label="下一页"
-          className="flex size-8 cursor-pointer items-center justify-center rounded-lg text-[13px] text-muted-foreground transition-colors hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
+          className="flex size-9 cursor-pointer items-center justify-center rounded-lg text-[14px] text-muted-foreground transition-colors hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
         >
           →
         </button>

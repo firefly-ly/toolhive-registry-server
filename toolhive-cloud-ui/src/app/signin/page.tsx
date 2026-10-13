@@ -51,7 +51,7 @@ export default function SignInPage() {
         {/* 移动端品牌位（左品牌面 md 以下不渲染） */}
         <div className="absolute top-10 left-10 flex items-center md:hidden">
           <BrandMark className="h-5" />
-          <span className="ml-2.5 text-[17px] font-semibold tracking-wide">
+          <span className="ml-2.5 text-[19px] font-semibold tracking-wide">
             能力中枢
           </span>
         </div>

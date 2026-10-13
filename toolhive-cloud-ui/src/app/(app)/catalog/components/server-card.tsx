@@ -134,7 +134,7 @@ export function ServerCard({
       <div className="relative z-10 flex flex-1 flex-col">
         <div className="flex items-center gap-2">
           <span
-            className="min-w-0 flex-1 truncate text-[16.5px] font-semibold transition-transform duration-200 group-hover:translate-x-[3px]"
+            className="min-w-0 flex-1 truncate text-[18px] font-semibold transition-transform duration-200 group-hover:translate-x-[3px]"
             title={server.title ?? name}
           >
             {server.title ?? name}
@@ -148,15 +148,15 @@ export function ServerCard({
             </Badge>
           )}
         </div>
-        <p className="mt-2 line-clamp-2 max-w-[92%] min-h-11 text-[13px] leading-[1.7] text-muted-foreground">
+        <p className="mt-2 line-clamp-2 max-w-[92%] min-h-11 text-[14.5px] leading-[1.7] text-muted-foreground">
           {description || "暂无描述"}
         </p>
 
         <div className="mt-auto flex items-center pt-4">
-          <span className="shrink-0 font-mono text-[12.5px] text-muted-foreground">
+          <span className="shrink-0 font-mono text-[14px] text-muted-foreground">
             {server.version ? `v${server.version}` : ""}
           </span>
-          <span className="ml-2.5 shrink-0 text-[12.5px] text-muted-foreground">
+          <span className="ml-2.5 shrink-0 text-[14px] text-muted-foreground">
             {callCount} 次调用
           </span>
           <span className="ml-auto mr-3 shrink-0">{starButton}</span>

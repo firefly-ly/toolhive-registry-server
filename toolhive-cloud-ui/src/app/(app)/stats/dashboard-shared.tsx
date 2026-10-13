@@ -31,12 +31,12 @@ export function Bdg({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 whitespace-nowrap rounded-[6px] border px-2.5 py-[3px] text-[12.5px]",
+        "inline-flex items-center gap-2 whitespace-nowrap rounded-[7px] border px-3 py-1 text-[14px]",
         TONE_CLS[tone],
         className,
       )}
     >
-      {dot && <span className="size-[7px] rounded-full bg-current" />}
+      {dot && <span className="size-2 rounded-full bg-current" />}
       {children}
     </span>
   );
@@ -58,6 +58,7 @@ export function KpiCell({
   sub,
   accent,
   valueColor,
+  delay = 0,
 }: {
   label: string;
   value: string | number;
@@ -65,23 +66,29 @@ export function KpiCell({
   /** 首格包豪斯蓝实色块（白字、黑描边右界） */
   accent?: boolean;
   valueColor?: string;
+  /** 入场延迟（秒）：KPI 行错落上浮 */
+  delay?: number;
 }) {
   return (
     <div
       className={cn(
-        "px-6 py-5",
+        "anim-pop px-7 py-6",
         accent
           ? "border-r-[1.5px] border-foreground bg-[#185FA5] text-white"
           : "border-r-[1.5px] border-border last:border-r-0",
       )}
+      style={{ animationDelay: `${delay}s` }}
     >
       <div
-        className={cn("text-[12px]", accent ? "opacity-75" : "text-[#9A9A94]")}
+        className={cn(
+          "text-[13.5px]",
+          accent ? "opacity-75" : "text-[#9A9A94]",
+        )}
       >
         {label}
       </div>
       <div
-        className="mt-1.5 font-mono text-[26px] font-semibold leading-none"
+        className="mt-1.5 font-mono text-[28px] font-semibold leading-none"
         style={valueColor ? { color: valueColor } : undefined}
       >
         {value}
@@ -89,7 +96,7 @@ export function KpiCell({
       {sub && (
         <div
           className={cn(
-            "mt-1 font-mono text-[11.5px]",
+            "mt-1 font-mono text-[12.5px]",
             accent ? "opacity-60" : "text-[#9A9A94]",
           )}
         >

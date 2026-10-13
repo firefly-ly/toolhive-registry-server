@@ -33,7 +33,7 @@ function BtnSm({
       type="button"
       onClick={onClick}
       className={cn(
-        "inline-flex cursor-pointer items-center gap-1.5 rounded-lg border-[1.5px] px-3.5 py-1.5 text-[13px] font-semibold transition-colors",
+        "inline-flex cursor-pointer items-center gap-1.5 rounded-lg border-[1.5px] px-3.5 py-1.5 text-[14.5px] font-semibold transition-colors",
         dark
           ? "border-foreground bg-foreground text-background"
           : "border-border bg-card text-muted-foreground hover:border-foreground hover:text-foreground",
@@ -192,10 +192,10 @@ export function StatsDashboard({
       {/* 页头（效果图 10：标题 + psub + 右侧区间切换/导出） */}
       <div className="flex flex-wrap items-center px-8 pb-[14px] pt-1">
         <div>
-          <h1 className="text-[28px] font-semibold tracking-[0.5px]">
+          <h1 className="text-[30px] font-semibold tracking-[0.5px]">
             统计 · 运营台
           </h1>
-          <p className="mt-1.5 text-[13.5px] text-muted-foreground">
+          <p className="mt-1.5 text-[15px] text-muted-foreground">
             整体经营状况 + 每个条目的明细 · 数据每 15 分钟刷新
           </p>
         </div>
@@ -216,29 +216,39 @@ export function StatsDashboard({
           label={`总调用（${range} 天）`}
           value={kpiValue}
           sub={kpiSub}
+          delay={0.1}
         />
-        <KpiCell label="活跃用户" value={kpis.activeUsers} sub={kpis.perUser} />
+        <KpiCell
+          label="活跃用户"
+          value={kpis.activeUsers}
+          sub={kpis.perUser}
+          delay={0.2}
+        />
         <KpiCell
           label="在架条目"
           value={kpis.onShelf}
           sub={`MCP ${kpis.mcpCount} · Skill ${kpis.skillCount}`}
+          delay={0.3}
         />
         <KpiCell
           label="待审提交"
           value={kpis.pending}
           sub={`最早积压 ${kpis.oldestPending}`}
           valueColor={kpis.pending > 0 ? "#854F0B" : undefined}
+          delay={0.4}
         />
         <KpiCell
           label="平均审批时长"
           value={kpis.approval.v}
           sub={kpis.approval.sub}
+          delay={0.5}
         />
         <KpiCell
           label="调用失败率"
           value={kpis.failRate.v}
           sub={kpis.failRate.sub}
           valueColor="#A32D2D"
+          delay={0.6}
         />
       </div>
 
@@ -246,8 +256,8 @@ export function StatsDashboard({
       <div className="grid border-t-[1.5px] border-border xl:grid-cols-[1.7fr_1fr]">
         <div className="border-b-[1.5px] border-border p-[22px] xl:border-b-0 xl:border-r-[1.5px]">
           <div className="mb-4 flex items-baseline">
-            <h3 className="text-[17px] font-semibold">调用趋势（按类型）</h3>
-            <span className="ml-auto flex gap-3.5 text-[12.5px] text-[#9A9A94]">
+            <h3 className="text-[19px] font-semibold">调用趋势（按类型）</h3>
+            <span className="ml-auto flex gap-3.5 text-[14px] text-[#9A9A94]">
               <span className="flex items-center gap-[5px]">
                 <i
                   className="inline-block size-[9px] rounded-[2px]"
@@ -264,7 +274,7 @@ export function StatsDashboard({
               </span>
             </span>
           </div>
-          <div className="flex h-[150px] items-end gap-2">
+          <div className="flex h-[170px] items-end gap-2">
             {sliced.days.map((d, i) => {
               const m = (sliced.mcp[i] / maxDay) * 100;
               const s = (sliced.skill[i] / maxDay) * 100;
@@ -296,7 +306,7 @@ export function StatsDashboard({
             {labelIdx.map((i) => (
               <span
                 key={i}
-                className="flex-1 text-center font-mono text-[11.5px] text-[#9A9A94]"
+                className="flex-1 text-center font-mono text-[12.5px] text-[#9A9A94]"
               >
                 {i === barCount - 1 ? "今天" : (sliced.days[i] || "").slice(5)}
               </span>
@@ -305,18 +315,18 @@ export function StatsDashboard({
         </div>
 
         <div className="p-[22px]">
-          <h3 className="mb-4 text-[17px] font-semibold">
+          <h3 className="mb-4 text-[19px] font-semibold">
             提交漏斗（近 30 天）
           </h3>
           <div className="space-y-3">
             {funnel.stages.map((st) => (
               <div key={st.label} className="flex items-center gap-3">
-                <span className="w-24 shrink-0 text-[13px] text-muted-foreground">
+                <span className="w-28 shrink-0 text-[14.5px] text-muted-foreground">
                   {st.label}
                 </span>
                 <div className="min-w-0 flex-1">
                   <div
-                    className="flex h-7 items-center rounded-md px-3 font-mono text-[12.5px] font-semibold text-white"
+                    className="flex h-8 items-center rounded-md px-3.5 font-mono text-[14px] font-semibold text-white"
                     style={{
                       background: st.bg,
                       width: `${st.width}%`,
@@ -330,7 +340,7 @@ export function StatsDashboard({
             ))}
           </div>
           {funnel.note && (
-            <div className="mt-[18px] rounded-[9px] border-[1.5px] border-dashed border-border p-3 text-[13px] leading-relaxed text-muted-foreground">
+            <div className="mt-[18px] rounded-[9px] border-[1.5px] border-dashed border-border p-3 text-[14.5px] leading-relaxed text-muted-foreground">
               {funnel.note}
             </div>
           )}
@@ -340,7 +350,7 @@ export function StatsDashboard({
       {/* 条目明细（效果图 10：表头行 + 9 列表格） */}
       <div className="border-t-[1.5px] border-border">
         <div className="flex items-center px-8 pb-2 pt-[22px]">
-          <h3 className="text-[17px] font-semibold">
+          <h3 className="text-[19px] font-semibold">
             条目明细（{rows.length} 个在架条目）
           </h3>
           <div className="ml-auto flex items-center gap-2">
@@ -348,14 +358,14 @@ export function StatsDashboard({
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="搜索条目…"
-              className="h-8 w-44 rounded-lg border-[1.5px] border-border bg-card px-3 text-[13px] outline-none placeholder:text-muted-foreground focus:border-foreground"
+              className="h-9 w-52 rounded-lg border-[1.5px] border-border bg-card px-3.5 text-[14.5px] outline-none placeholder:text-muted-foreground focus:border-foreground"
             />
             <select
               value={type}
               onChange={(e) =>
                 setType(e.target.value as "all" | "mcp" | "skill")
               }
-              className="h-8 cursor-pointer rounded-lg border-[1.5px] border-border bg-card px-2.5 text-[13px] font-semibold text-muted-foreground outline-none focus:border-foreground"
+              className="h-9 cursor-pointer rounded-lg border-[1.5px] border-border bg-card px-3 text-[14.5px] font-semibold text-muted-foreground outline-none focus:border-foreground"
             >
               <option value="all">类型：全部</option>
               <option value="mcp">类型：MCP</option>
@@ -364,7 +374,7 @@ export function StatsDashboard({
             <select
               value={sort}
               onChange={(e) => setSort(e.target.value as "calls" | "delta")}
-              className="h-8 cursor-pointer rounded-lg border-[1.5px] border-foreground bg-foreground px-2.5 text-[13px] font-semibold text-background outline-none"
+              className="h-9 cursor-pointer rounded-lg border-[1.5px] border-foreground bg-foreground px-3 text-[14.5px] font-semibold text-background outline-none"
             >
               <option value="calls">排序：调用量</option>
               <option value="delta">排序：环比</option>
@@ -374,7 +384,7 @@ export function StatsDashboard({
         <div className="overflow-x-auto px-8 pb-5">
           <table className="w-full border-collapse">
             <thead>
-              <tr className="text-left text-[12.5px] tracking-[1px] font-semibold text-[#9A9A94]">
+              <tr className="text-left text-[14px] tracking-[1px] font-semibold text-[#9A9A94]">
                 <th className="border-b-[1.5px] border-foreground px-3 py-2.5">
                   条目
                 </th>
@@ -407,7 +417,7 @@ export function StatsDashboard({
             <tbody>
               {tableRows.map((r) => (
                 <tr key={r.key} className="hover:bg-[#FBFBF7]">
-                  <td className="border-b border-border px-3 py-[13px] text-[13.5px]">
+                  <td className="border-b border-border px-3 py-[13px] text-[15px]">
                     <a href={r.href} className="font-semibold hover:underline">
                       {r.name}
                     </a>{" "}
@@ -418,7 +428,7 @@ export function StatsDashboard({
                       {r.type === "mcp" ? "MCP" : "SKILL"}
                     </Bdg>
                   </td>
-                  <td className="border-b border-border px-3 py-[13px] font-mono text-[13.5px]">
+                  <td className="border-b border-border px-3 py-[13px] font-mono text-[15px]">
                     {r.version}
                   </td>
                   <td className="border-b border-border px-3 py-[13px]">
@@ -429,7 +439,7 @@ export function StatsDashboard({
                       {r.status.label}
                     </Bdg>
                   </td>
-                  <td className="border-b border-border px-3 py-[13px] text-right font-mono text-[13.5px] font-bold">
+                  <td className="border-b border-border px-3 py-[13px] text-right font-mono text-[15px] font-bold">
                     {r.calls14.toLocaleString()}
                   </td>
                   <td className="border-b border-border px-3 py-[13px]">
@@ -463,13 +473,13 @@ export function StatsDashboard({
                         ))}
                     </span>
                   </td>
-                  <td className="border-b border-border px-3 py-[13px] text-right font-mono text-[13.5px]">
+                  <td className="border-b border-border px-3 py-[13px] text-right font-mono text-[15px]">
                     {r.failRate}
                   </td>
-                  <td className="border-b border-border px-3 py-[13px] text-right font-mono text-[13.5px]">
+                  <td className="border-b border-border px-3 py-[13px] text-right font-mono text-[15px]">
                     {r.p95}
                   </td>
-                  <td className="border-b border-border px-3 py-[13px] font-mono text-[13.5px] text-[#9A9A94]">
+                  <td className="border-b border-border px-3 py-[13px] font-mono text-[15px] text-[#9A9A94]">
                     {r.lastCall}
                   </td>
                 </tr>
@@ -492,12 +502,12 @@ export function StatsDashboard({
       {/* 用户排行 + 需要关注（效果图 10 底部 1:1 双栏） */}
       <div className="grid border-t-[1.5px] border-border xl:grid-cols-2">
         <div className="border-b-[1.5px] border-border px-8 py-5 xl:border-b-0 xl:border-r-[1.5px]">
-          <h3 className="mb-3 text-[17px] font-semibold">活跃用户排行</h3>
+          <h3 className="mb-3 text-[19px] font-semibold">活跃用户排行</h3>
           {userRank.map((u, i) => (
             <Kv key={u.name} last={i === userRank.length - 1}>
               <span className="flex items-center gap-[9px]">
                 <i
-                  className="w-4 font-mono text-[12.5px] font-semibold not-italic"
+                  className="w-4 font-mono text-[14px] font-semibold not-italic"
                   style={{ color: i === 0 ? "#854F0B" : "#9A9A94" }}
                 >
                   {i + 1}
@@ -509,7 +519,7 @@ export function StatsDashboard({
           ))}
         </div>
         <div className="px-8 py-5">
-          <h3 className="mb-3 text-[17px] font-semibold">需要关注</h3>
+          <h3 className="mb-3 text-[19px] font-semibold">需要关注</h3>
           {watch.length === 0 ? (
             <p className="py-6 text-sm text-muted-foreground">
               暂无需要关注的条目
