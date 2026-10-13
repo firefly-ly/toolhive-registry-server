@@ -78,7 +78,7 @@ describe("Servers", () => {
       expect(screen.getByText("Azure MCP")).toBeVisible();
     });
 
-    it("displays table headers", () => {
+    it("renders list rows without table header bar", () => {
       render(
         <Servers
           servers={mockServers}
@@ -89,8 +89,9 @@ describe("Servers", () => {
         />,
       );
 
-      expect(screen.getByText("名称")).toBeVisible();
-      expect(screen.getByText("描述")).toBeVisible();
+      // 效果图 01：列表形态改为通栏行卡片（服务器表头条不再渲染），表头语义由 servers-table 自测覆盖
+      expect(screen.getByText("Azure MCP")).toBeVisible();
+      expect(screen.queryByText("名称")).not.toBeInTheDocument();
     });
   });
 
@@ -148,8 +149,10 @@ describe("Servers", () => {
         />,
       );
 
-      expect(screen.getByText("暂无可用服务")).toBeVisible();
-      expect(screen.getByText(/目录中还没有 MCP 服务/i)).toBeVisible();
+      expect(screen.getByText("目录还是空的")).toBeVisible();
+      expect(
+        screen.getByText(/目录中还没有 MCP 服务或 Skill 技能/i),
+      ).toBeVisible();
     });
 
     it("shows no servers message in list mode", () => {
@@ -163,7 +166,7 @@ describe("Servers", () => {
         />,
       );
 
-      expect(screen.getByText("暂无可用服务")).toBeVisible();
+      expect(screen.getByText("目录还是空的")).toBeVisible();
     });
 
     it("displays illustration in empty state", () => {

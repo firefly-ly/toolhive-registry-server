@@ -90,6 +90,19 @@ vi.mock("next-themes", () => ({
   ThemeProvider: ({ children }: { children: React.ReactNode }) => children,
 }));
 
+// jsdom 缺失的浏览器 API polyfill（目录页 use-autofill-page-size 依赖 ResizeObserver）
+class ResizeObserverStub {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+if (typeof globalThis.ResizeObserver === "undefined") {
+  globalThis.ResizeObserver = ResizeObserverStub as unknown as typeof ResizeObserver;
+}
+if (typeof window !== "undefined" && typeof window.ResizeObserver === "undefined") {
+  window.ResizeObserver = ResizeObserverStub as unknown as typeof ResizeObserver;
+}
+
 // Auth client baseline mock; individual tests can customize return values
 vi.mock("@/lib/auth/auth-client", () => ({
   authClient: {

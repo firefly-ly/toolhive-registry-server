@@ -62,7 +62,7 @@ function Bdg({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-[5px] whitespace-nowrap rounded-[5px] border px-[9px] py-0.5 text-[11px]",
+        "inline-flex items-center gap-1.5 whitespace-nowrap rounded-[6px] border px-2.5 py-[3px] text-[12.5px]",
         BDG_TONE[tone],
       )}
     >
@@ -138,8 +138,8 @@ export function GroupRow({
   return (
     <div className="overflow-hidden rounded-[11px] border-[1.5px] border-foreground">
       {/* 组头：名称 + 类型/状态徽章 + 右侧组级操作 */}
-      <div className="flex flex-wrap items-center gap-2.5 border-b-[1.5px] border-border bg-[#FBFBF7] px-[18px] py-[14px]">
-        <b className="text-[14.5px] font-bold" title={title}>
+      <div className="flex flex-wrap items-center gap-2.5 border-b-[1.5px] border-border bg-[#FBFBF7] px-5 py-4">
+        <b className="text-[16px] font-bold" title={title}>
           {title}
         </b>
         <Bdg tone={isMcp ? "blue" : "ok"}>{isMcp ? "MCP" : "SKILL"}</Bdg>
@@ -154,7 +154,7 @@ export function GroupRow({
         ) : (
           <Bdg tone="mut">{items.length} 个版本</Bdg>
         )}
-        <span className="hidden truncate font-mono text-[11px] text-[#9A9A94] lg:inline">
+        <span className="hidden truncate font-mono text-[12.5px] text-[#9A9A94] lg:inline">
           {group_key}
         </span>
         <div className="ml-auto flex flex-wrap items-center gap-2">
@@ -214,16 +214,16 @@ export function VersionRow({ s }: { s: Submission }) {
   const deprecated = s.status === "deprecated";
 
   return (
-    <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-border px-3 py-[11px] text-[12.5px] last:border-b-0">
-      <span className="w-[90px] shrink-0 font-mono">{versionOf(s)}</span>
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-border px-3 py-[11px] text-[13.5px] last:border-b-0">
+      <span className="w-[108px] shrink-0 font-mono">{versionOf(s)}</span>
       {isMcp && (
-        <span className="w-[110px] shrink-0">
+        <span className="w-[128px] shrink-0">
           <Bdg tone={DEPLOY_TONE[deploy] ?? "mut"} dot={DEPLOY_DOT[deploy]}>
             {DEPLOY_LABEL[deploy] ?? deploy}
           </Bdg>
         </span>
       )}
-      <span className="w-[110px] shrink-0">
+      <span className="w-[128px] shrink-0">
         <Bdg tone={REG_TONE[regSync] ?? "mut"} dot={regSync === "error"}>
           {REGISTRY_LABEL[regSync] ?? (regSync || "未同步")}
         </Bdg>
@@ -231,7 +231,7 @@ export function VersionRow({ s }: { s: Submission }) {
       {!onShelf && <Bdg tone="blue">仅管理员可见</Bdg>}
       {deprecated && <Bdg tone="mut">已下架</Bdg>}
       {!isMcp && !onShelf && (
-        <span className="hidden min-w-0 text-[11px] text-[#9A9A94] xl:inline">
+        <span className="hidden min-w-0 text-[12.5px] text-[#9A9A94] xl:inline">
           通过后需先配置可见范围，才对所选范围开放目录可见与下载
         </span>
       )}

@@ -29,7 +29,7 @@ export function TopbarSearch() {
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="搜索…"
-          className="h-8 w-44 rounded-full border bg-background pr-3 pl-8 text-xs outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/40 focus-visible:ring-[3px]"
+          className="h-9 w-52 rounded-full border bg-background pr-3 pl-8 text-[13px] outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/40 focus-visible:ring-[3px]"
         />
       </label>
     </form>

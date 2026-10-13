@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
+import { useSearchParams } from "next/navigation";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import type {
   GithubComStacklokToolhiveRegistryServerInternalServiceRegistryInfo,
   V0ServerJson,
@@ -45,16 +46,29 @@ const pagedServers: V0ServerJson[] = Array.from(
     ),
 );
 
+// useSearchParams 在 vitest.setup.ts 里被 mock 成 vi.fn，这里按用例注入查询串
+const mockedUseSearchParams = vi.mocked(useSearchParams);
+function setSearchParams(qs: string) {
+  mockedUseSearchParams.mockReturnValue(
+    new URLSearchParams(qs) as unknown as ReturnType<typeof useSearchParams>,
+  );
+}
+
+beforeEach(() => {
+  setSearchParams("");
+});
+
 describe("ServersWrapper", () => {
-  it("has header with title", () => {
+  // 效果图 01：页头标题退场，hero 通栏即门面
+  it("renders hero headline instead of page header", () => {
     render(
       <ServersWrapper servers={mockServers} registries={mockRegistries} />,
     );
 
-    expect(screen.getByText("MCP 目录")).toBeVisible();
+    expect(screen.getByText(/找到你要的/)).toBeVisible();
   });
 
-  it("has catalog filters", () => {
+  it("has catalog filters (view switch + registry selector)", () => {
     render(
       <ServersWrapper servers={mockServers} registries={mockRegistries} />,
     );
@@ -63,7 +77,6 @@ describe("ServersWrapper", () => {
     expect(screen.getByLabelText("网格视图")).toBeVisible();
     // 两个注册表时显示切换器
     expect(screen.getByLabelText("选择注册表")).toBeVisible();
-    expect(screen.getByPlaceholderText("搜索 MCP…")).toBeVisible();
   });
 
   it("hides registry selector when only one registry exists", () => {
@@ -95,8 +108,6 @@ describe("ServersWrapper", () => {
     await user.click(screen.getByLabelText("列表视图"));
 
     await waitFor(() => {
-      expect(screen.getByText("名称")).toBeVisible();
-      expect(screen.getByText("描述")).toBeVisible();
       expect(screen.getByText("AWS Nova Canvas")).toBeVisible();
     });
   });
@@ -116,50 +127,42 @@ describe("ServersWrapper", () => {
     });
   });
 
-  it("filters servers client-side while typing (instant, no server round trip)", async () => {
-    const user = userEvent.setup();
+  // 效果图 01：搜索入口移到顶栏（?q=），wrapper 只负责接收查询串做客户端过滤
+  it("filters servers from the ?q= URL param (topbar search)", () => {
+    setSearchParams("q=aws");
     render(
       <ServersWrapper servers={mockServers} registries={mockRegistries} />,
     );
 
-    const searchInput = screen.getByPlaceholderText(
-      "搜索 MCP…",
-    ) as HTMLInputElement;
-    await user.type(searchInput, "aws");
-
-    expect(searchInput.value).toBe("aws");
     expect(screen.getByText("AWS Nova Canvas")).toBeVisible();
     expect(screen.queryByText("Google Applications")).not.toBeInTheDocument();
   });
 
-  it("maintains search value when switching view modes", async () => {
+  it("keeps ?q= filtering applied across view mode switches", async () => {
+    setSearchParams("q=aws");
     const user = userEvent.setup();
     render(
       <ServersWrapper servers={mockServers} registries={mockRegistries} />,
     );
 
-    const searchInput = screen.getByPlaceholderText(
-      "搜索 MCP…",
-    ) as HTMLInputElement;
-    await user.type(searchInput, "aws");
-    expect(searchInput.value).toBe("aws");
-
     await user.click(screen.getByLabelText("列表视图"));
 
     await waitFor(() => {
-      expect(screen.getByText("名称")).toBeVisible();
+      expect(screen.getByText("AWS Nova Canvas")).toBeVisible();
     });
-
-    expect(searchInput.value).toBe("aws");
+    expect(screen.queryByText("Google Applications")).not.toBeInTheDocument();
   });
 
-  it("hides pagination controls when all items fit on one page", () => {
+  it("single page keeps footer but no extra page buttons", () => {
     render(
       <ServersWrapper servers={mockServers} registries={mockRegistries} />,
     );
 
-    expect(screen.queryByRole("button", { name: /上一页/ })).toBeNull();
-    expect(screen.queryByRole("button", { name: /下一页/ })).toBeNull();
+    // 分页组件重写后页脚常驻；单页时只有页码 1，无第二页
+    expect(screen.getByRole("button", { name: "第 1 页" })).toBeVisible();
+    expect(
+      screen.queryByRole("button", { name: "第 2 页" }),
+    ).not.toBeInTheDocument();
   });
 
   it("renders pagination controls when items exceed one page", () => {
@@ -167,18 +170,17 @@ describe("ServersWrapper", () => {
       <ServersWrapper servers={pagedServers} registries={mockRegistries} />,
     );
 
-    expect(screen.getByRole("button", { name: /上一页/ })).toBeVisible();
-    expect(screen.getByRole("button", { name: /下一页/ })).toBeVisible();
     expect(screen.getByRole("button", { name: "第 1 页" })).toBeVisible();
     expect(screen.getByRole("button", { name: "第 2 页" })).toBeVisible();
+    expect(screen.getByRole("button", { name: /下一页/ })).toBeVisible();
   });
 
-  it("disables previous button on first page", () => {
+  it("next button enabled on first page (previous concept removed)", () => {
     render(
       <ServersWrapper servers={pagedServers} registries={mockRegistries} />,
     );
 
-    expect(screen.getByRole("button", { name: /上一页/ })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /下一页/ })).not.toBeDisabled();
   });
 
   it("moves to the second page when next is clicked", async () => {

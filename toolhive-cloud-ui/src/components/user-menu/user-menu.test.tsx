@@ -49,15 +49,15 @@ describe("UserMenu", () => {
       const trigger = screen.getByRole("button", { name: /test user/i });
       await user.click(trigger);
 
-      expect(screen.getByText(/light mode/i)).toBeVisible();
-      expect(screen.getByText(/dark mode/i)).toBeVisible();
-      expect(screen.getByText(/use system settings/i)).toBeVisible();
+      expect(screen.getByText(/浅色模式/)).toBeVisible();
+      expect(screen.getByText(/深色模式/)).toBeVisible();
+      expect(screen.getByText(/跟随系统/)).toBeVisible();
     });
 
     it.each([
-      { theme: "light", label: /light mode/i },
-      { theme: "dark", label: /dark mode/i },
-      { theme: "system", label: /use system settings/i },
+      { theme: "light", label: /浅色模式/ },
+      { theme: "dark", label: /深色模式/ },
+      { theme: "system", label: /跟随系统/ },
     ])("calls setTheme with '$theme' when $theme option is clicked", async ({
       theme,
       label,

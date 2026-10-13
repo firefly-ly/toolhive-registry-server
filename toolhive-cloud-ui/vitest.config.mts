@@ -8,7 +8,13 @@ export default defineConfig({
     globals: true,
     environment: "jsdom",
     setupFiles: ["src/mocks/test.setup.ts", "./vitest.setup.ts"],
-    exclude: ["**/node_modules/**", "**/dist/**", "tests/e2e/**"],
+    exclude: [
+      "**/node_modules/**",
+      "**/dist/**",
+      "tests/e2e/**",
+      // scripts/test/* 是 node --test 用例（自带运行器），不进 vitest
+      "scripts/**",
+    ],
     env: {
       // Exactly 32 bytes for AES-256
       BETTER_AUTH_SECRET: "12345678901234567890123456789012", // Exactly 32 bytes for AES-256

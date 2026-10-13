@@ -29,7 +29,7 @@ export function Navbar({ user, isAdmin }: NavbarProps) {
           className="flex items-center"
         >
           <BrandMark className="h-5 shrink-0" />
-          <span className="ml-2.5 text-[15px] font-semibold tracking-wide">
+          <span className="ml-2.5 text-[17px] font-semibold tracking-wide">
             能力中枢
           </span>
         </Link>

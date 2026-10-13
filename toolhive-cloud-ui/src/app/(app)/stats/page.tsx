@@ -161,9 +161,10 @@ export default async function StatsPage() {
   const recentN = Math.min(14, dayCount);
   const trendStale =
     dayCount === 0 ||
-    [...typeTrend.mcp.slice(-recentN), ...typeTrend.skill.slice(-recentN)].every(
-      (v) => v === 0,
-    );
+    [
+      ...typeTrend.mcp.slice(-recentN),
+      ...typeTrend.skill.slice(-recentN),
+    ].every((v) => v === 0);
   if (trendStale) {
     if (dayCount === 0) {
       typeTrend.days = Array.from({ length: 30 }, (_, i) => {

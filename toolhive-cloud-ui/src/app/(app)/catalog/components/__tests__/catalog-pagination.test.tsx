@@ -10,41 +10,18 @@ const defaultProps = {
 };
 
 describe("CatalogPagination", () => {
-  it("single page 时不渲染", () => {
-    const { container } = render(
-      <CatalogPagination {...defaultProps} totalPages={1} />,
+  // 效果图 01 分页重写后：单页也渲染页脚（「共 N 件」口径常驻），页码 1 常选、无翻页钮
+  it("single page 时渲染页脚且只有页码 1", () => {
+    render(<CatalogPagination {...defaultProps} totalPages={1} />);
+    expect(screen.getByRole("navigation", { name: "分页" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "第 1 页" })).toHaveAttribute(
+      "aria-current",
+      "page",
     );
-    expect(container).toBeEmptyDOMElement();
+    expect(screen.getByRole("button", { name: /下一页/ })).toBeDisabled();
   });
 
-  describe("Previous button", () => {
-    it("is disabled on the first page", () => {
-      render(<CatalogPagination {...defaultProps} page={0} />);
-      expect(screen.getByRole("button", { name: /上一页/ })).toBeDisabled();
-    });
-
-    it("is enabled when not on the first page", () => {
-      render(<CatalogPagination {...defaultProps} page={2} />);
-      expect(screen.getByRole("button", { name: /上一页/ })).not.toBeDisabled();
-    });
-
-    it("calls onPageChange(page - 1) when clicked", async () => {
-      const onPageChange = vi.fn();
-      const user = userEvent.setup();
-      render(
-        <CatalogPagination
-          {...defaultProps}
-          page={3}
-          onPageChange={onPageChange}
-        />,
-      );
-
-      await user.click(screen.getByRole("button", { name: /上一页/ }));
-      expect(onPageChange).toHaveBeenCalledWith(2);
-    });
-  });
-
-  describe("Next button", () => {
+  describe("Next button（→）", () => {
     it("is disabled on the last page", () => {
       render(<CatalogPagination {...defaultProps} page={4} totalPages={5} />);
       expect(screen.getByRole("button", { name: /下一页/ })).toBeDisabled();

@@ -47,7 +47,7 @@ export function SkillGlyph({ size = 16 }: { size?: number }) {
 export function CardTypeTab({ type }: { type: "mcp" | "skill" }) {
   return (
     <span
-      className={`absolute top-0 left-6 z-10 rounded-b-lg px-3 py-1 text-[10px] font-semibold tracking-[0.12em] text-white ${
+      className={`absolute top-0 left-6 z-10 rounded-b-lg px-3 py-1 text-[11.5px] font-semibold tracking-[0.12em] text-white ${
         type === "mcp" ? "bg-info" : "bg-success"
       }`}
     >

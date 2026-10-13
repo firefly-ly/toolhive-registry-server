@@ -14,12 +14,24 @@ describe("ServerCard", () => {
     },
   };
 
-  it("display server information with name, author and description", () => {
+  it("display server information with name and description (grid)", () => {
     render(<ServerCard server={mockServer} serverUrl="/servers/test-server" />);
 
+    // 效果图 01 网格卡：标题 + 描述；作者并入「N 次调用 · 作者」行（仅列表形态展示）
     expect(screen.getByText("test-org/test-server")).toBeTruthy();
-    expect(screen.getByText("test-org")).toBeTruthy();
     expect(screen.getByText("This is a test server for MCP")).toBeTruthy();
+  });
+
+  it("shows author in the list layout meta line", () => {
+    render(
+      <ServerCard
+        server={mockServer}
+        serverUrl="/servers/test-server"
+        layout="list"
+      />,
+    );
+
+    expect(screen.getAllByText(/test-org/).length).toBeGreaterThan(0);
   });
 
   it("does not show author when repository data is missing", () => {
@@ -38,11 +50,17 @@ describe("ServerCard", () => {
     expect(screen.getByText("暂无描述")).toBeTruthy();
   });
 
-  it("has 接入 (connect) button", () => {
-    render(<ServerCard server={mockServer} serverUrl="/servers/test-server" />);
+  it("has 接入 (connect) button in list layout", () => {
+    // 效果图 01：网格卡去接入钮（保留查看）；列表形态保留「接入」弹出客户端接入配置
+    render(
+      <ServerCard
+        server={mockServer}
+        serverUrl="/servers/test-server"
+        layout="list"
+      />,
+    );
 
-    // 卡片上的「接入」弹出客户端接入配置；真实调用（试跑工具）在详情页
-    const callButton = screen.getByRole("button", { name: /接入/ });
+    const callButton = screen.getAllByRole("button", { name: /接入/ })[0];
     expect(callButton).toBeTruthy();
   });
 

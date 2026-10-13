@@ -31,12 +31,12 @@ export function Bdg({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-[5px] whitespace-nowrap rounded-[5px] border px-[9px] py-0.5 text-[11px]",
+        "inline-flex items-center gap-1.5 whitespace-nowrap rounded-[6px] border px-2.5 py-[3px] text-[12.5px]",
         TONE_CLS[tone],
         className,
       )}
     >
-      {dot && <span className="size-1.5 rounded-full bg-current" />}
+      {dot && <span className="size-[7px] rounded-full bg-current" />}
       {children}
     </span>
   );
@@ -51,7 +51,7 @@ export function TypeBdg({ t }: { t: "mcp" | "skill" }) {
   );
 }
 
-/** 效果图 KPI 格：18/22 内边距、10.5px 标签、26px mono 数值、10px mono 副行 */
+/** 效果图 KPI 格（字号放大适配版）：20/24 内边距、12px 标签、26px mono 数值、11.5px mono 副行 */
 export function KpiCell({
   label,
   value,
@@ -69,22 +69,19 @@ export function KpiCell({
   return (
     <div
       className={cn(
-        "px-[22px] py-[18px]",
+        "px-6 py-5",
         accent
           ? "border-r-[1.5px] border-foreground bg-[#185FA5] text-white"
           : "border-r-[1.5px] border-border last:border-r-0",
       )}
     >
       <div
-        className={cn(
-          "text-[10.5px]",
-          accent ? "opacity-75" : "text-[#9A9A94]",
-        )}
+        className={cn("text-[12px]", accent ? "opacity-75" : "text-[#9A9A94]")}
       >
         {label}
       </div>
       <div
-        className="mt-1 font-mono text-[26px] font-semibold leading-none"
+        className="mt-1.5 font-mono text-[26px] font-semibold leading-none"
         style={valueColor ? { color: valueColor } : undefined}
       >
         {value}
@@ -92,7 +89,7 @@ export function KpiCell({
       {sub && (
         <div
           className={cn(
-            "mt-1 font-mono text-[10px]",
+            "mt-1 font-mono text-[11.5px]",
             accent ? "opacity-60" : "text-[#9A9A94]",
           )}
         >

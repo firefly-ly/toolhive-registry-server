@@ -32,13 +32,13 @@ function actionLabel(action: string): string {
 function resultBadge(result: string) {
   if (result === "denied" || result === "error") {
     return (
-      <span className="inline-flex items-center rounded-[5px] border border-[#F09595] bg-[#FCEBEB] px-[9px] py-0.5 text-[11px] whitespace-nowrap text-[#A32D2D]">
+      <span className="inline-flex items-center rounded-[6px] border border-[#F09595] bg-[#FCEBEB] px-2.5 py-[3px] text-[12.5px] whitespace-nowrap text-[#A32D2D]">
         {result === "denied" ? "已拦截" : "失败"}
       </span>
     );
   }
   return (
-    <span className="inline-flex items-center rounded-[5px] border border-[#97C459] bg-[#EAF3DE] px-[9px] py-0.5 text-[11px] whitespace-nowrap text-[#3B6D11]">
+    <span className="inline-flex items-center rounded-[6px] border border-[#97C459] bg-[#EAF3DE] px-2.5 py-[3px] text-[12.5px] whitespace-nowrap text-[#3B6D11]">
       成功
     </span>
   );
@@ -61,9 +61,9 @@ function monoTime(ts: string): string {
 
 /** 效果图 .btn.sm：1.5px 描边 8px 圆角小按钮（含原生控件皮肤） */
 const btnSm =
-  "inline-flex h-[30px] items-center gap-1 rounded-lg border-[1.5px] border-border bg-card px-3 text-[11.5px] font-semibold text-muted-foreground outline-none transition-colors hover:border-foreground hover:text-foreground focus:border-foreground";
+  "inline-flex h-8 items-center gap-1 rounded-lg border-[1.5px] border-border bg-card px-3 text-[13px] font-semibold text-muted-foreground outline-none transition-colors hover:border-foreground hover:text-foreground focus:border-foreground";
 const btnSmDark =
-  "inline-flex h-[30px] cursor-pointer items-center gap-1 rounded-lg border-[1.5px] border-foreground bg-foreground px-3 text-[11.5px] font-semibold text-background outline-none";
+  "inline-flex h-8 cursor-pointer items-center gap-1 rounded-lg border-[1.5px] border-foreground bg-foreground px-3 text-[13px] font-semibold text-background outline-none";
 
 export async function AuditBlock({
   filters,
@@ -204,7 +204,7 @@ export async function AuditBlock({
         {filters.target_id && (
           <>
             <input type="hidden" name="target_id" value={filters.target_id} />
-            <span className="inline-flex h-[30px] items-center gap-1.5 rounded-lg border-[1.5px] border-foreground bg-foreground px-3 text-[11.5px] font-semibold text-background">
+            <span className="inline-flex h-8 items-center gap-1.5 rounded-lg border-[1.5px] border-foreground bg-foreground px-3 text-[13px] font-semibold text-background">
               对象：{nameMap.get(filters.target_id) || filters.target_id}
               <Link
                 href="/admin?tab=audit"
@@ -243,8 +243,8 @@ export async function AuditBlock({
         <div className="min-h-0 flex-1 overflow-y-auto">
           <table className="w-full border-collapse">
             <thead>
-              <tr className="text-left text-[11px] font-semibold tracking-[1px] text-[#9A9A94]">
-                <th className="w-[150px] border-b-[1.5px] border-foreground px-3 py-2.5">
+              <tr className="text-left text-[12.5px] font-semibold tracking-[1px] text-[#9A9A94]">
+                <th className="w-[172px] border-b-[1.5px] border-foreground px-3 py-3">
                   时间
                 </th>
                 <th className="border-b-[1.5px] border-foreground px-3 py-2.5">
@@ -273,12 +273,12 @@ export async function AuditBlock({
                 const actor = e.actor_email || "?";
                 return (
                   <tr key={e.id} className="align-middle hover:bg-[#FBFBF7]">
-                    <td className="border-b border-border px-3 py-[13px] font-mono text-[12.5px] whitespace-nowrap">
+                    <td className="border-b border-border px-3 py-[13px] font-mono text-[13.5px] whitespace-nowrap">
                       {monoTime(e.ts)}
                     </td>
                     <td className="border-b border-border px-3 py-[13px]">
                       <span className="inline-flex items-center gap-2">
-                        <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-[#F1EFE8] text-[10px] text-[#5F5E5A]">
+                        <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-[#F1EFE8] text-[11.5px] text-[#5F5E5A]">
                           {actor.charAt(0).toUpperCase()}
                         </span>
                         <span className="truncate">
@@ -286,10 +286,10 @@ export async function AuditBlock({
                         </span>
                       </span>
                     </td>
-                    <td className="border-b border-border px-3 py-[13px] text-[12.5px]">
+                    <td className="border-b border-border px-3 py-[13px] text-[13.5px]">
                       {actionLabel(e.action)}
                     </td>
-                    <td className="border-b border-border px-3 py-[13px] font-mono text-[12.5px]">
+                    <td className="border-b border-border px-3 py-[13px] font-mono text-[13.5px]">
                       {niceName || e.target_id || "—"}
                     </td>
                     <td className="border-b border-border px-3 py-[13px]">
@@ -297,10 +297,10 @@ export async function AuditBlock({
                     </td>
                     <td className="border-b border-border px-3 py-[13px] text-right">
                       <details className="group">
-                        <summary className="inline-block cursor-pointer list-none text-[11px] font-semibold text-[#185FA5]">
+                        <summary className="inline-block cursor-pointer list-none text-[12.5px] font-semibold text-[#185FA5]">
                           详情
                         </summary>
-                        <pre className="mt-1 max-w-md overflow-x-auto rounded-md bg-[#F1EFE8] p-2 text-left text-[11px] whitespace-pre-wrap">
+                        <pre className="mt-1 max-w-md overflow-x-auto rounded-md bg-[#F1EFE8] p-2 text-left text-[12.5px] whitespace-pre-wrap">
                           {JSON.stringify(detail, null, 2)}
                         </pre>
                       </details>
@@ -325,7 +325,7 @@ export async function AuditBlock({
                 <span
                   key={item.key}
                   aria-hidden
-                  className="flex size-[30px] items-center justify-center text-xs text-[#9A9A94] select-none"
+                  className="flex size-8 items-center justify-center text-[13px] text-[#9A9A94] select-none"
                 >
                   …
                 </span>
@@ -336,7 +336,7 @@ export async function AuditBlock({
                   aria-current={item.v === page ? "page" : undefined}
                   aria-label={`第 ${item.v} 页`}
                   className={cn(
-                    "flex size-[30px] items-center justify-center rounded-lg border-[1.5px] text-xs transition-colors",
+                    "flex size-8 items-center justify-center rounded-lg border-[1.5px] text-[13px] transition-colors",
                     item.v === page
                       ? "border-foreground bg-foreground font-semibold text-background"
                       : "border-border text-muted-foreground hover:border-foreground hover:text-foreground",
@@ -350,7 +350,7 @@ export async function AuditBlock({
               <Link
                 href={pageUrl(page + 1)}
                 aria-label="下一页"
-                className="flex size-[30px] items-center justify-center rounded-lg text-xs text-muted-foreground transition-colors hover:text-foreground"
+                className="flex size-8 items-center justify-center rounded-lg text-[13px] text-muted-foreground transition-colors hover:text-foreground"
               >
                 →
               </Link>

@@ -150,14 +150,14 @@ function ScanCard({
     <div className="flex items-center gap-3 rounded-lg border-[1.5px] border-border p-3.5">
       <ScanMark status={s} />
       <div className="min-w-0">
-        <p className="text-[12.5px] font-semibold">{title}</p>
-        <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
+        <p className="text-[13.5px] font-semibold">{title}</p>
+        <p className="mt-0.5 truncate text-[12.5px] text-muted-foreground">
           {sub}
         </p>
       </div>
       <span
         className={cn(
-          "ml-auto inline-flex shrink-0 items-center rounded-md border px-2 py-0.5 text-[11px]",
+          "ml-auto inline-flex shrink-0 items-center rounded-md border px-2 py-0.5 text-[12.5px]",
           tone.cls,
         )}
       >
@@ -304,7 +304,7 @@ export function ReviewBlock({ pending }: { pending: Submission[] }) {
                     : "border-l-[3px] border-l-transparent bg-secondary/40 hover:bg-muted/50",
                 )}
               >
-                <b className="text-[13px] font-semibold">
+                <b className="text-[13.5px] font-semibold">
                   {name}{" "}
                   <span className="font-mono text-xs font-normal text-muted-foreground">
                     {versionOf(first)}
@@ -313,7 +313,7 @@ export function ReviewBlock({ pending }: { pending: Submission[] }) {
                 <div className="mt-2 flex flex-wrap items-center gap-1.5">
                   <span
                     className={cn(
-                      "inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-[11px]",
+                      "inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-[12.5px]",
                       first.type === "mcp"
                         ? "border-info/40 bg-info/10 text-info"
                         : "border-success/40 bg-success/10 text-success",
@@ -325,7 +325,7 @@ export function ReviewBlock({ pending }: { pending: Submission[] }) {
                   {scanStatus && (
                     <span
                       className={cn(
-                        "inline-flex items-center rounded-md border px-2 py-0.5 text-[11px]",
+                        "inline-flex items-center rounded-md border px-2 py-0.5 text-[12.5px]",
                         scanStatus === "clean"
                           ? "border-success/40 bg-success/10 text-success"
                           : "border-warning/40 bg-warning/10 text-warning",
@@ -334,12 +334,12 @@ export function ReviewBlock({ pending }: { pending: Submission[] }) {
                       {scanStatus === "clean" ? "扫描通过" : "扫描有提示"}
                     </span>
                   )}
-                  <span className="inline-flex items-center rounded-md border border-border bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
+                  <span className="inline-flex items-center rounded-md border border-border bg-muted px-2 py-0.5 text-[12.5px] text-muted-foreground">
                     {first.user_id} ·{" "}
                     {new Date(first.created_at).toLocaleDateString("zh-CN")}
                   </span>
                   {arr.length > 1 && (
-                    <span className="ml-auto text-[11px] text-muted-foreground">
+                    <span className="ml-auto text-[12.5px] text-muted-foreground">
                       {arr.length} 个版本
                     </span>
                   )}
@@ -478,7 +478,7 @@ export function ReviewBlock({ pending }: { pending: Submission[] }) {
 
               {/* 安全扫描（效果图 04：2×2 卡，SVG 圆形标记 + 右侧结果徽章） */}
               <div>
-                <p className="mb-2.5 text-[11px] font-semibold tracking-[0.15em] text-muted-foreground">
+                <p className="mb-2.5 text-[12.5px] font-semibold tracking-[0.15em] text-muted-foreground">
                   安全扫描
                 </p>
                 <div className="grid grid-cols-1 gap-2.5 md:grid-cols-2">

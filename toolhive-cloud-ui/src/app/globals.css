@@ -198,8 +198,8 @@ body {
 @layer utilities {
   /* 页面大标题：无衬线、收紧一档，页头不再压屏（原 2.125rem/300 衬线已废） */
   .text-page-title {
-    font-size: 1.75rem;
-    line-height: 2.375rem;
+    font-size: 1.75rem; /* 28px：与统计页头一致的一级标题层级 */
+    line-height: 2.5rem;
     font-weight: 600;
     letter-spacing: -0.01em;
   }
