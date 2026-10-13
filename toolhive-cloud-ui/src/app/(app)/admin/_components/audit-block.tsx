@@ -1,8 +1,4 @@
 import Link from "next/link";
-import { DateField } from "@/components/admin/date-field";
-import { ErrorToast } from "@/components/error-toast";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   type AuditEntry,
   listSubmissions,
@@ -15,8 +11,8 @@ const AUDIT_PAGE_SIZE = 50;
 
 // 动作中文名（后端 action 枚举 → 展示文案）
 const ACTION_LABELS: Record<string, string> = {
-  submit: "提交",
-  approve: "审批通过",
+  submit: "提交审核",
+  approve: "审批通过并部署",
   approve_denied: "审批被拦截",
   status_change: "状态变更",
   deploy: "部署",
@@ -26,6 +22,7 @@ const ACTION_LABELS: Record<string, string> = {
   rescan: "重跑扫描",
   proxy_denied: "代理调用被拒",
   upload_denied: "匿名上传被拒",
+  workload_recovered: "实例恢复",
 };
 
 function actionLabel(action: string): string {
@@ -35,13 +32,13 @@ function actionLabel(action: string): string {
 function resultBadge(result: string) {
   if (result === "denied" || result === "error") {
     return (
-      <span className="inline-flex items-center rounded-full border border-destructive/40 bg-destructive/10 px-2 py-0.5 text-xs font-semibold text-destructive">
+      <span className="inline-flex items-center rounded-[5px] border border-[#F09595] bg-[#FCEBEB] px-[9px] py-0.5 text-[11px] whitespace-nowrap text-[#A32D2D]">
         {result === "denied" ? "已拦截" : "失败"}
       </span>
     );
   }
   return (
-    <span className="inline-flex items-center rounded-full border border-success/40 bg-success/10 px-2 py-0.5 text-xs font-medium text-success">
+    <span className="inline-flex items-center rounded-[5px] border border-[#97C459] bg-[#EAF3DE] px-[9px] py-0.5 text-[11px] whitespace-nowrap text-[#3B6D11]">
       成功
     </span>
   );
@@ -54,6 +51,19 @@ function safeParseDetail(detail: string): Record<string, unknown> {
     return { raw: detail };
   }
 }
+
+function monoTime(ts: string): string {
+  const d = new Date(ts);
+  if (Number.isNaN(+d)) return ts;
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+}
+
+/** 效果图 .btn.sm：1.5px 描边 8px 圆角小按钮（含原生控件皮肤） */
+const btnSm =
+  "inline-flex h-[30px] items-center gap-1 rounded-lg border-[1.5px] border-border bg-card px-3 text-[11.5px] font-semibold text-muted-foreground outline-none transition-colors hover:border-foreground hover:text-foreground focus:border-foreground";
+const btnSmDark =
+  "inline-flex h-[30px] cursor-pointer items-center gap-1 rounded-lg border-[1.5px] border-foreground bg-foreground px-3 text-[11.5px] font-semibold text-background outline-none";
 
 export async function AuditBlock({
   filters,
@@ -83,7 +93,7 @@ export async function AuditBlock({
     error = e instanceof Error ? e.message : String(e);
   }
 
-  // 分页链接：保留当前筛选条件，仅翻页
+  // 链接构造：保留当前筛选条件
   const pageUrl = (p: number) => {
     const qs = new URLSearchParams();
     qs.set("tab", "audit");
@@ -95,9 +105,18 @@ export async function AuditBlock({
     if (filters.to) qs.set("to", filters.to);
     return `/admin?${qs.toString()}`;
   };
+  const exportQs = (() => {
+    const qs = new URLSearchParams();
+    if (filters.actor) qs.set("actor", filters.actor);
+    if (filters.action) qs.set("action", filters.action);
+    if (filters.target_id) qs.set("target_id", filters.target_id);
+    if (filters.from) qs.set("from", filters.from);
+    if (filters.to) qs.set("to", filters.to);
+    return qs.toString();
+  })();
   const totalPages = Math.max(1, Math.ceil(total / AUDIT_PAGE_SIZE));
 
-  // 页码列表：≤7 页全铺；更长时折叠为 1 … p-1 p p+1 … N（key 用 gap 位置，稳定）
+  // 页码列表：≤7 页全铺；更长时折叠（与目录页分页同一规则）
   const pageNumbers = (() => {
     const pushPage = (
       out: { key: string; v: number | "…" }[],
@@ -145,248 +164,168 @@ export async function AuditBlock({
     /* 提交列表不可用时按原样显示 ID */
   }
 
-  const selectCls =
-    "h-9 rounded-md border bg-transparent px-2 text-sm shadow-xs dark:bg-input/30";
+  // 时间快捷选项：值直接是 ISO 日期（GET 表单无需 JS 计算相对时间）
+  const isoDaysAgo = (n: number) =>
+    new Date(Date.now() - n * 86400000).toISOString().slice(0, 10);
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-4">
-      {/* 筛选表单：GET 提交回 /admin?tab=audit，纯服务端过滤，无需 client state */}
+    <div className="flex min-h-0 flex-1 flex-col">
+      {/* 筛选行（效果图 06：按钮化下拉 + 右侧导出 CSV） */}
       <form
         method="get"
         action="/admin"
-        className="flex flex-wrap items-end gap-x-4 gap-y-3 rounded-xl border bg-muted/30 p-4"
+        className="flex flex-wrap items-center gap-2.5 border-b-[1.5px] border-border py-4"
       >
         <input type="hidden" name="tab" value="audit" />
-        <div className="space-y-1.5">
-          <label
-            htmlFor="audit-f-actor"
-            className="block text-xs font-medium text-muted-foreground"
-          >
-            操作人
-          </label>
-          <Input
-            id="audit-f-actor"
-            name="actor"
-            defaultValue={filters.actor}
-            placeholder="邮箱关键字"
-            className="h-9 w-48"
-          />
-        </div>
-        <div className="space-y-1.5">
-          <label
-            htmlFor="audit-f-action"
-            className="block text-xs font-medium text-muted-foreground"
-          >
-            动作
-          </label>
-          <select
-            id="audit-f-action"
-            name="action"
-            defaultValue={filters.action}
-            className={selectCls}
-          >
-            <option value="">全部</option>
-            {Object.entries(ACTION_LABELS).map(([k, v]) => (
-              <option key={k} value={k}>
-                {v}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="space-y-1.5">
-          <label
-            htmlFor="audit-f-target"
-            className="block text-xs font-medium text-muted-foreground"
-          >
-            对象 ID
-          </label>
-          <Input
-            id="audit-f-target"
-            name="target_id"
-            defaultValue={filters.target_id}
-            placeholder="例如：sub_1234 / mcp:demo"
-            className="h-9 w-56 font-mono"
-          />
-        </div>
-        <div className="space-y-1.5">
-          <label
-            htmlFor="audit-f-from"
-            className="block text-xs font-medium text-muted-foreground"
-          >
-            开始日期
-          </label>
-          <DateField
-            id="audit-f-from"
-            name="from"
-            placeholder="开始日期"
-            defaultValue={filters.from}
-          />
-        </div>
-        <div className="space-y-1.5">
-          <label
-            htmlFor="audit-f-to"
-            className="block text-xs font-medium text-muted-foreground"
-          >
-            结束日期
-          </label>
-          <DateField
-            id="audit-f-to"
-            name="to"
-            placeholder="结束日期"
-            defaultValue={filters.to}
-          />
-        </div>
-        <div className="flex items-center gap-2 pb-0.5">
-          <Button type="submit" size="sm" className="h-9 px-5">
-            查询
-          </Button>
-          <Button
-            type="submit"
-            size="sm"
-            variant="ghost"
-            className="h-9"
-            asChild={false}
-          >
-            <a href="/admin?tab=audit">重置</a>
-          </Button>
-        </div>
+        <select
+          name="action"
+          defaultValue={filters.action ?? ""}
+          className={btnSm}
+        >
+          <option value="">操作类型：全部</option>
+          {Object.entries(ACTION_LABELS).map(([k, v]) => (
+            <option key={k} value={k}>
+              操作类型：{v}
+            </option>
+          ))}
+        </select>
+        <input
+          type="text"
+          name="actor"
+          defaultValue={filters.actor}
+          placeholder="操作者：全部"
+          className={cn(btnSm, "w-44 placeholder:font-semibold")}
+        />
+        <select name="from" defaultValue={filters.from ?? ""} className={btnSm}>
+          <option value="">时间：全部</option>
+          <option value={isoDaysAgo(7)}>时间：近 7 天</option>
+          <option value={isoDaysAgo(30)}>时间：近 30 天</option>
+        </select>
+        {filters.target_id && (
+          <>
+            <input type="hidden" name="target_id" value={filters.target_id} />
+            <span className="inline-flex h-[30px] items-center gap-1.5 rounded-lg border-[1.5px] border-foreground bg-foreground px-3 text-[11.5px] font-semibold text-background">
+              对象：{nameMap.get(filters.target_id) || filters.target_id}
+              <Link
+                href="/admin?tab=audit"
+                className="opacity-70 hover:opacity-100"
+              >
+                ×
+              </Link>
+            </span>
+          </>
+        )}
+        <button type="submit" className={btnSmDark}>
+          查询
+        </button>
+        <a
+          href={`/admin/audit-export?${exportQs}`}
+          className={cn(btnSmDark, "ml-auto no-underline")}
+        >
+          导出 CSV
+        </a>
       </form>
 
       {error && (
-        <ErrorToast
-          message="审计查询失败，请稍后重试"
-          description={String(error)}
-        />
+        <div className="rounded-lg border-[1.5px] border-[#F09595] bg-[#FCEBEB] px-4 py-3 text-sm text-[#A32D2D]">
+          审计查询失败：{error}
+        </div>
       )}
 
       {!error && items.length === 0 && (
-        <div className="flex-1 rounded-xl border py-10 text-center text-muted-foreground">
+        <div className="flex-1 py-12 text-center text-muted-foreground">
           没有符合条件的审计记录
         </div>
       )}
 
+      {/* 流水表（效果图 06：时间 mono / 操作者头像+名 / 动作 / 对象 mono / 结果 / 详情） */}
       {!error && items.length > 0 && (
-        <div className="min-h-0 flex-1 overflow-y-auto rounded-xl border">
-          {/* 流水 + 站台：按日期分组插「站台」行，行内操作者首字圆点 + 动作一句话 */}
-          {(() => {
-            const today = new Date();
-            const yest = new Date(today.getTime() - 86400000);
-            const dayKey = (d: Date) =>
-              `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
-            const groups: { label: string; rows: AuditEntry[] }[] = [];
-            for (const e of items) {
-              const d = new Date(e.ts);
-              const key = Number.isNaN(+d) ? e.ts.slice(0, 10) : dayKey(d);
-              const last = groups[groups.length - 1];
-              if (last && last.label === key) {
-                last.rows.push(e);
-              } else {
-                groups.push({ label: key, rows: [e] });
-              }
-            }
-            const labelOf = (key: string) => {
-              const m = key.match(/^(\d+)-(\d+)-(\d+)$/);
-              if (!m) return key;
-              const [, mo, d] = m;
-              if (key === dayKey(today)) return `今天 · ${+mo}月${+d}日`;
-              if (key === dayKey(yest)) return `昨天 · ${+mo}月${+d}日`;
-              return `${+mo}月${+d}日`;
-            };
-            return groups.map((g) => (
-              <div key={g.label}>
-                <div className="sticky top-0 z-10 border-b bg-muted/60 px-4 py-1.5 text-xs text-muted-foreground backdrop-blur-none">
-                  {labelOf(g.label)}
-                </div>
-                {g.rows.map((e) => {
-                  const detail = safeParseDetail(e.detail);
-                  const niceName = e.target_id
-                    ? nameMap.get(e.target_id)
-                    : undefined;
-                  const time = (() => {
-                    try {
-                      return new Date(e.ts).toLocaleTimeString("zh-CN", {
-                        hour12: false,
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      });
-                    } catch {
-                      return "";
-                    }
-                  })();
-                  return (
-                    <div
-                      key={e.id}
-                      className={cn(
-                        "flex items-center gap-3 border-t px-4 py-2",
-                        e.result !== "success" && "bg-destructive/5",
-                      )}
-                    >
-                      <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-medium text-muted-foreground">
-                        {(e.actor_email || "?").charAt(0).toUpperCase()}
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm">
-                          <span className="text-foreground">
-                            {e.actor_email}
-                          </span>
-                          {!!e.actor_admin && (
-                            <span className="ml-1.5 rounded bg-primary/10 px-1 py-0.5 text-xs text-primary">
-                              管理员
-                            </span>
-                          )}
-                          <span className="text-muted-foreground">
-                            {" "}
-                            {actionLabel(e.action)}{" "}
-                          </span>
-                          <span className="font-medium">
-                            {niceName || e.target_id || "—"}
-                          </span>
-                          {!niceName && e.target_id && (
-                            <span className="ml-1 font-mono text-xs text-muted-foreground">
-                              {e.target_type}
-                            </span>
-                          )}
-                        </p>
-                        <details>
-                          <summary className="cursor-pointer text-xs text-primary">
-                            详情
-                          </summary>
-                          <pre className="mt-1 max-w-lg overflow-x-auto rounded bg-muted/40 p-2 text-xs whitespace-pre-wrap">
-                            {JSON.stringify(detail, null, 2)}
-                          </pre>
-                        </details>
-                      </div>
-                      <div className="flex shrink-0 items-center gap-2">
-                        {resultBadge(e.result)}
-                        <span className="font-mono text-xs text-muted-foreground">
-                          {time}
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          <table className="w-full border-collapse">
+            <thead>
+              <tr className="text-left text-[11px] font-semibold tracking-[1px] text-[#9A9A94]">
+                <th className="w-[150px] border-b-[1.5px] border-foreground px-3 py-2.5">
+                  时间
+                </th>
+                <th className="border-b-[1.5px] border-foreground px-3 py-2.5">
+                  操作者
+                </th>
+                <th className="border-b-[1.5px] border-foreground px-3 py-2.5">
+                  动作
+                </th>
+                <th className="border-b-[1.5px] border-foreground px-3 py-2.5">
+                  对象
+                </th>
+                <th className="border-b-[1.5px] border-foreground px-3 py-2.5">
+                  结果
+                </th>
+                <th className="border-b-[1.5px] border-foreground px-3 py-2.5 text-right">
+                  详情
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((e) => {
+                const detail = safeParseDetail(e.detail);
+                const niceName = e.target_id
+                  ? nameMap.get(e.target_id)
+                  : undefined;
+                const actor = e.actor_email || "?";
+                return (
+                  <tr key={e.id} className="align-middle hover:bg-[#FBFBF7]">
+                    <td className="border-b border-border px-3 py-[13px] font-mono text-[12.5px] whitespace-nowrap">
+                      {monoTime(e.ts)}
+                    </td>
+                    <td className="border-b border-border px-3 py-[13px]">
+                      <span className="inline-flex items-center gap-2">
+                        <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-[#F1EFE8] text-[10px] text-[#5F5E5A]">
+                          {actor.charAt(0).toUpperCase()}
                         </span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            ));
-          })()}
+                        <span className="truncate">
+                          {e.actor_admin ? "管理员" : actor}
+                        </span>
+                      </span>
+                    </td>
+                    <td className="border-b border-border px-3 py-[13px] text-[12.5px]">
+                      {actionLabel(e.action)}
+                    </td>
+                    <td className="border-b border-border px-3 py-[13px] font-mono text-[12.5px]">
+                      {niceName || e.target_id || "—"}
+                    </td>
+                    <td className="border-b border-border px-3 py-[13px]">
+                      {resultBadge(e.result)}
+                    </td>
+                    <td className="border-b border-border px-3 py-[13px] text-right">
+                      <details className="group">
+                        <summary className="inline-block cursor-pointer list-none text-[11px] font-semibold text-[#185FA5]">
+                          详情
+                        </summary>
+                        <pre className="mt-1 max-w-md overflow-x-auto rounded-md bg-[#F1EFE8] p-2 text-left text-[11px] whitespace-pre-wrap">
+                          {JSON.stringify(detail, null, 2)}
+                        </pre>
+                      </details>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       )}
 
+      {/* 分页（效果图 .footer：共 N 条 · 时间倒序 + 30px 方形页码黑选中） */}
       {!error && items.length > 0 && (
-        <div className="flex items-center justify-between">
-          <p className="text-xs text-muted-foreground">
-            共 {total} 条 · 第 {page} / {totalPages} 页
-          </p>
-          <div className="flex items-center gap-1">
-            {page > 1 && (
-              <Button variant="outline" size="sm" asChild>
-                <Link href={pageUrl(page - 1)}>上一页</Link>
-              </Button>
-            )}
+        <div className="flex items-center py-4">
+          <span className="font-mono text-xs text-[#9A9A94]">
+            共 {total.toLocaleString()} 条 · 时间倒序
+          </span>
+          <div className="ml-auto flex items-center gap-1.5">
             {pageNumbers.map((item) =>
               item.v === "…" ? (
                 <span
                   key={item.key}
-                  className="px-1 text-xs text-muted-foreground"
+                  aria-hidden
+                  className="flex size-[30px] items-center justify-center text-xs text-[#9A9A94] select-none"
                 >
                   …
                 </span>
@@ -397,10 +336,10 @@ export async function AuditBlock({
                   aria-current={item.v === page ? "page" : undefined}
                   aria-label={`第 ${item.v} 页`}
                   className={cn(
-                    "flex h-8 min-w-8 items-center justify-center rounded-md px-2 text-sm",
+                    "flex size-[30px] items-center justify-center rounded-lg border-[1.5px] text-xs transition-colors",
                     item.v === page
-                      ? "bg-primary/10 font-medium text-primary"
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                      ? "border-foreground bg-foreground font-semibold text-background"
+                      : "border-border text-muted-foreground hover:border-foreground hover:text-foreground",
                   )}
                 >
                   {item.v}
@@ -408,9 +347,13 @@ export async function AuditBlock({
               ),
             )}
             {page < totalPages && (
-              <Button variant="outline" size="sm" asChild>
-                <Link href={pageUrl(page + 1)}>下一页</Link>
-              </Button>
+              <Link
+                href={pageUrl(page + 1)}
+                aria-label="下一页"
+                className="flex size-[30px] items-center justify-center rounded-lg text-xs text-muted-foreground transition-colors hover:text-foreground"
+              >
+                →
+              </Link>
             )}
           </div>
         </div>

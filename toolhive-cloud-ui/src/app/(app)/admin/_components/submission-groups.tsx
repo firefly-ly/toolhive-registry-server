@@ -1,13 +1,10 @@
 "use client";
 
-import { Eye } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { ConfirmForm } from "@/components/confirm-form";
-import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import type { Submission } from "@/lib/platform-backend";
 import { cn } from "@/lib/utils";
@@ -21,10 +18,8 @@ import {
 import {
   DEPLOY_LABEL,
   isOnShelf,
-  isRestricted,
   parseMeta,
   REGISTRY_LABEL,
-  REGISTRY_TONE,
   versionOf,
 } from "./group-utils";
 import { VisibilityDialog } from "./visibility-dialog";
@@ -45,68 +40,79 @@ function withActionToast(
   };
 }
 
-/** 类型色图标块：MCP 蓝（双环扣）/ Skill 青绿（旋转方块） */
-function GroupGlyph({ isMcp }: { isMcp: boolean }) {
+/* ---------------- 效果图 05 徽章（.bdg 规格） ---------------- */
+
+const BDG_TONE: Record<string, string> = {
+  ok: "border-[#97C459] bg-[#EAF3DE] text-[#3B6D11]",
+  warn: "border-[#EF9F27] bg-[#FAEEDA] text-[#854F0B]",
+  err: "border-[#F09595] bg-[#FCEBEB] text-[#A32D2D]",
+  mut: "border-[#D3D1C7] bg-[#F1EFE8] text-[#5F5E5A]",
+  blue: "border-[#85B7EB] bg-[#E6F1FB] text-[#0C447C]",
+};
+
+function Bdg({
+  tone,
+  dot,
+  children,
+}: {
+  tone: keyof typeof BDG_TONE;
+  dot?: boolean;
+  children: React.ReactNode;
+}) {
   return (
     <span
       className={cn(
-        "flex size-9 shrink-0 items-center justify-center rounded-lg",
-        isMcp ? "bg-info/10" : "bg-success/10",
+        "inline-flex items-center gap-[5px] whitespace-nowrap rounded-[5px] border px-[9px] py-0.5 text-[11px]",
+        BDG_TONE[tone],
       )}
     >
-      {isMcp ? (
-        <svg width="18" height="18" viewBox="0 0 20 20" aria-hidden="true">
-          <circle cx="7" cy="10" r="4.5" fill="hsl(var(--info))" />
-          <circle
-            cx="13"
-            cy="10"
-            r="4.5"
-            fill="hsl(var(--info))"
-            fillOpacity="0.5"
-          />
-        </svg>
-      ) : (
-        <svg width="18" height="18" viewBox="0 0 20 20" aria-hidden="true">
-          <rect
-            x="4.5"
-            y="4.5"
-            width="11"
-            height="11"
-            rx="2.5"
-            transform="rotate(45 10 10)"
-            fill="hsl(var(--success))"
-          />
-        </svg>
-      )}
+      {dot && <span className="size-1.5 rounded-full bg-current" />}
+      {children}
     </span>
   );
 }
 
-/** 版本胶囊：上架中实心 / 已下架虚线 / 未上线警示（产品货架的「货格」） */
-function VersionPill({ s }: { s: Submission }) {
-  const onShelf = isOnShelf(s);
-  const deprecated = s.status === "deprecated";
-  if (deprecated) {
-    return (
-      <span className="rounded-full border border-dashed border-border px-3 py-1 text-xs text-muted-foreground">
-        {versionOf(s)} · 已下架
-      </span>
-    );
-  }
-  if (!onShelf) {
-    return (
-      <span className="rounded-full border border-warning/50 bg-warning/10 px-3 py-1 text-xs text-warning">
-        {versionOf(s)} · 未上线
-      </span>
-    );
-  }
-  return (
-    <span className="rounded-full border border-success/40 bg-success/10 px-3 py-1 text-xs font-medium text-success">
-      {versionOf(s)} · 上架中
-    </span>
-  );
+const DEPLOY_TONE: Record<string, "ok" | "warn" | "err" | "mut"> = {
+  deployed: "ok",
+  deploying: "warn",
+  failed: "err",
+  undeployed: "mut",
+  unborn: "mut",
+};
+const DEPLOY_DOT: Record<string, boolean> = {
+  deployed: true,
+  deploying: true,
+  failed: true,
+  undeployed: false,
+  unborn: false,
+};
+const REG_TONE: Record<string, "ok" | "err" | "mut"> = {
+  published: "ok",
+  error: "err",
+  "delete-error": "err",
+  deleted: "mut",
+  "skipped:no-endpoint": "mut",
+  "": "mut",
+};
+
+/** 相对时间（效果图「张三 · 今天」行） */
+function relTime(iso: string): string {
+  const diff = Date.now() - +new Date(iso);
+  if (Number.isNaN(diff)) return "";
+  const min = Math.floor(diff / 60000);
+  if (min < 1) return "刚刚";
+  if (min < 60) return `${min} 分钟前`;
+  const h = Math.floor(min / 60);
+  if (h < 24) return `${h} 小时前`;
+  const d = Math.floor(h / 24);
+  if (d === 1) return "昨天";
+  if (d < 7) return `${d} 天前`;
+  const w = Math.floor(d / 7);
+  if (w < 5) return `${w} 周前`;
+  return new Date(iso).toLocaleDateString("zh-CN");
 }
 
+/** 组卡（效果图 05：1.5px 黑框 11px 圆角，奶白组头 + 版本行表） */
 export function GroupRow({
   group_key,
   items,
@@ -114,133 +120,125 @@ export function GroupRow({
   group_key: string;
   items: Submission[];
 }) {
-  // 组内最新一条作为卡片基础版本（列表已按创建时间倒序）；用户侧版本由下拉自选
+  // 组内最新一条作为卡片基础版本（列表已按创建时间倒序）
   const activeItem = items[0];
   const isMcp = activeItem.type === "mcp";
   const meta = parseMeta(activeItem.meta);
   const title = meta.name || activeItem.payload_ref;
+  const latestOnShelf = isOnShelf(activeItem);
+  const hasSyncError = items.some(
+    (s) => parseMeta(s.meta).registry_synced === "error",
+  );
+  const latestDeploy = meta.deploy_status || "unborn";
+  const canDeployLatest =
+    isMcp &&
+    latestOnShelf &&
+    (latestDeploy === "unborn" || latestDeploy === "failed");
 
   return (
-    <Card>
-      <CardContent className="py-4">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex min-w-0 items-start gap-3">
-            <GroupGlyph isMcp={isMcp} />
-            <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <span className="truncate font-medium" title={title}>
-                  {title}
-                </span>
-                <Badge variant="outline" className="shrink-0 text-xs">
-                  {isMcp ? "MCP" : "Skill"}
-                </Badge>
-                {activeItem.status === "deprecated" && (
-                  <Badge variant="secondary" className="shrink-0 text-xs">
-                    已下架
-                  </Badge>
-                )}
-                {isRestricted(activeItem) && (
-                  <Badge variant="secondary" className="shrink-0 gap-1 text-xs">
-                    <Eye className="size-3" />
-                    受限可见
-                  </Badge>
-                )}
-              </div>
-              <div className="truncate text-sm text-muted-foreground">
-                {group_key} · 提交者 {activeItem.user_id}
-              </div>
-            </div>
-          </div>
-          <div className="flex shrink-0 flex-wrap justify-end gap-2">
-            <VersionActions s={activeItem} />
-          </div>
+    <div className="overflow-hidden rounded-[11px] border-[1.5px] border-foreground">
+      {/* 组头：名称 + 类型/状态徽章 + 右侧组级操作 */}
+      <div className="flex flex-wrap items-center gap-2.5 border-b-[1.5px] border-border bg-[#FBFBF7] px-[18px] py-[14px]">
+        <b className="text-[14.5px] font-bold" title={title}>
+          {title}
+        </b>
+        <Bdg tone={isMcp ? "blue" : "ok"}>{isMcp ? "MCP" : "SKILL"}</Bdg>
+        {!latestOnShelf ? (
+          <Bdg tone="warn" dot>
+            未上线 · 待配可见范围
+          </Bdg>
+        ) : hasSyncError ? (
+          <Bdg tone="err" dot>
+            同步失败
+          </Bdg>
+        ) : (
+          <Bdg tone="mut">{items.length} 个版本</Bdg>
+        )}
+        <span className="hidden truncate font-mono text-[11px] text-[#9A9A94] lg:inline">
+          {group_key}
+        </span>
+        <div className="ml-auto flex flex-wrap items-center gap-2">
+          {canDeployLatest && (
+            <form
+              action={withActionToast(
+                deploySubmissionAction,
+                "已开始部署",
+                "部署约需 1~3 分钟，状态将自动刷新",
+              )}
+            >
+              <input type="hidden" name="id" value={activeItem.id} />
+              <Button
+                type="submit"
+                size="sm"
+                className="border-[#639922] bg-[#639922] text-white hover:bg-[#54821C]"
+              >
+                部署最新版
+              </Button>
+            </form>
+          )}
+          {hasSyncError && (
+            <form
+              action={withActionToast(
+                syncRegistryAction,
+                "已触发同步",
+                "同步结果以条目上的 Registry 徽章为准",
+              )}
+            >
+              <input type="hidden" name="id" value={activeItem.id} />
+              <Button type="submit" size="sm" variant="outline">
+                重试同步
+              </Button>
+            </form>
+          )}
+          <VisibilityDialog s={activeItem} />
         </div>
+      </div>
 
-        {/* 版本胶囊行：每格一个版本的状态一览 */}
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          {items.map((s) => (
-            <VersionPill key={s.id} s={s} />
-          ))}
-        </div>
-
-        <details className="mt-3 group">
-          <summary className="cursor-pointer text-sm text-muted-foreground hover:text-foreground">
-            版本操作（部署 / 下架 / 删除…）
-          </summary>
-          <div className="mt-3 space-y-2 border-t pt-3">
-            {items.map((s) => (
-              <VersionRow key={s.id} s={s} />
-            ))}
-          </div>
-        </details>
-      </CardContent>
-    </Card>
+      {/* 版本行表 */}
+      <div className="py-1">
+        {items.map((s) => (
+          <VersionRow key={s.id} s={s} />
+        ))}
+      </div>
+    </div>
   );
 }
 
+/** 版本行（效果图 05 表格行：版本 | 部署 | 同步 | 提交者·时间 | 操作） */
 export function VersionRow({ s }: { s: Submission }) {
   const meta = parseMeta(s.meta);
   const isMcp = s.type === "mcp";
   const deploy = meta.deploy_status || "unborn";
-  const deployTone =
-    deploy === "deployed"
-      ? "default"
-      : deploy === "failed"
-        ? "destructive"
-        : "secondary";
   const regSync = meta.registry_synced || "";
-  const regTone = REGISTRY_TONE[regSync] ?? "secondary";
-  const regLabel = REGISTRY_LABEL[regSync] ?? regSync;
+  const onShelf = isOnShelf(s);
+  const deprecated = s.status === "deprecated";
 
   return (
-    <div className="flex flex-col gap-2 rounded-md border px-3 py-2 sm:flex-row sm:items-center sm:justify-between">
-      <div className="min-w-0">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium">{versionOf(s)}</span>
-          {isMcp && (
-            <Badge
-              variant={deployTone as "default" | "destructive" | "secondary"}
-              className="text-xs"
-            >
-              {DEPLOY_LABEL[deploy] ?? deploy}
-            </Badge>
-          )}
-          <Badge
-            variant={regTone as "default" | "destructive" | "secondary"}
-            className="text-xs"
-          >
-            Registry：{regLabel}
-          </Badge>
-          {s.status === "deprecated" && (
-            <Badge variant="secondary" className="text-xs">
-              已下架
-            </Badge>
-          )}
-          {!isOnShelf(s) && (
-            <Badge
-              variant="outline"
-              className="border-warning/50 text-warning text-xs font-medium"
-            >
-              未上线
-            </Badge>
-          )}
-        </div>
-        <div className="truncate text-xs text-muted-foreground">
-          {s.payload_ref} · {s.id}
-        </div>
-        {regSync === "error" && meta.registry_sync_error && (
-          <div
-            className="truncate text-xs text-destructive"
-            title={meta.registry_sync_error}
-          >
-            {meta.registry_sync_error.slice(0, 60)}
-          </div>
-        )}
-      </div>
-      <div className="flex shrink-0 flex-wrap gap-2">
-        {/* 2026-09-08：激活指针已废弃（用户侧版本下拉自选已上架版本，目录默认展示最新已上架），
-            原 Skill「设为默认版本」按钮一并移除。 */}
-        {/* 该条目的审计轨迹：跳到审计 tab 并按对象 ID 预过滤 */}
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-border px-3 py-[11px] text-[12.5px] last:border-b-0">
+      <span className="w-[90px] shrink-0 font-mono">{versionOf(s)}</span>
+      {isMcp && (
+        <span className="w-[110px] shrink-0">
+          <Bdg tone={DEPLOY_TONE[deploy] ?? "mut"} dot={DEPLOY_DOT[deploy]}>
+            {DEPLOY_LABEL[deploy] ?? deploy}
+          </Bdg>
+        </span>
+      )}
+      <span className="w-[110px] shrink-0">
+        <Bdg tone={REG_TONE[regSync] ?? "mut"} dot={regSync === "error"}>
+          {REGISTRY_LABEL[regSync] ?? (regSync || "未同步")}
+        </Bdg>
+      </span>
+      {!onShelf && <Bdg tone="blue">仅管理员可见</Bdg>}
+      {deprecated && <Bdg tone="mut">已下架</Bdg>}
+      {!isMcp && !onShelf && (
+        <span className="hidden min-w-0 text-[11px] text-[#9A9A94] xl:inline">
+          通过后需先配置可见范围，才对所选范围开放目录可见与下载
+        </span>
+      )}
+      <span className="shrink-0 text-muted-foreground">
+        {s.user_id} · {relTime(s.created_at)}
+      </span>
+      <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
         <Link
           href={`/admin?tab=audit&target_id=${encodeURIComponent(s.id)}`}
           className={cn(buttonVariants({ variant: "outline", size: "sm" }))}

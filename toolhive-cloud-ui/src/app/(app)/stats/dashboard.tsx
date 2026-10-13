@@ -1,307 +1,542 @@
 "use client";
 
-import Link from "next/link";
-import { useMemo, useState } from "react";
-import { Card } from "@/components/ui/card";
+import { type ReactNode, useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import {
-  CardHead,
-  EmptyRow,
-  type Filt,
-  gradeColor,
-  gradeOf,
-  type ItemStat,
-  Kpi,
+  Bdg,
+  type Funnel,
+  KpiCell,
   MCP,
-  RankRow,
   SKILL,
-  type TrendItem,
-  TypePill,
+  type StatRow,
+  type WatchRow,
 } from "./dashboard-shared";
-import { TrendChart } from "./trend-chart";
+
+const RANGES = [
+  { k: 7, label: "近 7 天" },
+  { k: 14, label: "近 14 天" },
+  { k: 30, label: "近 30 天" },
+] as const;
+
+/* 小型筛选按钮（效果图 .btn.sm：1.5px 描边 8px 圆角） */
+function BtnSm({
+  children,
+  dark,
+  onClick,
+}: {
+  children: ReactNode;
+  dark?: boolean;
+  onClick?: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "inline-flex cursor-pointer items-center gap-1.5 rounded-lg border-[1.5px] px-3.5 py-1.5 text-[11.5px] font-semibold transition-colors",
+        dark
+          ? "border-foreground bg-foreground text-background"
+          : "border-border bg-card text-muted-foreground hover:border-foreground hover:text-foreground",
+      )}
+    >
+      {children}
+    </button>
+  );
+}
+
+/* 效果图 .kv 行：9px 上下留白 + 发丝下界 */
+function Kv({ children, last }: { children: ReactNode; last?: boolean }) {
+  return (
+    <div
+      className={cn(
+        "flex items-center justify-between py-[9px] text-xs",
+        !last && "border-b border-border",
+      )}
+    >
+      {children}
+    </div>
+  );
+}
 
 export function StatsDashboard({
-  items,
-  kpis,
-  trendDays,
-  trendItems,
+  rows,
+  trend,
   funnel,
+  watch,
+  userRank,
+  kpis,
 }: {
-  items: ItemStat[];
-  kpis: { total: number; avg: number; good: number; watch: number };
-  trendDays: string[];
-  trendItems: TrendItem[];
-  /** 提交漏斗（效果图 10）：提交 → 审核通过 → 配置上线 */
-  funnel?: { submitted: number; approved: number; onShelf: number };
+  rows: StatRow[];
+  trend: { days: string[]; mcp: number[]; skill: number[] };
+  funnel: Funnel;
+  watch: WatchRow[];
+  userRank: { name: string; n: number }[];
+  kpis: {
+    calls: { v: string; sub: string };
+    activeUsers: string;
+    perUser: string;
+    onShelf: number;
+    mcpCount: number;
+    skillCount: number;
+    pending: number;
+    oldestPending: string;
+    approval: { v: string; sub: string };
+    failRate: { v: string; sub: string };
+  };
 }) {
-  const [fRank, setFRank] = useState<Filt>("all");
-  const [fTrend, setFTrend] = useState<Filt>("all");
+  const [range, setRange] = useState<number>(14);
+  const [query, setQuery] = useState("");
+  const [type, setType] = useState<"all" | "mcp" | "skill">("all");
+  const [sort, setSort] = useState<"calls" | "delta">("calls");
 
-  const rankList = useMemo(() => {
-    let l = [...items].sort((a, b) => b.score - a.score).slice(0, 8);
-    if (fRank !== "all") l = l.filter((i) => i.type === fRank);
-    return l;
-  }, [items, fRank]);
+  /* 趋势堆叠柱：按所选区间切片 */
+  const sliced = useMemo(() => {
+    const n = trend.days.length;
+    const from = Math.max(0, n - range);
+    return {
+      days: trend.days.slice(from),
+      mcp: trend.mcp.slice(from),
+      skill: trend.skill.slice(from),
+    };
+  }, [trend, range]);
 
-  const trendLines = useMemo(() => {
-    let l = trendItems;
-    if (fTrend !== "all") l = l.filter((i) => i.type === fTrend);
-    return l;
-  }, [trendItems, fTrend]);
+  const maxDay = Math.max(
+    1,
+    ...sliced.mcp.map((v, i) => v + (sliced.skill[i] || 0)),
+  );
+  const barCount = sliced.days.length;
+  const labelIdx = Array.from(
+    new Set(
+      [0, 0.25, 0.5, 0.75, 1].map((f) =>
+        Math.round(f * Math.max(0, barCount - 1)),
+      ),
+    ),
+  );
+
+  /* 明细筛选 + 排序 */
+  const tableRows = useMemo(() => {
+    let l = rows;
+    if (type !== "all") l = l.filter((r) => r.type === type);
+    const q = query.trim().toLowerCase();
+    if (q)
+      l = l.filter((r) =>
+        [r.name, r.version, r.status.label].join(" ").toLowerCase().includes(q),
+      );
+    return [...l].sort((a, b) =>
+      sort === "calls" ? b.calls14 - a.calls14 : b.delta - a.delta,
+    );
+  }, [rows, type, query, sort]);
+
+  const totalCalls =
+    sliced.mcp.reduce((a, b) => a + b, 0) +
+    sliced.skill.reduce((a, b) => a + b, 0);
+
+  /* 总调用 KPI：有埋点数据时随区间实时计算，无数据时回退服务端测试占位 */
+  const hasTrend =
+    trend.days.length > 0 &&
+    (trend.mcp.some((v) => v > 0) || trend.skill.some((v) => v > 0));
+  const half = Math.max(1, Math.floor(barCount / 2));
+  const recentHalf = [
+    ...sliced.mcp.slice(-half),
+    ...sliced.skill.slice(-half),
+  ].reduce((a, b) => a + b, 0);
+  const prevHalf = [
+    ...sliced.mcp.slice(-half * 2, -half),
+    ...sliced.skill.slice(-half * 2, -half),
+  ].reduce((a, b) => a + b, 0);
+  const kpiValue = hasTrend ? totalCalls.toLocaleString() : kpis.calls.v;
+  const kpiSub = hasTrend
+    ? `环比 ${prevHalf > 0 ? `${recentHalf >= prevHalf ? "+" : ""}${Math.round(((recentHalf - prevHalf) / prevHalf) * 100)}%` : "—"}`
+    : kpis.calls.sub;
+
+  /* 导出 CSV（条目明细） */
+  const exportCsv = () => {
+    const head = [
+      "条目",
+      "类型",
+      "版本",
+      "状态",
+      "调用",
+      "环比",
+      "失败率",
+      "P95",
+      "最近调用",
+    ];
+    const lines = rows.map((r) =>
+      [
+        r.name,
+        r.type.toUpperCase(),
+        r.version,
+        r.status.label,
+        r.calls14,
+        `${r.delta >= 0 ? "+" : ""}${r.delta}%`,
+        r.failRate,
+        r.p95,
+        r.lastCall,
+      ]
+        .map((v) => `"${String(v).replace(/"/g, '""')}"`)
+        .join(","),
+    );
+    const blob = new Blob([`\uFEFF${[head.join(","), ...lines].join("\n")}`], {
+      type: "text/csv;charset=utf-8",
+    });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "运营台条目明细.csv";
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
 
   return (
-    <div className="space-y-5">
-      {/* KPI：首格 info 蓝色块主卡（包豪斯），其余白格 */}
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
-        <Kpi
-          l="总使用（调用+下载）"
-          v={items.reduce((a, b) => a + b.usage, 0)}
-          s="全部条目累计"
+    <div>
+      {/* 页头（效果图 10：标题 + psub + 右侧区间切换/导出） */}
+      <div className="flex flex-wrap items-center px-8 pb-[14px] pt-1">
+        <div>
+          <h1 className="text-[26px] font-semibold tracking-[0.5px]">
+            统计 · 运营台
+          </h1>
+          <p className="mt-1.5 text-[13px] text-muted-foreground">
+            整体经营状况 + 每个条目的明细 · 数据每 15 分钟刷新
+          </p>
+        </div>
+        <div className="ml-auto flex flex-wrap items-center gap-2">
+          {RANGES.map((r) => (
+            <BtnSm key={r.k} dark={range === r.k} onClick={() => setRange(r.k)}>
+              {r.label}
+            </BtnSm>
+          ))}
+          <BtnSm onClick={exportCsv}>导出 CSV</BtnSm>
+        </div>
+      </div>
+
+      {/* KPI 六格（效果图 10：首格蓝色实色主块，1.5px 发丝分界） */}
+      <div className="grid grid-cols-2 border-t-[1.5px] border-border md:grid-cols-3 xl:grid-cols-6">
+        <KpiCell
           accent
+          label={`总调用（${range} 天）`}
+          value={kpiValue}
+          sub={kpiSub}
         />
-        <Kpi
-          l="能力项"
-          v={kpis.total}
-          s={`MCP ${items.filter((i) => i.type === "mcp").length} · Skill ${items.filter((i) => i.type === "skill").length}`}
+        <KpiCell label="活跃用户" value={kpis.activeUsers} sub={kpis.perUser} />
+        <KpiCell
+          label="在架条目"
+          value={kpis.onShelf}
+          sub={`MCP ${kpis.mcpCount} · Skill ${kpis.skillCount}`}
         />
-        <Kpi l="平均综合分" v={kpis.avg} s="0–100" c="hsl(var(--success))" />
-        <Kpi
-          l="优质 (≥80)"
-          v={kpis.good}
-          s="高价值 · 可主推"
-          c="hsl(var(--success) / 0.8)"
+        <KpiCell
+          label="待审提交"
+          value={kpis.pending}
+          sub={`最早积压 ${kpis.oldestPending}`}
+          valueColor={kpis.pending > 0 ? "#854F0B" : undefined}
         />
-        <Kpi
-          l="需关注 (<50)"
-          v={kpis.watch}
-          s="缺维护 / 低采纳"
-          c="hsl(var(--destructive))"
+        <KpiCell
+          label="平均审批时长"
+          value={kpis.approval.v}
+          sub={kpis.approval.sub}
+        />
+        <KpiCell
+          label="调用失败率"
+          value={kpis.failRate.v}
+          sub={kpis.failRate.sub}
+          valueColor="#A32D2D"
         />
       </div>
 
-      {/* 排行榜 | 留存 */}
-      <div className="grid grid-cols-1 gap-5 xl:grid-cols-3">
-        <Card className="xl:col-span-2 p-4">
-          <CardHead
-            title="优质度排行榜"
-            sub="Top 8 · 综合分 + 关键分维度"
-            filt={fRank}
-            onFilt={setFRank}
-          />
-          <div className="max-h-[470px] space-y-1 overflow-y-auto pr-1">
-            {rankList.map((it, i) => (
-              <RankRow key={it.key} it={it} rank={i + 1} />
-            ))}
-            {rankList.length === 0 && <EmptyRow />}
+      {/* 趋势 + 漏斗（效果图：左 1.7 右 1，发丝竖分界） */}
+      <div className="grid border-t-[1.5px] border-border xl:grid-cols-[1.7fr_1fr]">
+        <div className="border-b-[1.5px] border-border p-[22px] xl:border-b-0 xl:border-r-[1.5px]">
+          <div className="mb-4 flex items-baseline">
+            <h3 className="text-[15px] font-semibold">调用趋势（按类型）</h3>
+            <span className="ml-auto flex gap-3.5 text-[11px] text-[#9A9A94]">
+              <span className="flex items-center gap-[5px]">
+                <i
+                  className="inline-block size-[9px] rounded-[2px]"
+                  style={{ background: MCP }}
+                />
+                MCP
+              </span>
+              <span className="flex items-center gap-[5px]">
+                <i
+                  className="inline-block size-[9px] rounded-[2px]"
+                  style={{ background: SKILL }}
+                />
+                Skill
+              </span>
+            </span>
           </div>
-        </Card>
-
-        <Card className="p-4">
-          <CardHead title="提交漏斗（累计）" sub="提交 → 审核通过 → 配置上线" />
-          <div className="space-y-3">
-            {(
-              [
-                {
-                  label: "提交",
-                  v: funnel?.submitted ?? 0,
-                  bg: "bg-foreground",
-                },
-                {
-                  label: "审核通过",
-                  v: funnel?.approved ?? 0,
-                  bg: "bg-muted-foreground",
-                },
-                {
-                  label: "配置上线",
-                  v: funnel?.onShelf ?? 0,
-                  bg: "bg-success",
-                },
-              ] as const
-            ).map((st, i, arr) => {
-              const top = Math.max(1, arr[0].v);
-              const w = Math.max(12, Math.round((st.v / top) * 100));
+          <div className="flex h-[130px] items-end gap-2">
+            {sliced.days.map((d, i) => {
+              const m = (sliced.mcp[i] / maxDay) * 100;
+              const s = (sliced.skill[i] / maxDay) * 100;
               return (
-                <div key={st.label} className="flex items-center gap-3">
-                  <span className="w-20 shrink-0 text-xs text-muted-foreground">
-                    {st.label}
-                  </span>
-                  <div
-                    className={`flex h-[26px] flex-1 items-center rounded-md px-2.5 ${st.bg}`}
-                    style={{ width: `${w}%` }}
-                  >
-                    <span className="font-mono text-[11px] font-semibold text-white">
-                      {st.v} 件
-                    </span>
-                  </div>
+                <div
+                  key={d}
+                  className="flex h-full flex-1 flex-col justify-end gap-0.5"
+                  title={`${sliced.days[i]} · MCP ${sliced.mcp[i]} · Skill ${sliced.skill[i]}`}
+                >
+                  <i
+                    className="block rounded-t-[3px]"
+                    style={{
+                      height: `${Math.max(m, sliced.mcp[i] > 0 ? 3 : 0)}%`,
+                      background: MCP,
+                    }}
+                  />
+                  <i
+                    className="block rounded-t-[3px]"
+                    style={{
+                      height: `${Math.max(s, sliced.skill[i] > 0 ? 3 : 0)}%`,
+                      background: SKILL,
+                    }}
+                  />
                 </div>
               );
             })}
           </div>
-          {(() => {
-            const f = funnel;
-            if (!f) return null;
-            const d1 = f.submitted - f.approved;
-            const d2 = f.approved - f.onShelf;
-            if (d1 <= 0 && d2 <= 0) return null;
-            const note =
-              d1 >= d2
-                ? `最大流失在「提交 → 审核」：${d1} 件仍在待审或已被拒绝，建议及时处理队列。`
-                : `最大流失在「审核 → 上线」：${d2} 件通过后未配置可见范围，建议通知管理员补配置。`;
-            return (
-              <div className="mt-4 rounded-lg border-[1.5px] border-dashed border-border p-3 text-xs leading-relaxed text-muted-foreground">
-                {note}
-              </div>
-            );
-          })()}
-        </Card>
-      </div>
-
-      {/* 趋势 | 四象限 */}
-      <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
-        <Card className="p-4">
-          <CardHead
-            title="近 30 天使用趋势"
-            sub="每条目独立折线 · 顶部为高用量项"
-            filt={fTrend}
-            onFilt={setFTrend}
-          />
-          <TrendChart days={trendDays} lines={trendLines} />
-        </Card>
-        <Card className="p-4">
-          <CardHead title="需要关注" sub="零使用 / 低分条目的运营建议" />
-          <div className="space-y-2">
-            {(() => {
-              const watch = [
-                ...items
-                  .filter((i) => i.u30 === 0)
-                  .map((i) => ({
-                    key: i.key,
-                    name: i.name,
-                    type: i.type,
-                    href: i.href,
-                    reason: "近 30 天无调用，建议评估下架或推一把",
-                    tone: "warn" as const,
-                  })),
-                ...items
-                  .filter((i) => i.u30 > 0 && i.score < 50)
-                  .map((i) => ({
-                    key: i.key,
-                    name: i.name,
-                    type: i.type,
-                    href: i.href,
-                    reason: `综合分 ${i.score}（低于 50），建议补描述 / 提示词质量`,
-                    tone: "err" as const,
-                  })),
-              ];
-              if (watch.length === 0) {
-                return (
-                  <p className="py-10 text-center text-sm text-muted-foreground">
-                    暂无需要关注的条目
-                  </p>
-                );
-              }
-              return watch.map((w) => (
-                <div
-                  key={`${w.key}-${w.reason.slice(0, 6)}`}
-                  className="flex items-center gap-3 rounded-lg border-[1.5px] border-border p-3"
-                >
-                  <span
-                    className={cn(
-                      "inline-flex shrink-0 items-center rounded-md border px-2 py-0.5 text-[11px]",
-                      w.tone === "warn"
-                        ? "border-warning/40 bg-warning/10 text-warning"
-                        : "border-destructive/40 bg-destructive/10 text-destructive",
-                    )}
-                  >
-                    {w.tone === "warn" ? "零使用" : "低分"}
-                  </span>
-                  <span className="min-w-0 truncate text-sm font-medium">
-                    {w.name}
-                  </span>
-                  <span className="min-w-0 flex-1 truncate text-xs text-muted-foreground">
-                    {w.reason}
-                  </span>
-                  <Link
-                    href={w.href}
-                    className="shrink-0 text-xs font-semibold text-info hover:underline"
-                  >
-                    查看
-                  </Link>
-                </div>
-              ));
-            })()}
+          <div className="mt-2 flex gap-2">
+            {labelIdx.map((i) => (
+              <span
+                key={i}
+                className="flex-1 text-center font-mono text-[10px] text-[#9A9A94]"
+              >
+                {i === barCount - 1 ? "今天" : (sliced.days[i] || "").slice(5)}
+              </span>
+            ))}
           </div>
-        </Card>
+        </div>
+
+        <div className="p-[22px]">
+          <h3 className="mb-4 text-[15px] font-semibold">
+            提交漏斗（近 30 天）
+          </h3>
+          <div className="space-y-3">
+            {funnel.stages.map((st) => (
+              <div key={st.label} className="flex items-center gap-3">
+                <span className="w-[82px] shrink-0 text-[11.5px] text-muted-foreground">
+                  {st.label}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div
+                    className="flex h-[26px] items-center rounded-md px-2.5 font-mono text-[11px] font-semibold text-white"
+                    style={{
+                      background: st.bg,
+                      width: `${st.width}%`,
+                      minWidth: 64,
+                    }}
+                  >
+                    {st.v} 件
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          {funnel.note && (
+            <div className="mt-[18px] rounded-[9px] border-[1.5px] border-dashed border-border p-3 text-[11.5px] leading-relaxed text-muted-foreground">
+              {funnel.note}
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* 明细 */}
-      <Card className="p-4">
-        <CardHead title="逐项明细" sub="调用/下载、收藏、去重用户与综合分" />
-        <div className="max-h-[360px] overflow-auto">
-          <table className="w-full border-collapse text-sm">
-            <thead className="sticky top-0 bg-card">
-              <tr className="text-left text-xs tracking-wide text-muted-foreground">
-                <th className="p-3">名称</th>
-                <th className="p-3">类型</th>
-                <th className="p-3 text-right">使用</th>
-                <th className="p-3 text-right">收藏</th>
-                <th className="p-3 text-right">去重用户</th>
-                <th className="p-3 text-right">采纳</th>
-                <th className="p-3 text-right">活跃</th>
-                <th className="p-3 text-right">综合分</th>
-                <th className="p-3">评级</th>
-                <th className="p-3"></th>
+      {/* 条目明细（效果图 10：表头行 + 9 列表格） */}
+      <div className="border-t-[1.5px] border-border">
+        <div className="flex items-center px-8 pb-2 pt-[22px]">
+          <h3 className="text-[15px] font-semibold">
+            条目明细（{rows.length} 个在架条目）
+          </h3>
+          <div className="ml-auto flex items-center gap-2">
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="搜索条目…"
+              className="h-[30px] w-36 rounded-lg border-[1.5px] border-border bg-card px-3 text-[11.5px] outline-none placeholder:text-muted-foreground focus:border-foreground"
+            />
+            <select
+              value={type}
+              onChange={(e) =>
+                setType(e.target.value as "all" | "mcp" | "skill")
+              }
+              className="h-[30px] cursor-pointer rounded-lg border-[1.5px] border-border bg-card px-2 text-[11.5px] font-semibold text-muted-foreground outline-none focus:border-foreground"
+            >
+              <option value="all">类型：全部</option>
+              <option value="mcp">类型：MCP</option>
+              <option value="skill">类型：SKILL</option>
+            </select>
+            <select
+              value={sort}
+              onChange={(e) => setSort(e.target.value as "calls" | "delta")}
+              className="h-[30px] cursor-pointer rounded-lg border-[1.5px] border-foreground bg-foreground px-2 text-[11.5px] font-semibold text-background outline-none"
+            >
+              <option value="calls">排序：调用量</option>
+              <option value="delta">排序：环比</option>
+            </select>
+          </div>
+        </div>
+        <div className="overflow-x-auto px-8 pb-5">
+          <table className="w-full border-collapse">
+            <thead>
+              <tr className="text-left text-[11px] tracking-[1px] font-semibold text-[#9A9A94]">
+                <th className="border-b-[1.5px] border-foreground px-3 py-2.5">
+                  条目
+                </th>
+                <th className="border-b-[1.5px] border-foreground px-3 py-2.5">
+                  版本
+                </th>
+                <th className="border-b-[1.5px] border-foreground px-3 py-2.5">
+                  状态
+                </th>
+                <th className="border-b-[1.5px] border-foreground px-3 py-2.5 text-right">
+                  调用（14 天）
+                </th>
+                <th className="border-b-[1.5px] border-foreground px-3 py-2.5">
+                  环比
+                </th>
+                <th className="border-b-[1.5px] border-foreground px-3 py-2.5">
+                  趋势
+                </th>
+                <th className="border-b-[1.5px] border-foreground px-3 py-2.5 text-right">
+                  失败率
+                </th>
+                <th className="border-b-[1.5px] border-foreground px-3 py-2.5 text-right">
+                  P95 延迟
+                </th>
+                <th className="border-b-[1.5px] border-foreground px-3 py-2.5">
+                  最近调用
+                </th>
               </tr>
             </thead>
             <tbody>
-              {items.map((it) => {
-                const g = gradeOf(it.score);
-                return (
-                  <tr key={it.key} className="border-t border-border/60">
-                    <td className="p-3 font-medium">{it.name}</td>
-                    <td className="p-3">
-                      <TypePill t={it.type} />
-                    </td>
-                    <td className="p-3 text-right font-mono">{it.usage}</td>
-                    <td className="p-3 text-right font-mono">{it.favs}</td>
-                    <td className="p-3 text-right font-mono">{it.u30}</td>
-                    <td className="p-3 text-right font-mono">
-                      {Math.round(it.dim.adopt)}
-                    </td>
-                    <td className="p-3 text-right font-mono">
-                      {Math.round(it.dim.active)}
-                    </td>
-                    <td
-                      className="p-3 text-right font-mono font-semibold"
-                      style={{ color: gradeColor(it.score) }}
+              {tableRows.map((r) => (
+                <tr key={r.key} className="hover:bg-[#FBFBF7]">
+                  <td className="border-b border-border px-3 py-[13px] text-[12.5px]">
+                    <a href={r.href} className="font-semibold hover:underline">
+                      {r.name}
+                    </a>{" "}
+                    <Bdg
+                      tone={r.type === "mcp" ? "blue" : "ok"}
+                      className="ml-1"
                     >
-                      {it.score}
-                    </td>
-                    <td className="p-3">
-                      <span
-                        className={cn(
-                          "rounded-full px-2.5 py-0.5 text-xs font-semibold",
-                          g.cls,
-                        )}
-                      >
-                        {g.label}
-                      </span>
-                    </td>
-                    <td className="p-3 text-right">
-                      <Link
-                        className="font-medium text-info hover:underline"
-                        href={it.href}
-                      >
-                        查看
-                      </Link>
-                    </td>
-                  </tr>
-                );
-              })}
+                      {r.type === "mcp" ? "MCP" : "SKILL"}
+                    </Bdg>
+                  </td>
+                  <td className="border-b border-border px-3 py-[13px] font-mono text-[12.5px]">
+                    {r.version}
+                  </td>
+                  <td className="border-b border-border px-3 py-[13px]">
+                    <Bdg
+                      tone={r.status.tone}
+                      dot={r.type === "mcp" && r.status.tone !== "mut"}
+                    >
+                      {r.status.label}
+                    </Bdg>
+                  </td>
+                  <td className="border-b border-border px-3 py-[13px] text-right font-mono text-[12.5px] font-bold">
+                    {r.calls14.toLocaleString()}
+                  </td>
+                  <td className="border-b border-border px-3 py-[13px]">
+                    <Bdg tone={r.delta >= 0 ? "ok" : "err"}>
+                      {r.delta >= 0 ? "+" : ""}
+                      {r.delta}%
+                    </Bdg>
+                  </td>
+                  <td className="border-b border-border px-3 py-[13px]">
+                    <span className="inline-flex h-4 items-end gap-0.5">
+                      {r.spark
+                        .map((v, idx) => ({ v, idx }))
+                        .map(({ v, idx }) => (
+                          <i
+                            key={`spark-${r.key}-${idx}`}
+                            className="block w-1 rounded-[1px]"
+                            style={{
+                              height: `${v}%`,
+                              minHeight: 2,
+                              background:
+                                r.status.tone === "err" &&
+                                idx === r.spark.length - 1
+                                  ? "#F09595"
+                                  : r.status.tone === "mut"
+                                    ? "#D3D1C7"
+                                    : r.type === "mcp"
+                                      ? MCP
+                                      : SKILL,
+                            }}
+                          />
+                        ))}
+                    </span>
+                  </td>
+                  <td className="border-b border-border px-3 py-[13px] text-right font-mono text-[12.5px]">
+                    {r.failRate}
+                  </td>
+                  <td className="border-b border-border px-3 py-[13px] text-right font-mono text-[12.5px]">
+                    {r.p95}
+                  </td>
+                  <td className="border-b border-border px-3 py-[13px] font-mono text-[12.5px] text-[#9A9A94]">
+                    {r.lastCall}
+                  </td>
+                </tr>
+              ))}
+              {tableRows.length === 0 && (
+                <tr>
+                  <td
+                    colSpan={9}
+                    className="px-3 py-10 text-center text-sm text-muted-foreground"
+                  >
+                    没有匹配的条目
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
-      </Card>
+      </div>
+
+      {/* 用户排行 + 需要关注（效果图 10 底部 1:1 双栏） */}
+      <div className="grid border-t-[1.5px] border-border xl:grid-cols-2">
+        <div className="border-b-[1.5px] border-border px-8 py-5 xl:border-b-0 xl:border-r-[1.5px]">
+          <h3 className="mb-3 text-[15px] font-semibold">活跃用户排行</h3>
+          {userRank.map((u, i) => (
+            <Kv key={u.name} last={i === userRank.length - 1}>
+              <span className="flex items-center gap-[9px]">
+                <i
+                  className="w-4 font-mono text-[11px] font-semibold not-italic"
+                  style={{ color: i === 0 ? "#854F0B" : "#9A9A94" }}
+                >
+                  {i + 1}
+                </i>
+                {u.name}
+              </span>
+              <span className="font-mono font-semibold">{u.n} 次</span>
+            </Kv>
+          ))}
+        </div>
+        <div className="px-8 py-5">
+          <h3 className="mb-3 text-[15px] font-semibold">需要关注</h3>
+          {watch.length === 0 ? (
+            <p className="py-6 text-sm text-muted-foreground">
+              暂无需要关注的条目
+            </p>
+          ) : (
+            watch.map((w) => (
+              <Kv
+                key={`${w.label}|${w.badge}`}
+                last={w === watch[watch.length - 1]}
+              >
+                <span className="min-w-0 truncate">
+                  {w.href ? (
+                    <a href={w.href} className="hover:underline">
+                      {w.label}
+                    </a>
+                  ) : (
+                    w.label
+                  )}
+                </span>
+                <Bdg tone={w.tone} className="ml-3 shrink-0">
+                  {w.badge}
+                </Bdg>
+              </Kv>
+            ))
+          )}
+        </div>
+      </div>
     </div>
   );
 }

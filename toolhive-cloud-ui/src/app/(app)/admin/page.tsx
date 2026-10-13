@@ -3,38 +3,12 @@ import { ErrorToast } from "@/components/error-toast";
 import { PageHeader } from "@/components/header-page";
 import { NavTabs } from "@/components/nav-tabs";
 import { getAuthContext } from "@/lib/auth/context";
-import type { Submission } from "@/lib/platform-backend";
 import { listSubmissions } from "@/lib/platform-backend";
 import { AuditBlock } from "./_components/audit-block";
+import { buildGroups, isOnShelf, parseMeta } from "./_components/group-utils";
 import { PublishedBlock } from "./_components/published-block";
 import { RetiredBlock } from "./_components/retired-block";
 import { ReviewBlock } from "./_components/review-block";
-
-function parseMeta(meta?: string): Record<string, string> {
-  try {
-    return meta ? (JSON.parse(meta) as Record<string, string>) : {};
-  } catch {
-    return {};
-  }
-}
-
-function groupKey(s: Submission): string {
-  return parseMeta(s.meta).group_key || s.id;
-}
-
-function buildGroups(published: Submission[]) {
-  const groups = new Map<string, Submission[]>();
-  published.forEach((s) => {
-    const gk = groupKey(s);
-    const arr = groups.get(gk) || [];
-    arr.push(s);
-    groups.set(gk, arr);
-  });
-  for (const arr of groups.values()) {
-    arr.sort((a, b) => +new Date(b.created_at) - +new Date(a.created_at));
-  }
-  return groups;
-}
 
 export default async function AdminPage({
   searchParams,
@@ -84,12 +58,24 @@ export default async function AdminPage({
     (s) => s.status === "removed" || s.status === "rejected",
   );
 
-  // 页头徽章口径：待审总数 + 今日新增（按提交时间零点起算）
+  // 页头 psub 按 tab 切换（效果图 04/05/06 各自的摘要口径）
   const todayStart = new Date();
   todayStart.setHours(0, 0, 0, 0);
   const todayNew = submissions.filter(
     (s) => +new Date(s.created_at) >= +todayStart,
   ).length;
+  const notOnShelfN = published.filter((s) => !isOnShelf(s)).length;
+  const syncErrN = published.filter(
+    (s) => parseMeta(s.meta).registry_synced === "error",
+  ).length;
+  const psub =
+    tab === "published"
+      ? `已发布 ${published.length} 件 · 未上线 ${notOnShelfN} 件 · 同步失败 ${syncErrN} 件`
+      : tab === "audit"
+        ? "全部管理操作留痕，支持按类型 / 操作者 / 时间检索"
+        : tab === "retired"
+          ? `已删除 / 已拒绝 ${retired.length} 件，仅管理员可见`
+          : `待审 ${pending.length} 件 · 今日新增 ${todayNew} 件`;
 
   const TABS = [
     {
@@ -119,11 +105,8 @@ export default async function AdminPage({
 
   return (
     <div className="flex h-full flex-col">
-      {/* 效果图 04：页头 + psub 摘要（待审/今日已审收进副标行，红胶囊退场） */}
-      <PageHeader
-        title="管理后台"
-        description={`待审 ${pending.length} 件 · 今日新增 ${todayNew} 件`}
-      />
+      {/* 效果图 04/05/06：页头 + psub 摘要（按 tab 切换口径） */}
+      <PageHeader title="管理后台" description={psub} />
 
       {/* 子导航（效果图 .subnav：纯文字 + 黑色下边线，无图标） */}
       <div className="border-b-2 border-foreground bg-secondary/50 px-8">

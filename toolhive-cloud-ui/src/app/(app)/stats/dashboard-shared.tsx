@@ -1,310 +1,137 @@
 "use client";
 
-import { Card } from "@/components/ui/card";
+import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
-export interface ItemDim {
-  adopt: number;
-  active: number;
-  stable: number;
-  health: number;
-  mature: number;
-  content: number;
-}
-export interface ItemStat {
-  key: string;
-  id: string;
-  type: "mcp" | "skill";
-  name: string;
-  owner?: string;
-  desc: string;
-  usage: number;
-  favs: number;
-  u30: number;
-  u7: number;
-  fav7: number;
-  g7: number;
-  adopt30: number; // 近 30 天采纳数（调用/下载量）
-  dim: ItemDim;
-  score: number;
-  href: string;
-  deploy?: string;
-  healthy?: boolean;
-}
-export interface TrendItem {
-  key: string;
-  type: "mcp" | "skill";
-  name: string;
-  data: number[];
-}
+export const MCP = "#185FA5";
+export const SKILL = "#639922";
 
-export type Filt = "all" | "mcp" | "skill";
-export const MCP = "hsl(var(--info))";
-export const SKILL = "hsl(var(--success))";
+export type Tone = "ok" | "warn" | "err" | "mut" | "blue";
 
-export function TypePill({ t }: { t: "mcp" | "skill" }) {
-  return t === "mcp" ? (
-    <span className="rounded-full bg-info/10 px-2 py-0.5 text-xs font-semibold text-info">
-      MCP
-    </span>
-  ) : (
-    <span className="rounded-full bg-success/15 px-2 py-0.5 text-xs font-semibold text-success">
-      Skill
-    </span>
-  );
-}
+/** 效果图 .bdg 徽章：11px、5px 圆角、1px 描边、可选圆点 */
+const TONE_CLS: Record<Tone, string> = {
+  ok: "border-[#97C459] bg-[#EAF3DE] text-[#3B6D11]",
+  warn: "border-[#EF9F27] bg-[#FAEEDA] text-[#854F0B]",
+  err: "border-[#F09595] bg-[#FCEBEB] text-[#A32D2D]",
+  mut: "border-[#D3D1C7] bg-[#F1EFE8] text-[#5F5E5A]",
+  blue: "border-[#85B7EB] bg-[#E6F1FB] text-[#0C447C]",
+};
 
-// 类型过滤分段控件（右上角，各自独立）：黑胶囊选中态，与目录页类型筛选同款
-export function Seg({
-  on,
-  onChange,
+export function Bdg({
+  tone,
+  dot,
+  children,
+  className,
 }: {
-  on: Filt;
-  onChange: (f: Filt) => void;
+  tone: Tone;
+  dot?: boolean;
+  children: ReactNode;
+  className?: string;
 }) {
-  const opts: { k: Filt; l: string }[] = [
-    { k: "all", l: "全部" },
-    { k: "mcp", l: "MCP" },
-    { k: "skill", l: "Skill" },
-  ];
-  return (
-    <div className="inline-flex shrink-0 rounded-lg border border-foreground bg-card p-0.5">
-      {opts.map((o) => (
-        <button
-          key={o.k}
-          type="button"
-          onClick={() => onChange(o.k)}
-          className={cn(
-            "cursor-pointer rounded-md px-3.5 py-1 text-sm font-semibold transition-colors",
-            on === o.k
-              ? "bg-foreground text-background"
-              : "text-muted-foreground hover:text-foreground",
-          )}
-        >
-          {o.l}
-        </button>
-      ))}
-    </div>
-  );
-}
-
-export function CardHead({
-  title,
-  sub,
-  filt,
-  onFilt,
-}: {
-  title: string;
-  sub?: string;
-  filt?: Filt;
-  onFilt?: (f: Filt) => void;
-}) {
-  return (
-    <div className="mb-3 flex items-center justify-between gap-3">
-      <div className="min-w-0">
-        <h3 className="text-lg font-semibold text-foreground">{title}</h3>
-        {sub && <p className="text-xs text-muted-foreground">{sub}</p>}
-      </div>
-      {filt && onFilt && <Seg on={filt} onChange={onFilt} />}
-    </div>
-  );
-}
-
-function _Sc({ c }: { c: string }) {
   return (
     <span
-      className="inline-block h-2.5 w-2.5 rounded-[3px]"
-      style={{ background: c }}
-    />
-  );
-}
-
-export function gradeOf(score: number) {
-  if (score >= 80)
-    return {
-      label: "优质",
-      cls: "bg-success/15 text-success",
-    };
-  if (score >= 60)
-    return {
-      label: "良好",
-      cls: "bg-success/8 text-success/85",
-    };
-  if (score >= 45)
-    return {
-      label: "待观察",
-      cls: "bg-warning/15 text-warning",
-    };
-  return {
-    label: "低质",
-    cls: "bg-destructive/10 text-destructive",
-  };
-}
-export const gradeColor = (s: number) =>
-  s >= 80
-    ? "hsl(var(--success))"
-    : s >= 60
-      ? "hsl(var(--success) / 0.75)"
-      : s >= 45
-        ? "hsl(var(--warning))"
-        : "hsl(var(--destructive))";
-export function Kpi({
-  l,
-  v,
-  s,
-  c,
-  accent,
-}: {
-  l: string;
-  v: number;
-  s?: string;
-  c?: string;
-  /** 包豪斯色块主卡：info 蓝底白字（每行至多一枚） */
-  accent?: boolean;
-}) {
-  return (
-    <Card
       className={cn(
-        "p-4",
-        accent && "border-none bg-info text-white dark:bg-info/90",
+        "inline-flex items-center gap-[5px] whitespace-nowrap rounded-[5px] border px-[9px] py-0.5 text-[11px]",
+        TONE_CLS[tone],
+        className,
       )}
     >
-      <p
-        className={cn(
-          "text-xs",
-          accent ? "opacity-75" : "text-muted-foreground",
-        )}
-      >
-        {l}
-      </p>
-      <p
-        className="mt-1 font-mono text-3xl font-semibold"
-        style={c && !accent ? { color: c } : undefined}
-      >
-        {v}
-      </p>
-      {s && (
-        <p
-          className={cn(
-            "font-mono text-[11px]",
-            accent ? "opacity-60" : "text-muted-foreground",
-          )}
-        >
-          {s}
-        </p>
-      )}
-    </Card>
+      {dot && <span className="size-1.5 rounded-full bg-current" />}
+      {children}
+    </span>
   );
 }
 
-export function RankRow({ it, rank }: { it: ItemStat; rank: number }) {
-  const rkCls =
-    rank === 1
-      ? "bg-highlight text-foreground"
-      : rank === 2
-        ? "bg-muted text-foreground"
-        : rank === 3
-          ? "bg-highlight/40 text-foreground"
-          : "bg-muted text-muted-foreground";
-  const dims =
-    it.type === "mcp"
-      ? ([
-          ["采纳", it.dim.adopt],
-          ["活跃", it.dim.active],
-          ["稳定", it.dim.stable],
-          ["反馈", it.dim.health],
-          ["成熟", it.dim.mature],
-          ["内容", it.dim.content],
-        ] as const)
-      : ([
-          ["采纳", it.dim.adopt],
-          ["活跃", it.dim.active],
-          ["反馈", it.dim.health],
-          ["成熟", it.dim.mature],
-          ["内容", it.dim.content],
-        ] as const);
-  const cols = it.type === "mcp" ? 6 : 5;
-  const gridCls =
-    it.type === "mcp"
-      ? "grid-cols-[repeat(6,minmax(80px,1fr))]"
-      : "grid-cols-[repeat(5,minmax(80px,1fr))]";
-  const barC = it.type === "mcp" ? MCP : SKILL;
+/** 类型徽章：MCP 蓝 / SKILL 绿（效果图条目明细、已发布管理表头） */
+export function TypeBdg({ t }: { t: "mcp" | "skill" }) {
   return (
-    <div className="flex items-center gap-4 rounded-lg border-b border-border/60 px-1 py-2">
-      <span
-        className={cn(
-          "flex h-6 w-6 flex-none items-center justify-center rounded-md text-xs font-bold",
-          rkCls,
-        )}
-      >
-        {rank}
-      </span>
-      <div className="w-36 shrink-0">
-        <div className="flex items-center gap-1.5">
-          <span className="truncate text-sm font-semibold">{it.name}</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <TypePill t={it.type} />
-          <span className="text-xs text-muted-foreground">
-            {it.type === "mcp" ? "调用" : "下载"} {it.usage}
-          </span>
-        </div>
-      </div>
-      {/* 中：各维度得分，等宽对齐填满中间，不侵入右侧总分 */}
+    <Bdg tone={t === "mcp" ? "blue" : "ok"}>
+      {t === "mcp" ? "MCP" : "SKILL"}
+    </Bdg>
+  );
+}
+
+/** 效果图 KPI 格：18/22 内边距、10.5px 标签、26px mono 数值、10px mono 副行 */
+export function KpiCell({
+  label,
+  value,
+  sub,
+  accent,
+  valueColor,
+}: {
+  label: string;
+  value: string | number;
+  sub?: string;
+  /** 首格包豪斯蓝实色块（白字、黑描边右界） */
+  accent?: boolean;
+  valueColor?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "px-[22px] py-[18px]",
+        accent
+          ? "border-r-[1.5px] border-foreground bg-[#185FA5] text-white"
+          : "border-r-[1.5px] border-border last:border-r-0",
+      )}
+    >
       <div
         className={cn(
-          "min-w-0 flex-1 grid gap-x",
-          gridCls,
-          cols === 5 ? "gap-x-3" : "gap-x-2",
+          "text-[10.5px]",
+          accent ? "opacity-75" : "text-[#9A9A94]",
         )}
       >
-        {dims.map(([label, v]) => {
-          const val = Math.round(v);
-          return (
-            <div key={label} className="min-w-[80px]">
-              <div className="flex items-baseline justify-between text-xs text-muted-foreground">
-                <span className="font-medium">{label}</span>
-                <b className="tabular-nums text-sm text-foreground">{val}</b>
-              </div>
-              <span className="mt-1 block h-1.5 overflow-hidden rounded-full bg-muted">
-                <span
-                  className="block h-full rounded-full"
-                  style={{ width: `${Math.max(2, val)}%`, background: barC }}
-                />
-              </span>
-            </div>
-          );
-        })}
+        {label}
       </div>
-      {/* 右：加权总分，固定不挤 */}
-      <div className="w-20 shrink-0 text-right">
+      <div
+        className="mt-1 font-mono text-[26px] font-semibold leading-none"
+        style={valueColor ? { color: valueColor } : undefined}
+      >
+        {value}
+      </div>
+      {sub && (
         <div
-          className="text-3xl font-extrabold leading-7"
-          style={{ color: gradeColor(it.score) }}
+          className={cn(
+            "mt-1 font-mono text-[10px]",
+            accent ? "opacity-60" : "text-[#9A9A94]",
+          )}
         >
-          {it.score}
+          {sub}
         </div>
-        <div className="mt-0.5 text-sm text-muted-foreground">
-          {gradeOf(it.score).label}
-        </div>
-      </div>
+      )}
     </div>
   );
 }
 
-export function perCapita(items: ItemStat[]) {
-  const used = items.filter((i) => i.u7 > 0);
-  if (!used.length) return "—";
-  return (used.reduce((a, b) => a + b.g7 / b.u7, 0) / used.length).toFixed(1);
-}
-export function perItem(it: ItemStat) {
-  return it.u7 > 0 ? it.g7 / it.u7 : 0;
+/** 效果图条目明细行 */
+export interface StatRow {
+  key: string;
+  type: "mcp" | "skill";
+  name: string;
+  version: string;
+  status: { label: string; tone: Tone };
+  /** 近 14 天调用/下载量 */
+  calls14: number;
+  /** 环比（近 7 天 vs 前 7 天，%） */
+  delta: number;
+  /** 近 5 天迷你趋势（已归一化 0–100） */
+  spark: number[];
+  failRate: string;
+  p95: string;
+  lastCall: string;
+  href: string;
 }
 
-export function EmptyRow() {
-  return (
-    <p className="py-8 text-center text-sm text-muted-foreground">
-      没有匹配的条目
-    </p>
-  );
+/** 提交漏斗（效果图 10 四段：提交→审核通过→配置上线→部署成功） */
+export interface Funnel {
+  stages: { label: string; v: number; bg: string; width: number }[];
+  note?: string;
+}
+
+/** 需要关注行 */
+export interface WatchRow {
+  label: string;
+  badge: string;
+  tone: Tone;
+  href?: string;
 }
