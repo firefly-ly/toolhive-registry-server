@@ -278,7 +278,7 @@ export async function AuditBlock({
                     </td>
                     <td className="border-b border-border px-3 py-[13px]">
                       <span className="inline-flex items-center gap-2">
-                        <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-[#F1EFE8] text-[12.5px] text-[#5F5E5A]">
+                        <span className="flex size-6 shrink-0 items-center justify-center rounded-full border-[1.5px] border-foreground bg-[#F1EFE8] text-[12.5px] text-[#5F5E5A]">
                           {actor.charAt(0).toUpperCase()}
                         </span>
                         <span className="truncate">

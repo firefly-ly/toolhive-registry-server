@@ -149,7 +149,7 @@ export function CatalogHero({
   return (
     <div>
       {/* ── 上层：主张区 + KPI 嵌拼矩阵（通栏，1px 分界） ── */}
-      <div className="grid grid-cols-1 border-b lg:grid-cols-[1.55fr_1fr]">
+      <div className="grid grid-cols-1 border-b-2 border-foreground lg:grid-cols-[1.55fr_1fr]">
         {/* 左主张区 */}
         <div className="relative overflow-hidden px-1 py-10 lg:pr-10">
           {/* 左下角淡奶油几何衬底 + 漂移衬形（效果图 bgdeco 的动态版） */}
@@ -214,7 +214,7 @@ export function CatalogHero({
         </div>
 
         {/* 右 KPI 嵌拼矩阵：无圆角、1px 分界线、与左区同高 */}
-        <div className="grid grid-cols-2 grid-rows-2 border-t lg:border-t-0 lg:border-l">
+        <div className="grid grid-cols-2 grid-rows-2 border-t lg:border-t-0 lg:border-l-2 lg:border-foreground">
           {cells.map((c, i) => (
             <div
               key={c.label}
@@ -237,7 +237,7 @@ export function CatalogHero({
       {/* ── 下层：精选带（左字形 + 内容，右切换 + 黑 CTA，底全宽进度条） ── */}
       {cur && (
         <div
-          className="anim-pop-d2 relative border-b"
+          className="anim-pop-d2 relative border-b-2 border-foreground"
           onMouseEnter={() => setPaused(true)}
           onMouseLeave={() => setPaused(false)}
         >

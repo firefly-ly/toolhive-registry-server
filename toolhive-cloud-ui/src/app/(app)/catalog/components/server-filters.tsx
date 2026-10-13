@@ -57,11 +57,11 @@ export function ServerFilters({
   return (
     <div className="flex w-full flex-wrap items-center justify-between gap-3">
       {/* 左：类型分段 + 状态/排序 + 数据源 */}
-      <div className="flex min-w-0 flex-1 items-center gap-2.5">
+      <div className="flex min-w-0 flex-1 items-center gap-3">
         <div
           role="group"
           aria-label="类型筛选"
-          className="flex shrink-0 items-center rounded-lg border border-foreground bg-card p-0.5"
+          className="flex shrink-0 items-center overflow-hidden rounded-lg border-[1.5px] border-foreground bg-card"
         >
           {TYPE_OPTIONS.map((opt) => {
             const active = typeFilter === opt.value;
@@ -71,7 +71,7 @@ export function ServerFilters({
                 type="button"
                 onClick={() => onTypeFilterChange(opt.value)}
                 aria-pressed={active}
-                className={`cursor-pointer rounded-md px-3 py-1.5 text-xs font-semibold whitespace-nowrap transition-colors ${
+                className={`flex cursor-pointer items-center border-r-[1.5px] border-foreground px-4 py-1.5 text-[13.5px] font-semibold whitespace-nowrap transition-colors last:border-r-0 ${
                   active
                     ? "bg-foreground text-background"
                     : "text-muted-foreground hover:text-foreground"
