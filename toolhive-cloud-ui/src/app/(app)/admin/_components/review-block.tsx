@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from "react";
 import {
   ApproveDialog,
   type PromptScanResult,
-  ScanBadge,
   type TrivyResult,
 } from "@/app/(app)/submissions/approve-dialog";
 import { Badge } from "@/components/ui/badge";
@@ -24,6 +23,148 @@ const TYPE_LABEL: Record<string, string> = { mcp: "MCP", skill: "Skill" };
 
 function parseLoose(v: unknown): Record<string, unknown> {
   return v && typeof v === "object" ? (v as Record<string, unknown>) : {};
+}
+
+/** 扫描结果 → 圆形标记（效果图 04 SVG：对勾绿 / 叹号琥珀 / 叉红 / 上箭头灰） */
+function ScanMark({ status }: { status?: string }) {
+  const s = status ?? "skipped";
+  if (s === "clean") {
+    return (
+      <svg viewBox="0 0 26 26" className="size-6.5 shrink-0" aria-hidden>
+        <circle
+          cx="13"
+          cy="13"
+          r="11"
+          fill="#EAF3DE"
+          stroke="#639922"
+          strokeWidth="2"
+        />
+        <path
+          d="M8 13l3.5 3.5L18 10"
+          fill="none"
+          stroke="#3B6D11"
+          strokeWidth="2.2"
+          strokeLinecap="round"
+        />
+      </svg>
+    );
+  }
+  if (s === "warn") {
+    return (
+      <svg viewBox="0 0 26 26" className="size-6.5 shrink-0" aria-hidden>
+        <circle
+          cx="13"
+          cy="13"
+          r="11"
+          fill="#FAEEDA"
+          stroke="#EF9F27"
+          strokeWidth="2"
+        />
+        <path
+          d="M13 7v7M13 17.5v.5"
+          stroke="#854F0B"
+          strokeWidth="2.4"
+          strokeLinecap="round"
+        />
+      </svg>
+    );
+  }
+  if (s === "alert" || s === "critical" || s === "error") {
+    return (
+      <svg viewBox="0 0 26 26" className="size-6.5 shrink-0" aria-hidden>
+        <circle
+          cx="13"
+          cy="13"
+          r="11"
+          fill="#FCEBEB"
+          stroke="#F09595"
+          strokeWidth="2"
+        />
+        <path
+          d="M9 9l8 8M17 9l-8 8"
+          stroke="#A32D2D"
+          strokeWidth="2.2"
+          strokeLinecap="round"
+        />
+      </svg>
+    );
+  }
+  return (
+    <svg viewBox="0 0 26 26" className="size-6.5 shrink-0" aria-hidden>
+      <circle
+        cx="13"
+        cy="13"
+        r="11"
+        fill="#F1EFE8"
+        stroke="#B4B2A9"
+        strokeWidth="2"
+      />
+      <path
+        d="M13 18V8M13 8l-4 4M13 8l4 4"
+        fill="none"
+        stroke="#5F5E5A"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+const SCAN_TONE: Record<string, { label: string; cls: string }> = {
+  clean: { label: "通过", cls: "border-success/40 bg-success/10 text-success" },
+  warn: {
+    label: "有提示",
+    cls: "border-warning/40 bg-warning/10 text-warning",
+  },
+  alert: {
+    label: "需人工确认",
+    cls: "border-destructive/40 bg-destructive/10 text-destructive",
+  },
+  critical: {
+    label: "需人工确认",
+    cls: "border-destructive/40 bg-destructive/10 text-destructive",
+  },
+  error: {
+    label: "扫描失败",
+    cls: "border-destructive/40 bg-destructive/10 text-destructive",
+  },
+  skipped: {
+    label: "无需处理",
+    cls: "border-border bg-muted text-muted-foreground",
+  },
+};
+
+/** 扫描卡（效果图 04 .scan 规格：标记 + 标题/副文 + 右侧结果徽章） */
+function ScanCard({
+  title,
+  sub,
+  status,
+}: {
+  title: string;
+  sub: string;
+  status?: string;
+}) {
+  const s = status ?? "skipped";
+  const tone = SCAN_TONE[s] ?? SCAN_TONE.skipped;
+  return (
+    <div className="flex items-center gap-3 rounded-lg border-[1.5px] border-border p-3.5">
+      <ScanMark status={s} />
+      <div className="min-w-0">
+        <p className="text-[12.5px] font-semibold">{title}</p>
+        <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
+          {sub}
+        </p>
+      </div>
+      <span
+        className={cn(
+          "ml-auto inline-flex shrink-0 items-center rounded-md border px-2 py-0.5 text-[11px]",
+          tone.cls,
+        )}
+      >
+        {tone.label}
+      </span>
+    </div>
+  );
 }
 
 /**
@@ -135,7 +276,7 @@ export function ReviewBlock({ pending }: { pending: Submission[] }) {
             ))}
           </div>
         </div>
-        <div className="min-h-0 flex-1 space-y-2 overflow-y-auto p-3">
+        <div className="min-h-0 flex-1 overflow-y-auto">
           {groups.length === 0 && (
             <p className="py-8 text-center text-sm text-muted-foreground">
               没有匹配的提交
@@ -146,33 +287,63 @@ export function ReviewBlock({ pending }: { pending: Submission[] }) {
             const name = parseMeta(first.meta).name || gk;
             const isActive =
               selected != null && arr.some((s) => s.id === selected.id);
+            const fm = parseLoose(parseMeta(first.meta));
+            const fTrivy = fm.trivy as { status?: string } | undefined;
+            const fScan = fm.prompt_scan as { status?: string } | undefined;
+            const scanStatus =
+              first.type === "mcp" ? fTrivy?.status : fScan?.status;
             return (
               <button
                 key={gk}
                 type="button"
                 onClick={() => setSelectedId(first.id)}
                 className={cn(
-                  "w-full cursor-pointer rounded-lg border p-3 text-left transition-colors",
+                  "w-full cursor-pointer border-b border-border px-4.5 py-3.5 text-left transition-colors",
                   isActive
-                    ? "border-primary/40 bg-primary/5"
-                    : "border-transparent hover:border-border hover:bg-muted/40",
+                    ? "border-l-[3px] border-l-primary bg-card"
+                    : "border-l-[3px] border-l-transparent bg-secondary/40 hover:bg-muted/50",
                 )}
               >
-                <div className="flex items-center gap-2">
-                  <span className="min-w-0 truncate text-sm font-medium">
-                    {name}
+                <b className="text-[13px] font-semibold">
+                  {name}{" "}
+                  <span className="font-mono text-xs font-normal text-muted-foreground">
+                    {versionOf(first)}
                   </span>
-                  <Badge variant="outline" className="shrink-0 text-xs">
+                </b>
+                <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                  <span
+                    className={cn(
+                      "inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-[11px]",
+                      first.type === "mcp"
+                        ? "border-info/40 bg-info/10 text-info"
+                        : "border-success/40 bg-success/10 text-success",
+                    )}
+                  >
+                    <span className="size-1.5 rounded-full bg-current" />
                     {TYPE_LABEL[first.type] ?? first.type}
-                  </Badge>
-                  <span className="ml-auto shrink-0 text-xs text-muted-foreground">
-                    {arr.length} 个版本
                   </span>
+                  {scanStatus && (
+                    <span
+                      className={cn(
+                        "inline-flex items-center rounded-md border px-2 py-0.5 text-[11px]",
+                        scanStatus === "clean"
+                          ? "border-success/40 bg-success/10 text-success"
+                          : "border-warning/40 bg-warning/10 text-warning",
+                      )}
+                    >
+                      {scanStatus === "clean" ? "扫描通过" : "扫描有提示"}
+                    </span>
+                  )}
+                  <span className="inline-flex items-center rounded-md border border-border bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
+                    {first.user_id} ·{" "}
+                    {new Date(first.created_at).toLocaleDateString("zh-CN")}
+                  </span>
+                  {arr.length > 1 && (
+                    <span className="ml-auto text-[11px] text-muted-foreground">
+                      {arr.length} 个版本
+                    </span>
+                  )}
                 </div>
-                <p className="mt-1 truncate text-xs text-muted-foreground">
-                  {versionOf(first)} · {first.user_id} ·{" "}
-                  {new Date(first.created_at).toLocaleDateString("zh-CN")}
-                </p>
               </button>
             );
           })}
@@ -305,26 +476,50 @@ export function ReviewBlock({ pending }: { pending: Submission[] }) {
                   </p>
                 )}
 
-              <div className="flex flex-wrap items-center gap-2 rounded-lg border bg-muted/30 p-3">
-                <p className="text-xs font-medium text-muted-foreground">
+              {/* 安全扫描（效果图 04：2×2 卡，SVG 圆形标记 + 右侧结果徽章） */}
+              <div>
+                <p className="mb-2.5 text-[11px] font-semibold tracking-[0.15em] text-muted-foreground">
                   安全扫描
                 </p>
-                <ScanBadge
-                  label="镜像漏洞"
-                  status={trivy?.status}
-                  extra={
-                    trivy
-                      ? `CRITICAL ${trivy.critical} · HIGH ${trivy.high} · 密钥 ${trivy.secrets}`
-                      : undefined
-                  }
-                />
-                {selected.type === "skill" && (
-                  <ScanBadge
-                    label="注入规则"
-                    status={promptScan?.status}
-                    extra={promptScan ? `命中 ${promptScan.total}` : undefined}
+                <div className="grid grid-cols-1 gap-2.5 md:grid-cols-2">
+                  <ScanCard
+                    title={
+                      selected.type === "mcp"
+                        ? "Trivy 漏洞扫描"
+                        : "提示注入扫描"
+                    }
+                    sub={
+                      selected.type === "mcp"
+                        ? trivy
+                          ? `CRITICAL ${trivy.critical} · HIGH ${trivy.high} · 密钥 ${trivy.secrets}`
+                          : "未执行"
+                        : promptScan
+                          ? `${promptScan.total} 条规则命中`
+                          : "未执行"
+                    }
+                    status={
+                      selected.type === "mcp"
+                        ? trivy?.status
+                        : promptScan?.status
+                    }
                   />
-                )}
+                  <ScanCard
+                    title="数据源声明"
+                    sub={(() => {
+                      const ds = parseLoose(selMeta.data_source);
+                      if (!ds.type || ds.type === "none")
+                        return "未声明外部数据源";
+                      return ds.type === "database"
+                        ? "数据库直连（需审批隔离决策）"
+                        : "HTTP API 出网";
+                    })()}
+                    status={(() => {
+                      const ds = parseLoose(selMeta.data_source);
+                      if (!ds.type || ds.type === "none") return "skipped";
+                      return "warn";
+                    })()}
+                  />
+                </div>
               </div>
             </div>
 

@@ -13,14 +13,11 @@ import {
   type ItemStat,
   Kpi,
   MCP,
-  perCapita,
-  perItem,
   RankRow,
   SKILL,
   type TrendItem,
   TypePill,
 } from "./dashboard-shared";
-import { Quadrant } from "./quadrant";
 import { TrendChart } from "./trend-chart";
 
 export function StatsDashboard({
@@ -28,54 +25,29 @@ export function StatsDashboard({
   kpis,
   trendDays,
   trendItems,
+  funnel,
 }: {
   items: ItemStat[];
   kpis: { total: number; avg: number; good: number; watch: number };
   trendDays: string[];
   trendItems: TrendItem[];
+  /** 提交漏斗（效果图 10）：提交 → 审核通过 → 配置上线 */
+  funnel?: { submitted: number; approved: number; onShelf: number };
 }) {
   const [fRank, setFRank] = useState<Filt>("all");
-  const [fRet, setFRet] = useState<Filt>("all");
   const [fTrend, setFTrend] = useState<Filt>("all");
-  const [fQuad, setFQuad] = useState<Filt>("all");
-  const [retMode, setRetMode] = useState<"users" | "ppc">("users");
 
   const rankList = useMemo(() => {
     let l = [...items].sort((a, b) => b.score - a.score).slice(0, 8);
     if (fRank !== "all") l = l.filter((i) => i.type === fRank);
     return l;
   }, [items, fRank]);
-  const retList = useMemo(() => {
-    let l = [...items].sort((a, b) =>
-      retMode === "users"
-        ? b.u30 - a.u30
-        : b.u7
-          ? b.g7 / b.u7 - (a.u7 ? a.g7 / a.u7 : 0)
-          : -1,
-    );
-    l = l.slice(0, 6);
-    if (fRet !== "all") l = l.filter((i) => i.type === fRet);
-    return l;
-  }, [items, fRet, retMode]);
 
   const trendLines = useMemo(() => {
     let l = trendItems;
     if (fTrend !== "all") l = l.filter((i) => i.type === fTrend);
     return l;
   }, [trendItems, fTrend]);
-  const quadList = useMemo(() => {
-    let l = items;
-    if (fQuad !== "all") l = l.filter((i) => i.type === fQuad);
-    return l;
-  }, [items, fQuad]);
-
-  const maxU = Math.max(1, ...items.map((i) => i.u30));
-  const _maxG = Math.max(1, ...retList.map((i) => i.g7));
-
-  const _d30 = kpis.total ? kpis.total : items.length;
-  const avgU = items.length
-    ? items.reduce((a, b) => a + b.u30, 0) / items.length
-    : 0;
 
   return (
     <div className="space-y-5">
@@ -125,82 +97,62 @@ export function StatsDashboard({
         </Card>
 
         <Card className="p-4">
-          <CardHead
-            title="留存与深度使用"
-            sub="近一月用户 · 近一周人均"
-            filt={fRet}
-            onFilt={setFRet}
-          />
-          {/* 可切换双指标 */}
-          <div className="mb-3 grid grid-cols-2 gap-2">
-            <button
-              type="button"
-              onClick={() => setRetMode("users")}
-              className={cn(
-                "rounded-xl border p-2.5 text-left transition-colors cursor-pointer",
-                retMode === "users"
-                  ? "border-foreground bg-foreground text-background"
-                  : "border-border bg-card hover:border-foreground/40",
-              )}
-            >
-              <p className="text-xs opacity-85">平均唯一用户 · 近一月</p>
-              <p className="font-mono text-3xl font-semibold">
-                {Math.round(avgU)}
-              </p>
-              <p className="text-xs opacity-75">人 / 项 · 去重真实用户</p>
-            </button>
-            <button
-              type="button"
-              onClick={() => setRetMode("ppc")}
-              className={cn(
-                "rounded-xl border p-2.5 text-left transition-colors cursor-pointer",
-                retMode === "ppc"
-                  ? "border-foreground bg-foreground text-background"
-                  : "border-border bg-card hover:border-foreground/40",
-              )}
-            >
-              <p className="text-xs opacity-85">人均使用 · 近一周</p>
-              <p className="font-mono text-3xl font-semibold">
-                {perCapita(items)}
-              </p>
-              <p className="text-xs opacity-75">次 / 人 · 近 7 天</p>
-            </button>
-          </div>
-          <div className="max-h-[240px] space-y-2 overflow-y-auto pr-1">
-            {retList.map((it) => {
-              const val = retMode === "users" ? it.u30 : perItem(it);
-              const wmax =
-                retMode === "users"
-                  ? maxU
-                  : Math.max(1, ...retList.map((x) => perItem(x)));
-              const w = Math.max(2, Math.round((val / wmax) * 100));
+          <CardHead title="提交漏斗（累计）" sub="提交 → 审核通过 → 配置上线" />
+          <div className="space-y-3">
+            {(
+              [
+                {
+                  label: "提交",
+                  v: funnel?.submitted ?? 0,
+                  bg: "bg-foreground",
+                },
+                {
+                  label: "审核通过",
+                  v: funnel?.approved ?? 0,
+                  bg: "bg-muted-foreground",
+                },
+                {
+                  label: "配置上线",
+                  v: funnel?.onShelf ?? 0,
+                  bg: "bg-success",
+                },
+              ] as const
+            ).map((st, i, arr) => {
+              const top = Math.max(1, arr[0].v);
+              const w = Math.max(12, Math.round((st.v / top) * 100));
               return (
-                <div
-                  key={it.key}
-                  className="grid grid-cols-[auto_1fr_64px] items-center gap-3 text-sm"
-                >
-                  <span className="w-28 truncate text-muted-foreground">
-                    {it.name}
+                <div key={st.label} className="flex items-center gap-3">
+                  <span className="w-20 shrink-0 text-xs text-muted-foreground">
+                    {st.label}
                   </span>
-                  <span className="h-2.5 overflow-hidden rounded-full bg-muted">
-                    <span
-                      className="block h-full rounded-full"
-                      style={{
-                        width: `${w}%`,
-                        background: it.type === "mcp" ? MCP : SKILL,
-                      }}
-                    />
-                  </span>
-                  <span className="text-right text-base font-semibold">
-                    {retMode === "users"
-                      ? `${it.u30}人`
-                      : perItem(it).toFixed(1)}
-                  </span>
+                  <div
+                    className={`flex h-[26px] flex-1 items-center rounded-md px-2.5 ${st.bg}`}
+                    style={{ width: `${w}%` }}
+                  >
+                    <span className="font-mono text-[11px] font-semibold text-white">
+                      {st.v} 件
+                    </span>
+                  </div>
                 </div>
               );
             })}
-            {retList.length === 0 && <EmptyRow />}
           </div>
+          {(() => {
+            const f = funnel;
+            if (!f) return null;
+            const d1 = f.submitted - f.approved;
+            const d2 = f.approved - f.onShelf;
+            if (d1 <= 0 && d2 <= 0) return null;
+            const note =
+              d1 >= d2
+                ? `最大流失在「提交 → 审核」：${d1} 件仍在待审或已被拒绝，建议及时处理队列。`
+                : `最大流失在「审核 → 上线」：${d2} 件通过后未配置可见范围，建议通知管理员补配置。`;
+            return (
+              <div className="mt-4 rounded-lg border-[1.5px] border-dashed border-border p-3 text-xs leading-relaxed text-muted-foreground">
+                {note}
+              </div>
+            );
+          })()}
         </Card>
       </div>
 
@@ -216,13 +168,69 @@ export function StatsDashboard({
           <TrendChart days={trendDays} lines={trendLines} />
         </Card>
         <Card className="p-4">
-          <CardHead
-            title="采纳 × 质量 四象限"
-            sub="横轴综合评分 · 纵轴近一月采纳数 · 气泡=综合分"
-            filt={fQuad}
-            onFilt={setFQuad}
-          />
-          <Quadrant items={quadList} />
+          <CardHead title="需要关注" sub="零使用 / 低分条目的运营建议" />
+          <div className="space-y-2">
+            {(() => {
+              const watch = [
+                ...items
+                  .filter((i) => i.u30 === 0)
+                  .map((i) => ({
+                    key: i.key,
+                    name: i.name,
+                    type: i.type,
+                    href: i.href,
+                    reason: "近 30 天无调用，建议评估下架或推一把",
+                    tone: "warn" as const,
+                  })),
+                ...items
+                  .filter((i) => i.u30 > 0 && i.score < 50)
+                  .map((i) => ({
+                    key: i.key,
+                    name: i.name,
+                    type: i.type,
+                    href: i.href,
+                    reason: `综合分 ${i.score}（低于 50），建议补描述 / 提示词质量`,
+                    tone: "err" as const,
+                  })),
+              ];
+              if (watch.length === 0) {
+                return (
+                  <p className="py-10 text-center text-sm text-muted-foreground">
+                    暂无需要关注的条目
+                  </p>
+                );
+              }
+              return watch.map((w) => (
+                <div
+                  key={`${w.key}-${w.reason.slice(0, 6)}`}
+                  className="flex items-center gap-3 rounded-lg border-[1.5px] border-border p-3"
+                >
+                  <span
+                    className={cn(
+                      "inline-flex shrink-0 items-center rounded-md border px-2 py-0.5 text-[11px]",
+                      w.tone === "warn"
+                        ? "border-warning/40 bg-warning/10 text-warning"
+                        : "border-destructive/40 bg-destructive/10 text-destructive",
+                    )}
+                  >
+                    {w.tone === "warn" ? "零使用" : "低分"}
+                  </span>
+                  <span className="min-w-0 truncate text-sm font-medium">
+                    {w.name}
+                  </span>
+                  <span className="min-w-0 flex-1 truncate text-xs text-muted-foreground">
+                    {w.reason}
+                  </span>
+                  <Link
+                    href={w.href}
+                    className="shrink-0 text-xs font-semibold text-info hover:underline"
+                  >
+                    查看
+                  </Link>
+                </div>
+              ));
+            })()}
+          </div>
         </Card>
       </div>
 

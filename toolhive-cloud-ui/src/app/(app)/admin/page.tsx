@@ -1,4 +1,3 @@
-import { ClipboardCheck, PackageCheck, ScrollText, Trash2 } from "lucide-react";
 import { redirect } from "next/navigation";
 import { ErrorToast } from "@/components/error-toast";
 import { PageHeader } from "@/components/header-page";
@@ -98,45 +97,36 @@ export default async function AdminPage({
       label: "审核队列",
       href: "/admin?tab=reviews",
       count: pending.length,
-      icon: ClipboardCheck,
     },
     {
       key: "published",
       label: "已发布管理",
       href: "/admin?tab=published",
       count: published.length,
-      icon: PackageCheck,
     },
     {
       key: "retired",
       label: "已删除 / 已拒绝",
       href: "/admin?tab=retired",
       count: retired.length,
-      icon: Trash2,
     },
     {
       key: "audit",
       label: "审计轨迹",
       href: "/admin?tab=audit",
-      icon: ScrollText,
     },
   ] as const;
 
   return (
     <div className="flex h-full flex-col">
-      <PageHeader title="管理后台">
-        <span className="flex items-center gap-2">
-          <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
-            待审 {pending.length}
-          </span>
-          <span className="text-xs text-muted-foreground">
-            今日新增 {todayNew}
-          </span>
-        </span>
-      </PageHeader>
+      {/* 效果图 04：页头 + psub 摘要（待审/今日已审收进副标行，红胶囊退场） */}
+      <PageHeader
+        title="管理后台"
+        description={`待审 ${pending.length} 件 · 今日新增 ${todayNew} 件`}
+      />
 
-      {/* 下划线式 Tab：图标 + 计数徽章，URL 驱动，选中红脊 */}
-      <div className="px-8 pt-2">
+      {/* 子导航（效果图 .subnav：纯文字 + 黑色下边线，无图标） */}
+      <div className="border-b-2 border-foreground bg-secondary/50 px-8">
         <NavTabs tabs={[...TABS]} activeKey={tab} />
       </div>
 

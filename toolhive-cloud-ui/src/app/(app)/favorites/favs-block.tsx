@@ -1,11 +1,9 @@
 "use client";
 
-import { Activity, Star } from "lucide-react";
+import { Star } from "lucide-react";
 import Link from "next/link";
-import { useMemo, useState } from "react";
 import { EmptyState } from "@/components/header-page";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { toggleFavoriteAction } from "@/lib/platform-actions";
 import { cn } from "@/lib/utils";
 
@@ -25,15 +23,11 @@ export interface ActivityEntry {
   count: number;
 }
 
-const FILTERS: { key: "all" | "mcp" | "skill"; label: string }[] = [
-  { key: "all", label: "全部" },
-  { key: "mcp", label: "MCP" },
-  { key: "skill", label: "Skill" },
-];
-
 /**
- * 我的工作台：左侧常用磁贴（类型色图标块 + 快捷操作），右侧使用动态时间线。
- * 整页滚动由页面根承担，本组件不再内滚。
+ * 工作台（效果图 02 逐像素版）：
+ * 左 1.7 栏「我的收藏」黑框磁贴（右上类型徽章带圆点、底行 mono 最近使用 + 黑色进入钮、
+ * 右下类型色角饰），右栏「使用动态」时间线（事件色圆点）+ 虚线快捷入口框；
+ * 两栏由 1.5px 发丝线分隔。
  */
 export function FavsBlock({
   count,
@@ -46,24 +40,6 @@ export function FavsBlock({
   rows: FavRow[];
   activity?: ActivityEntry[];
 }) {
-  const [filter, setFilter] = useState<"all" | "mcp" | "skill">("all");
-  const [query, setQuery] = useState("");
-
-  const filtered = useMemo(() => {
-    let list = rows;
-    if (filter !== "all") {
-      list = list.filter((r) => r.item_type === filter);
-    }
-    const q = query.trim().toLowerCase();
-    if (!q) return list;
-    return list.filter(
-      (item) =>
-        item.title.toLowerCase().includes(q) ||
-        item.description.toLowerCase().includes(q) ||
-        item.item_ref.toLowerCase().includes(q),
-    );
-  }, [rows, filter, query]);
-
   if (rows.length === 0) {
     return (
       <EmptyState
@@ -77,193 +53,162 @@ export function FavsBlock({
   }
 
   return (
-    <div className="grid grid-cols-1 gap-4 xl:grid-cols-[3fr_2fr]">
-      {/* 左：常用磁贴 */}
-      <div className="min-w-0">
-        <div className="mb-3 flex flex-wrap items-center gap-2">
-          <span className="text-sm font-medium">常用能力（{count}）</span>
-          <div className="ml-auto flex items-center gap-2">
-            <div className="inline-flex rounded-lg bg-muted p-1">
-              {FILTERS.map(({ key, label }) => (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={() => setFilter(key)}
-                  className={cn(
-                    "cursor-pointer rounded-md px-3 py-1 text-sm transition-colors",
-                    filter === key
-                      ? "bg-primary/10 font-medium text-primary"
-                      : "text-muted-foreground hover:text-foreground",
-                  )}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-            <div className="relative w-48">
-              <Input
-                type="text"
-                placeholder="搜索收藏…"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                className="h-9 bg-card"
-              />
-            </div>
-          </div>
+    <div className="flex flex-col lg:flex-row lg:border-t-[1.5px] border-border">
+      {/* 左 1.7 栏：我的收藏磁贴 */}
+      <div className="min-w-0 py-6 lg:flex-[1.7] lg:border-r-[1.5px] lg:border-border lg:pr-8">
+        <div className="mb-4 flex items-baseline">
+          <h3 className="text-base font-semibold">我的收藏</h3>
+          <span className="ml-2.5 text-[11px] text-muted-foreground">
+            {count} 件
+          </span>
+          <Link
+            href="/catalog"
+            className="ml-auto text-xs font-semibold text-muted-foreground hover:text-foreground"
+          >
+            管理收藏 →
+          </Link>
         </div>
 
-        {filtered.length === 0 ? (
-          <p className="py-10 text-center text-sm text-muted-foreground">
-            没有匹配的收藏
-          </p>
-        ) : (
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-3">
-            {filtered.map((r) => {
-              const unfav = toggleFavoriteAction.bind(
-                null,
-                r.item_type,
-                r.item_ref,
-                true,
-              );
-              const isMcp = r.item_type === "mcp";
-              return (
-                <div
-                  key={`${r.item_type}-${r.item_ref}`}
-                  className="group/tile relative flex flex-col overflow-hidden rounded-xl border bg-card p-4 transition-colors hover:border-primary/40"
+        <div className="grid grid-cols-1 gap-3.5 md:grid-cols-2">
+          {rows.map((r) => {
+            const unfav = toggleFavoriteAction.bind(
+              null,
+              r.item_type,
+              r.item_ref,
+              true,
+            );
+            const isMcp = r.item_type === "mcp";
+            return (
+              <div
+                key={`${r.item_type}-${r.item_ref}`}
+                className="group relative overflow-hidden rounded-[10px] border-[1.5px] border-foreground bg-card p-4 pt-5"
+              >
+                {/* 右上类型徽章（带圆点，效果图 .bdg 规格） */}
+                <span
+                  className={cn(
+                    "absolute top-3 right-3.5 inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-[11px]",
+                    isMcp
+                      ? "border-info/40 bg-info/10 text-info"
+                      : "border-success/40 bg-success/10 text-success",
+                  )}
                 >
-                  {/* 几何角饰（对齐效果图 02）：MCP 右下四分之一圆 / Skill 半圆，悬停放大 */}
-                  <span
-                    aria-hidden
-                    className={cn(
-                      "pointer-events-none absolute right-0 bottom-0 size-10 opacity-70 transition-transform duration-300 group-hover/tile:scale-125",
-                      isMcp
-                        ? "rounded-tl-full bg-info/15"
-                        : "rounded-t-full bg-success/15",
-                    )}
-                  />
-                  <div className="flex items-center gap-2.5">
-                    <span
-                      className={cn(
-                        "flex size-7 shrink-0 items-center justify-center rounded-lg",
-                        isMcp ? "bg-info/10" : "bg-success/10",
-                      )}
-                    >
-                      <span
-                        className={cn(
-                          "size-2.5 rounded-sm",
-                          isMcp
-                            ? "rounded-tl-sm bg-info"
-                            : "rounded-full bg-success",
-                        )}
-                      />
-                    </span>
-                    <p
-                      className="min-w-0 flex-1 truncate text-sm font-semibold"
-                      title={r.title}
-                    >
-                      {r.title}
-                    </p>
-                    <span
-                      className={cn(
-                        "shrink-0 rounded-md px-1.5 py-0.5 text-xs",
-                        isMcp
-                          ? "bg-info/10 text-info"
-                          : "bg-success/10 text-success",
-                      )}
-                    >
-                      {isMcp ? "MCP" : "Skill"}
-                    </span>
-                  </div>
-                  <p className="mt-2 line-clamp-1 text-xs text-muted-foreground">
-                    {r.description ||
-                      (r.href
-                        ? "暂无描述"
-                        : "条目已下线、版本已更新或当前账号无权查看")}
-                  </p>
-                  <p className="mt-1 text-xs text-muted-foreground">
+                  <span className="size-1.5 rounded-full bg-current" />
+                  {isMcp ? "MCP" : "SKILL"}
+                </span>
+                {/* 右下类型色角饰 */}
+                <span
+                  aria-hidden
+                  className={cn(
+                    "pointer-events-none absolute right-0 bottom-0",
+                    isMcp
+                      ? "size-10 rounded-tl-full bg-info/10"
+                      : "h-5 w-10 rounded-t-full bg-success/10",
+                  )}
+                />
+
+                <b className="text-sm font-bold" title={r.title}>
+                  <span className="line-clamp-1">{r.title}</span>
+                </b>
+                <p className="mt-1.5 line-clamp-1 text-[11.5px] leading-relaxed text-muted-foreground">
+                  {r.description || "暂无描述"}
+                </p>
+
+                <div className="mt-3.5 flex items-center text-[11px] text-muted-foreground">
+                  <span className="font-mono">
                     {r.metric || "暂无使用记录"}
-                  </p>
-                  <div className="mt-3 flex items-center gap-2 border-t pt-3">
-                    <form action={unfav}>
+                  </span>
+                  <span className="ml-auto flex shrink-0 items-center gap-1">
+                    {/* biome-ignore lint/a11y/useKeyWithClickEvents: 仅阻止点击冒泡，非交互容器 */}
+                    <form action={unfav} onClick={(e) => e.stopPropagation()}>
                       <Button
                         type="submit"
                         variant="ghost"
-                        size="sm"
-                        className="h-8 gap-1 px-2 text-muted-foreground hover:text-foreground"
+                        size="icon"
+                        className="h-7 w-7"
                         aria-label="取消收藏"
                         title="取消收藏"
                       >
                         <Star className="size-3.5 fill-star text-star" />
                       </Button>
                     </form>
-                    {/* href 为空 = 条目已不可达（下线/无权限），不渲染查看入口 */}
                     {r.href && (
                       <Button
-                        variant="outline"
+                        variant="ghost"
                         size="sm"
-                        className="ml-auto h-8"
                         asChild
+                        className="h-7 rounded-lg bg-foreground px-3.5 text-[11.5px] font-semibold text-background hover:bg-foreground/85 hover:text-background"
                       >
-                        <Link href={r.href}>查看</Link>
+                        <Link href={r.href}>进入</Link>
                       </Button>
                     )}
+                  </span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* 右栏：使用动态时间线 + 快捷入口 */}
+      <div className="min-w-0 py-6 lg:flex-1 lg:pl-8">
+        <h3 className="text-base font-semibold">使用动态</h3>
+        {activity.length === 0 ? (
+          <div className="mt-4 flex flex-col items-center gap-1.5 rounded-[10px] border-[1.5px] border-dashed border-border py-10 text-center">
+            <p className="text-sm font-semibold">近两周没有使用记录</p>
+            <p className="text-xs text-muted-foreground">
+              从磁贴进入调用后，动态会出现在这里
+            </p>
+          </div>
+        ) : (
+          <div className="mt-2">
+            {activity.map((a, i) => {
+              const tone = a.text.includes("下载")
+                ? "bg-highlight"
+                : a.text.includes("调用")
+                  ? "bg-success"
+                  : "bg-muted-foreground/40";
+              return (
+                <div
+                  key={`${a.date}-${a.text}-${i}`}
+                  className="flex items-start gap-3 border-b border-border py-3 last:border-b-0"
+                >
+                  <span
+                    className={cn("mt-1 size-2.5 shrink-0 rounded-full", tone)}
+                  />
+                  <div className="min-w-0">
+                    <p className="text-[12.5px] font-semibold">{a.text}</p>
+                    <p className="mt-0.5 font-mono text-[11px] text-muted-foreground">
+                      {a.date}
+                      {a.count > 1 ? ` · ${a.count} 次` : ""}
+                    </p>
                   </div>
                 </div>
               );
             })}
           </div>
         )}
-      </div>
 
-      {/* 右：使用动态时间线 */}
-      <div className="min-w-0">
-        <div className="rounded-xl border bg-card p-4">
-          <p className="mb-3 text-sm font-medium">
-            使用动态
-            <span className="ml-2 text-xs font-normal text-muted-foreground">
-              近 14 天 · 收藏条目
-            </span>
-          </p>
-          {activity.length === 0 ? (
-            <div className="flex flex-col items-center gap-1.5 rounded-xl bg-muted/40 py-8 text-center">
-              <Activity className="size-5 text-muted-foreground/70" />
-              <p className="text-sm text-muted-foreground">
-                近两周没有使用记录
-              </p>
-              <p className="text-xs text-muted-foreground/70">
-                从磁贴进入调用后，动态会出现在这里
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-0">
-              {activity.map((a, i) => (
-                <div key={`${a.date}-${a.text}`} className="flex gap-3">
-                  <div className="flex flex-col items-center">
-                    <span className="mt-1.5 size-2 shrink-0 rounded-full bg-success" />
-                    {i < activity.length - 1 && (
-                      <span className="w-px flex-1 bg-border" />
-                    )}
-                  </div>
-                  <div
-                    className={cn(
-                      "min-w-0 flex-1",
-                      i < activity.length - 1 && "pb-4",
-                    )}
-                  >
-                    <p className="truncate text-sm">
-                      {a.text}
-                      {a.count > 1 && (
-                        <span className="ml-1.5 text-xs text-muted-foreground">
-                          ×{a.count}
-                        </span>
-                      )}
-                    </p>
-                    <p className="text-xs text-muted-foreground">{a.date}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+        {/* 快捷入口（虚线框，效果图 02） */}
+        <div className="mt-5 rounded-[10px] border-[1.5px] border-dashed border-border p-4 text-center">
+          <p className="text-xs font-semibold">快捷入口</p>
+          <div className="mt-2.5 flex justify-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              asChild
+              className="h-7 rounded-lg bg-foreground px-3.5 text-[11.5px] font-semibold text-background hover:bg-foreground/85 hover:text-background"
+            >
+              <Link href="/submissions">提交新工具</Link>
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              asChild
+              className="h-7 rounded-lg border-[1.5px] border-border bg-card px-3.5 text-[11.5px] font-semibold text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+            >
+              <Link href="/catalog">浏览目录</Link>
+            </Button>
+          </div>
         </div>
       </div>
     </div>

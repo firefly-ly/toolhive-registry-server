@@ -1,7 +1,6 @@
 import { History, NotebookPen } from "lucide-react";
 import { PageHeader } from "@/components/header-page";
 import { NavTabs } from "@/components/nav-tabs";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getAuthContext } from "@/lib/auth/context";
 import { listSubmissions } from "@/lib/platform-backend";
 import { safe } from "@/lib/safe-async";
@@ -59,14 +58,8 @@ export default async function SubmissionsPage({
 
       <div className="pb-10">
         {tab === "new" ? (
-          <Card className="mx-auto max-w-7xl shadow-none">
-            <CardHeader>
-              <CardTitle className="text-xl">新建提交</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <SubmissionForm action={createSubmissionAction} />
-            </CardContent>
-          </Card>
+          /* 效果图 03：向导直接平铺（左步骤轨灰底 + 右内容），不再套卡片壳 */
+          <SubmissionForm action={createSubmissionAction} />
         ) : (
           <SubmissionsBlock
             submissions={ownSubmissions}

@@ -5,6 +5,8 @@ import {
   getSkills,
   getTrend,
   getUniqueUsers,
+  listSubmissions,
+  type Submission,
 } from "@/lib/platform-backend";
 import { safe } from "@/lib/safe-async";
 import { StatsDashboard } from "./dashboard";
@@ -72,6 +74,11 @@ export default async function StatsPage() {
     event: string;
     u: number;
   }[] = [];
+  const subs = await safe(
+    listSubmissions(),
+    [] as Submission[],
+    "stats.listSubmissions",
+  );
   const [mcps, skills, mcpFav, skillFav, trend, unique] = await Promise.all([
     safe(getMcpServers(), [], "stats.getMcpServers"),
     safe(getSkills(), [], "stats.getSkills"),
@@ -250,6 +257,26 @@ export default async function StatsPage() {
           kpis={{ total, avg, good, watch }}
           trendDays={trend.days}
           trendItems={trendItems}
+          funnel={{
+            submitted: subs.length,
+            approved: subs.filter(
+              (x) => x.status === "approved" || x.status === "deprecated",
+            ).length,
+            onShelf: subs.filter(
+              (x) =>
+                (x.status === "approved" || x.status === "deprecated") &&
+                (() => {
+                  try {
+                    return (
+                      (JSON.parse(x.meta || "{}") as Record<string, unknown>)
+                        .visibility_configured !== false
+                    );
+                  } catch {
+                    return true;
+                  }
+                })(),
+            ).length,
+          }}
         />
       </div>
     </div>

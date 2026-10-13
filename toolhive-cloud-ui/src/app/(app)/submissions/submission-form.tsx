@@ -31,9 +31,10 @@ interface SubmissionFormProps {
 }
 
 const STEPS = [
-  { n: 1, label: "基本信息" },
-  { n: 2, label: "制品来源" },
-  { n: 3, label: "描述与提交" },
+  { n: 0, label: "选择类型", sub: "决定后续流程" },
+  { n: 1, label: "基本信息", sub: "名称 · 引用 · 版本" },
+  { n: 2, label: "制品来源", sub: "ghcr / tar / 源码包" },
+  { n: 3, label: "确认提交", sub: "校验清单把关" },
 ] as const;
 
 /** 校验清单单条：ok=通过（绿），否则红；pending=提交时校验（琥珀） */
@@ -318,394 +319,429 @@ export function SubmissionForm({ action }: SubmissionFormProps) {
       ref={formRef}
       onSubmit={handleSubmit}
       noValidate
-      className="space-y-4"
+      className="flex flex-col md:flex-row"
     >
-      <input type="hidden" name="type" value={type} />
-
-      {/* ── 第 0 步：选择类型（MCP / Skill 分道，效果图 03）── */}
-      {step === 0 && (
-        <section className="rounded-xl border p-6">
-          <h3 className="text-lg font-semibold">选择提交类型</h3>
-          <p className="mt-1 text-sm text-muted-foreground">
-            两类条目的流程与校验不同，先选类型，后续步骤会按分支展开。
-          </p>
-          <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2">
-            {/* MCP 大卡：蓝拱 + 琥珀圆点 */}
+      {/* 左侧竖排步骤轨（效果图 03：灰底、28px 圆圈、当前步琥珀底 + 副标） */}
+      <aside
+        aria-label="提交步骤"
+        className="hidden w-[230px] shrink-0 border-r-[1.5px] border-border bg-secondary/50 px-7 py-7 md:block"
+      >
+        {STEPS.map((r) => {
+          const done = step > r.n;
+          const active = step === r.n;
+          const label = r.n === 2 && !isMcp ? "上传技能包" : r.label;
+          const sub = r.n === 2 && !isMcp ? "zip 包 · SKILL.md 校验" : r.sub;
+          return (
             <button
+              key={r.n}
               type="button"
-              onClick={() => setType("mcp")}
-              aria-pressed={isMcp}
-              className={cn(
-                "relative cursor-pointer rounded-xl border-2 p-6 text-left transition-colors",
-                isMcp
-                  ? "border-foreground bg-card"
-                  : "border-border bg-card hover:border-muted-foreground/60",
-              )}
+              onClick={() => setStep(r.n)}
+              className="flex w-full cursor-pointer gap-3 py-2.5 text-left"
             >
-              {isMcp && (
-                <span className="absolute top-0 right-5 -translate-y-1/2 rounded-full bg-highlight px-3 py-0.5 text-xs font-medium text-foreground">
-                  已选
-                </span>
-              )}
-              <span aria-hidden className="flex items-end gap-1.5">
-                <span className="h-9 w-7 rounded-t-full bg-info" />
-                <span className="size-2.5 rounded-full bg-highlight" />
+              <span
+                className={cn(
+                  "flex size-7 shrink-0 items-center justify-center rounded-full border-[1.5px] text-xs font-semibold",
+                  active
+                    ? "border-foreground bg-highlight text-foreground"
+                    : done
+                      ? "border-success bg-success/10 text-success"
+                      : "border-border bg-card text-muted-foreground",
+                )}
+              >
+                {done ? "✓" : r.n === 0 ? "1" : r.n + 1}
               </span>
-              <p className="mt-4 text-base font-semibold">MCP 服务</p>
-              <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-                部署在平台运行的
-                工具服务：提供镜像或源码，审批通过后自动构建部署。
-              </p>
-              <p className="mt-3 text-xs text-muted-foreground">
-                流程：基本信息 → 制品来源 → 审批 → 自动部署
-              </p>
-            </button>
-            {/* Skill 大卡：绿圆 + 琥珀山形 */}
-            <button
-              type="button"
-              onClick={() => setType("skill")}
-              aria-pressed={!isMcp}
-              className={cn(
-                "relative cursor-pointer rounded-xl border-2 p-6 text-left transition-colors",
-                !isMcp
-                  ? "border-foreground bg-card"
-                  : "border-border bg-card hover:border-muted-foreground/60",
-              )}
-            >
-              {!isMcp && (
-                <span className="absolute top-0 right-5 -translate-y-1/2 rounded-full bg-highlight px-3 py-0.5 text-xs font-medium text-foreground">
-                  已选
-                </span>
-              )}
-              <span aria-hidden className="flex items-end gap-1.5">
-                <span className="size-9 rounded-full bg-success" />
-                <span className="h-4 w-7 bg-highlight [clip-path:polygon(0_100%,50%_0,100%_100%)]" />
-              </span>
-              <p className="mt-4 text-base font-semibold">Skill 技能</p>
-              <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-                打包上传的提示词技能：包内含
-                SKILL.md，上传时自动校验，审批通过后上架下载。
-              </p>
-              <p className="mt-3 text-xs text-muted-foreground">
-                流程：基本信息 → 上传技能包 → 审批 → 上架
-              </p>
-            </button>
-          </div>
-          <div className="mt-6 flex justify-end">
-            <Button type="button" size="lg" onClick={() => setStep(1)}>
-              下一步：基本信息 →
-            </Button>
-          </div>
-        </section>
-      )}
-
-      {/* 三站进度轨：可点击跳转，最终提交由第 3 步校验清单把关 */}
-      {step > 0 && (
-        <div className="flex items-center pb-2">
-          {STEPS.map((s, i) => (
-            <Fragment key={s.n}>
-              {i > 0 && (
-                <div
+              <span className="min-w-0">
+                <span
                   className={cn(
-                    "mx-3 h-px flex-1",
-                    step > s.n ? "bg-primary" : "bg-border",
+                    "block text-[13px] font-semibold",
+                    active ? "text-foreground" : "text-muted-foreground",
                   )}
-                />
-              )}
+                >
+                  {label}
+                </span>
+                {sub && (
+                  <span
+                    className={cn(
+                      "mt-0.5 block text-[11px]",
+                      active ? "text-warning" : "text-muted-foreground/80",
+                    )}
+                  >
+                    {sub}
+                  </span>
+                )}
+              </span>
+            </button>
+          );
+        })}
+      </aside>
+
+      <div className="min-w-0 flex-1 space-y-5 md:px-9 md:py-7">
+        <input type="hidden" name="type" value={type} />
+
+        {/* ── 第 0 步：选择类型（MCP / Skill 分道，效果图 03）── */}
+        {step === 0 && (
+          <section>
+            <p className="mb-3.5 text-[11px] font-semibold tracking-[0.15em] text-muted-foreground">
+              条目类型（决定后续流程，提交后不可更改）
+            </p>
+            <div className="grid grid-cols-1 gap-3.5 md:grid-cols-2">
+              {/* MCP 大卡：52px 蓝拱内嵌琥珀圆点，选中 2px 黑边 + 琥珀垂片 */}
               <button
                 type="button"
-                onClick={() => setStep(s.n)}
-                className="flex cursor-pointer items-center gap-2"
-              >
-                <span
-                  className={cn(
-                    "flex size-7 items-center justify-center rounded-full text-xs font-medium",
-                    step === s.n
-                      ? "bg-primary/10 text-primary"
-                      : step > s.n
-                        ? "bg-success/15 text-success"
-                        : "border border-border text-muted-foreground",
-                  )}
-                >
-                  {step > s.n ? "✓" : s.n}
-                </span>
-                <span
-                  className={cn(
-                    "text-sm",
-                    step === s.n ? "font-medium" : "text-muted-foreground",
-                  )}
-                >
-                  {s.n === 2 && !isMcp ? "上传技能包" : s.label}
-                </span>
-              </button>
-            </Fragment>
-          ))}
-        </div>
-      )}
-
-      <div className={step !== 1 ? "hidden" : ""}>
-        <section className="rounded-xl border p-5">
-          <div className="mb-4 flex items-center gap-2.5">
-            <span className="flex size-6 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
-              1
-            </span>
-            <h3 className="font-medium">基本信息</h3>
-            <span className="text-xs text-muted-foreground">
-              类型、引用与展示名称
-            </span>
-          </div>
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-[180px_1fr_1fr]">
-              <div className="space-y-2">
-                <label
-                  htmlFor="submission-type"
-                  className="block text-sm font-medium"
-                >
-                  类型
-                </label>
-                <Select
-                  value={type}
-                  onValueChange={(value) => setType(value as "mcp" | "skill")}
-                >
-                  <SelectTrigger
-                    id="submission-type"
-                    className={selectTriggerClass}
-                  >
-                    <SelectValue placeholder="选择类型">
-                      {type === "mcp" ? "MCP Server" : "Skills"}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent
-                    position="popper"
-                    className="w-[var(--radix-select-trigger-width)]"
-                  >
-                    <SelectItem value="mcp">MCP Server</SelectItem>
-                    <SelectItem value="skill">Skills</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <label
-                  htmlFor="payload_ref"
-                  className="block text-sm font-medium"
-                >
-                  引用
-                </label>
-                <input
-                  id="payload_ref"
-                  name="payload_ref"
-                  placeholder="dws-explorer:1.0.0"
-                  className={inputClass}
-                  value={payloadRef}
-                  onChange={(e) => setPayloadRef(e.target.value)}
-                />
-                <Hint text="提交引用（payload_ref）：产品名:版本号，如 dws-explorer:1.0.0。系统据此自动分组并识别版本，同名产品多版本可并存。">
-                  <span>格式建议</span>
-                </Hint>
-              </div>
-
-              <div className="space-y-2">
-                <label htmlFor="name" className="block text-sm font-medium">
-                  名称（必填）
-                </label>
-                <input
-                  id="name"
-                  name="name"
-                  placeholder="DWS 数据探查器"
-                  className={inputClass}
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <label
-                  htmlFor="group_key"
-                  className="block text-sm font-medium"
-                >
-                  产品标识（可选）
-                </label>
-                <input
-                  id="group_key"
-                  name="group_key"
-                  placeholder="默认从引用中提取，如 dws-explorer"
-                  className={inputClass}
-                />
-              </div>
-              <div className="space-y-2">
-                <label htmlFor="version" className="block text-sm font-medium">
-                  版本号（可选）
-                </label>
-                <input
-                  id="version"
-                  name="version"
-                  placeholder="默认从引用中提取，如 1.0.0"
-                  className={inputClass}
-                />
-              </div>
-            </div>
-
-            <div className="w-full space-y-2">
-              <label
-                htmlFor="repository_url"
-                className="block text-sm font-medium"
-              >
-                仓库地址（可选）
-              </label>
-              <input
-                id="repository_url"
-                name="repository_url"
-                placeholder="https://github.com/你的组织/你的仓库"
-                className={inputClass}
-              />
-              <p className="text-xs text-muted-foreground">
-                填写后详情页会展示仓库入口（最新代码 / 最新
-                README）；不填则以上传的源码包为准。
-              </p>
-            </div>
-          </div>
-          <div className="mt-4 flex justify-end">
-            <Button type="button" onClick={() => goNext(1)} disabled={!basicOk}>
-              下一步
-            </Button>
-          </div>
-        </section>
-      </div>
-
-      <div className={step !== 2 ? "hidden" : ""}>
-        <section className="rounded-xl border p-5">
-          <div className="mb-4 flex items-center gap-2.5">
-            <span className="flex size-6 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
-              2
-            </span>
-            <h3 className="font-medium">制品来源</h3>
-            <span className="text-xs text-muted-foreground">
-              {isMcp ? "镜像 / tar 包 / 源码构建" : "技能包文件或下载地址"}
-            </span>
-          </div>
-          {isMcp ? (
-            <McpSourceSection
-              mcpSource={mcpSource}
-              onSourceChange={setMcpSource}
-              imageRef={imageRef}
-              onImageRefChange={setImageRef}
-              cls={cls}
-              autoMirror={autoMirror}
-              onAutoMirrorChange={setAutoMirror}
-              transport={transport}
-              onTransportChange={setTransport}
-              tarFile={tarFile}
-              onTarFile={setTarFile}
-              sourceFile={sourceFile}
-              onSourceFile={setSourceFile}
-              envFile={envFile}
-              onEnvFile={setEnvFile}
-              dataSourceType={dataSourceType}
-              onDataSourceTypeChange={setDataSourceType}
-              dataSourceTargets={dataSourceTargets}
-              onDataSourceTargetsChange={setDataSourceTargets}
-              dataSourceNote={dataSourceNote}
-              onDataSourceNoteChange={setDataSourceNote}
-            />
-          ) : (
-            <SkillSourceSection
-              skillSource={skillSource}
-              onSourceChange={setSkillSource}
-              file={file}
-              onFile={setFile}
-            />
-          )}
-          <div className="mt-4 flex justify-between">
-            <Button type="button" variant="ghost" onClick={() => setStep(1)}>
-              上一步
-            </Button>
-            <Button
-              type="button"
-              onClick={() => goNext(2)}
-              disabled={!sourceReady}
-            >
-              下一步
-            </Button>
-          </div>
-        </section>
-      </div>
-
-      <div className={step !== 3 ? "hidden" : ""}>
-        <section className="rounded-xl border p-5">
-          <div className="mb-4 flex items-center gap-2.5">
-            <span className="flex size-6 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
-              3
-            </span>
-            <h3 className="font-medium">描述与提交</h3>
-            <span className="text-xs text-muted-foreground">
-              描述会展示在目录卡片上
-            </span>
-          </div>
-          <div className="space-y-4">
-            <div className="w-full space-y-2">
-              <label
-                htmlFor="description"
-                className="block text-sm font-medium"
-              >
-                描述{isMcp ? "（可选）" : "（必填）"}
-              </label>
-              <input
-                id="description"
-                name="description"
-                placeholder={
+                onClick={() => setType("mcp")}
+                aria-pressed={isMcp}
+                className={cn(
+                  "relative cursor-pointer overflow-hidden rounded-xl p-5 text-left transition-colors",
                   isMcp
-                    ? "一句话描述这个 MCP Server 能做什么"
-                    : "一句话描述这个技能能做什么"
-                }
-                className={inputClass}
-                value={desc}
-                onChange={(e) => setDesc(e.target.value)}
-              />
+                    ? "border-2 border-foreground bg-card"
+                    : "border-[1.5px] border-border bg-card hover:border-muted-foreground/60",
+                )}
+              >
+                {isMcp && (
+                  <span className="absolute top-0 right-4.5 rounded-b-lg bg-highlight px-3 py-1 text-[10px] font-semibold text-foreground">
+                    已选
+                  </span>
+                )}
+                <span
+                  aria-hidden
+                  className="relative block size-13 rounded-t-full bg-info"
+                >
+                  <span className="absolute top-6.5 left-4 size-5 rounded-full bg-highlight" />
+                </span>
+                <b className="mt-3.5 block text-[17px]">MCP 服务</b>
+                <p className="mt-1.5 text-xs leading-[1.7] text-muted-foreground">
+                  给助手接入外部能力的工具服务：部署运行、被调用、可回滚。
+                </p>
+                <div className="mt-3 flex flex-col gap-1 text-[11.5px] text-success">
+                  <span>✓ 镜像地址 / tar 包 / 源码包三种来源</span>
+                  <span>✓ 审批通过后自动部署，支持版本回滚</span>
+                  <span>✓ 统计调用量 / 延迟 / 失败率</span>
+                </div>
+              </button>
+              {/* Skill 大卡：52px 绿圆内嵌琥珀山形 */}
+              <button
+                type="button"
+                onClick={() => setType("skill")}
+                aria-pressed={!isMcp}
+                className={cn(
+                  "relative cursor-pointer overflow-hidden rounded-xl p-5 text-left transition-colors",
+                  !isMcp
+                    ? "border-2 border-foreground bg-card"
+                    : "border-[1.5px] border-border bg-card hover:border-muted-foreground/60",
+                )}
+              >
+                {!isMcp && (
+                  <span className="absolute top-0 right-4.5 rounded-b-lg bg-highlight px-3 py-1 text-[10px] font-semibold text-foreground">
+                    已选
+                  </span>
+                )}
+                <span
+                  aria-hidden
+                  className="relative block size-13 rounded-full bg-success"
+                >
+                  <span className="absolute bottom-1.5 left-3.5 h-4 w-7.5 bg-highlight [clip-path:polygon(0_100%,50%_0,100%_100%)]" />
+                </span>
+                <b
+                  className={cn(
+                    "mt-3.5 block text-[17px]",
+                    !isMcp ? "" : "text-muted-foreground",
+                  )}
+                >
+                  Skill 技能
+                </b>
+                <p className="mt-1.5 text-xs leading-[1.7] text-muted-foreground">
+                  打包上传的提示词技能：上传时自动校验，审批通过后上架下载。
+                </p>
+                <div className="mt-3 flex flex-col gap-1 text-[11.5px] text-success">
+                  <span>✓ zip / tar.gz 上传，SKILL.md 自动校验</span>
+                  <span>✓ 审批通过后上架，按权限下载</span>
+                  <span>✓ 统计下载量与版本分布</span>
+                </div>
+              </button>
             </div>
+            <div className="mt-6 flex justify-end">
+              <Button type="button" size="lg" onClick={() => setStep(1)}>
+                下一步：基本信息 →
+              </Button>
+            </div>
+          </section>
+        )}
 
-            {/* 发布前检查单：全绿才亮提交钮 */}
-            <div className="space-y-2 rounded-xl border bg-muted/30 p-4">
-              <p className="text-sm font-medium">发布前检查</p>
-              <CheckItem ok={basicOk} label="引用与名称已填写" />
-              <CheckItem
-                ok={sourceReady}
-                pending={urlMode}
-                label={
-                  urlMode ? "文件位置将在提交时校验可达性" : "制品来源已就绪"
-                }
-              />
-              <CheckItem
-                ok={descOk}
-                label={isMcp ? "描述已填写（可选）" : "描述已填写"}
-              />
-              {isMcp && mcpSource === "ghcr" && (
-                <CheckItem
-                  ok={!!cls?.allowed}
-                  pending={!cls}
-                  label={
-                    cls
-                      ? cls.allowed
-                        ? `镜像来源校验通过（${cls.tier === 2 ? "受信源" : cls.tier === 1 ? "外部公网源" : "受限来源"}）`
-                        : `镜像来源未通过校验：${cls.message}`
-                      : "镜像来源校验中…"
-                  }
+        <div className={step !== 1 ? "hidden" : ""}>
+          <section className="rounded-xl border p-5">
+            <div className="mb-4 flex items-center gap-2.5">
+              <span className="flex size-6 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+                1
+              </span>
+              <h3 className="font-medium">基本信息</h3>
+              <span className="text-xs text-muted-foreground">
+                类型、引用与展示名称
+              </span>
+            </div>
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-[180px_1fr_1fr]">
+                <div className="space-y-2">
+                  <label
+                    htmlFor="submission-type"
+                    className="block text-sm font-medium"
+                  >
+                    类型
+                  </label>
+                  <Select
+                    value={type}
+                    onValueChange={(value) => setType(value as "mcp" | "skill")}
+                  >
+                    <SelectTrigger
+                      id="submission-type"
+                      className={selectTriggerClass}
+                    >
+                      <SelectValue placeholder="选择类型">
+                        {type === "mcp" ? "MCP Server" : "Skills"}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent
+                      position="popper"
+                      className="w-[var(--radix-select-trigger-width)]"
+                    >
+                      <SelectItem value="mcp">MCP Server</SelectItem>
+                      <SelectItem value="skill">Skills</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <label
+                    htmlFor="payload_ref"
+                    className="block text-sm font-medium"
+                  >
+                    引用
+                  </label>
+                  <input
+                    id="payload_ref"
+                    name="payload_ref"
+                    placeholder="dws-explorer:1.0.0"
+                    className={inputClass}
+                    value={payloadRef}
+                    onChange={(e) => setPayloadRef(e.target.value)}
+                  />
+                  <Hint text="提交引用（payload_ref）：产品名:版本号，如 dws-explorer:1.0.0。系统据此自动分组并识别版本，同名产品多版本可并存。">
+                    <span>格式建议</span>
+                  </Hint>
+                </div>
+
+                <div className="space-y-2">
+                  <label htmlFor="name" className="block text-sm font-medium">
+                    名称（必填）
+                  </label>
+                  <input
+                    id="name"
+                    name="name"
+                    placeholder="DWS 数据探查器"
+                    className={inputClass}
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <label
+                    htmlFor="group_key"
+                    className="block text-sm font-medium"
+                  >
+                    产品标识（可选）
+                  </label>
+                  <input
+                    id="group_key"
+                    name="group_key"
+                    placeholder="默认从引用中提取，如 dws-explorer"
+                    className={inputClass}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label
+                    htmlFor="version"
+                    className="block text-sm font-medium"
+                  >
+                    版本号（可选）
+                  </label>
+                  <input
+                    id="version"
+                    name="version"
+                    placeholder="默认从引用中提取，如 1.0.0"
+                    className={inputClass}
+                  />
+                </div>
+              </div>
+
+              <div className="w-full space-y-2">
+                <label
+                  htmlFor="repository_url"
+                  className="block text-sm font-medium"
+                >
+                  仓库地址（可选）
+                </label>
+                <input
+                  id="repository_url"
+                  name="repository_url"
+                  placeholder="https://github.com/你的组织/你的仓库"
+                  className={inputClass}
                 />
-              )}
+                <p className="text-xs text-muted-foreground">
+                  填写后详情页会展示仓库入口（最新代码 / 最新
+                  README）；不填则以上传的源码包为准。
+                </p>
+              </div>
             </div>
+            <div className="mt-4 flex justify-end">
+              <Button
+                type="button"
+                onClick={() => goNext(1)}
+                disabled={!basicOk}
+              >
+                下一步
+              </Button>
+            </div>
+          </section>
+        </div>
 
-            <div className="flex items-center justify-between">
-              <Button type="button" variant="ghost" onClick={() => setStep(2)}>
+        <div className={step !== 2 ? "hidden" : ""}>
+          <section className="rounded-xl border p-5">
+            <div className="mb-4 flex items-center gap-2.5">
+              <span className="flex size-6 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+                2
+              </span>
+              <h3 className="font-medium">制品来源</h3>
+              <span className="text-xs text-muted-foreground">
+                {isMcp ? "镜像 / tar 包 / 源码构建" : "技能包文件或下载地址"}
+              </span>
+            </div>
+            {isMcp ? (
+              <McpSourceSection
+                mcpSource={mcpSource}
+                onSourceChange={setMcpSource}
+                imageRef={imageRef}
+                onImageRefChange={setImageRef}
+                cls={cls}
+                autoMirror={autoMirror}
+                onAutoMirrorChange={setAutoMirror}
+                transport={transport}
+                onTransportChange={setTransport}
+                tarFile={tarFile}
+                onTarFile={setTarFile}
+                sourceFile={sourceFile}
+                onSourceFile={setSourceFile}
+                envFile={envFile}
+                onEnvFile={setEnvFile}
+                dataSourceType={dataSourceType}
+                onDataSourceTypeChange={setDataSourceType}
+                dataSourceTargets={dataSourceTargets}
+                onDataSourceTargetsChange={setDataSourceTargets}
+                dataSourceNote={dataSourceNote}
+                onDataSourceNoteChange={setDataSourceNote}
+              />
+            ) : (
+              <SkillSourceSection
+                skillSource={skillSource}
+                onSourceChange={setSkillSource}
+                file={file}
+                onFile={setFile}
+              />
+            )}
+            <div className="mt-4 flex justify-between">
+              <Button type="button" variant="ghost" onClick={() => setStep(1)}>
                 上一步
               </Button>
-              <Button type="submit" size="lg" disabled={pending || !allOk}>
-                {pending ? "提交中…" : "提交"}
+              <Button
+                type="button"
+                onClick={() => goNext(2)}
+                disabled={!sourceReady}
+              >
+                下一步
               </Button>
             </div>
-          </div>
-        </section>
+          </section>
+        </div>
+
+        <div className={step !== 3 ? "hidden" : ""}>
+          <section className="rounded-xl border p-5">
+            <div className="mb-4 flex items-center gap-2.5">
+              <span className="flex size-6 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+                3
+              </span>
+              <h3 className="font-medium">描述与提交</h3>
+              <span className="text-xs text-muted-foreground">
+                描述会展示在目录卡片上
+              </span>
+            </div>
+            <div className="space-y-4">
+              <div className="w-full space-y-2">
+                <label
+                  htmlFor="description"
+                  className="block text-sm font-medium"
+                >
+                  描述{isMcp ? "（可选）" : "（必填）"}
+                </label>
+                <input
+                  id="description"
+                  name="description"
+                  placeholder={
+                    isMcp
+                      ? "一句话描述这个 MCP Server 能做什么"
+                      : "一句话描述这个技能能做什么"
+                  }
+                  className={inputClass}
+                  value={desc}
+                  onChange={(e) => setDesc(e.target.value)}
+                />
+              </div>
+
+              {/* 发布前检查单：全绿才亮提交钮 */}
+              <div className="space-y-2 rounded-xl border bg-muted/30 p-4">
+                <p className="text-sm font-medium">发布前检查</p>
+                <CheckItem ok={basicOk} label="引用与名称已填写" />
+                <CheckItem
+                  ok={sourceReady}
+                  pending={urlMode}
+                  label={
+                    urlMode ? "文件位置将在提交时校验可达性" : "制品来源已就绪"
+                  }
+                />
+                <CheckItem
+                  ok={descOk}
+                  label={isMcp ? "描述已填写（可选）" : "描述已填写"}
+                />
+                {isMcp && mcpSource === "ghcr" && (
+                  <CheckItem
+                    ok={!!cls?.allowed}
+                    pending={!cls}
+                    label={
+                      cls
+                        ? cls.allowed
+                          ? `镜像来源校验通过（${cls.tier === 2 ? "受信源" : cls.tier === 1 ? "外部公网源" : "受限来源"}）`
+                          : `镜像来源未通过校验：${cls.message}`
+                        : "镜像来源校验中…"
+                    }
+                  />
+                )}
+              </div>
+
+              <div className="flex items-center justify-between">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => setStep(2)}
+                >
+                  上一步
+                </Button>
+                <Button type="submit" size="lg" disabled={pending || !allOk}>
+                  {pending ? "提交中…" : "提交"}
+                </Button>
+              </div>
+            </div>
+          </section>
+        </div>
       </div>
     </form>
   );

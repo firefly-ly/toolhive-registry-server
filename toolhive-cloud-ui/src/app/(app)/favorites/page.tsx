@@ -155,10 +155,12 @@ export default async function FavoritesPage() {
 
   return (
     <div className="-mr-8 flex h-full flex-col overflow-y-auto pr-8">
-      <PageHeader title="我的工作台" />
+      <PageHeader
+        title="工作台"
+        description="你常用的工具与最近动态，都在这里。"
+      />
       <div className="pb-10">
         <FavsBlock
-          title="我的工作台"
           count={rows.length}
           rows={rows}
           activity={activity.slice(0, 8)}
