@@ -225,14 +225,11 @@ export function MemberTokenDialog({ s }: { s: Submission }) {
                     名单来自「可见范围」按邮箱授权的成员
                   </span>
                 </div>
-                {mode === "all" ? (
+                {members.length === 0 ? (
                   <p className="mt-3 text-sm text-muted-foreground">
-                    该 MCP
-                    当前为全员可见，未启用成员级访问控制。如需按成员管理凭证，请先在「可见范围」中切换为受限访问并添加成员。
-                  </p>
-                ) : members.length === 0 ? (
-                  <p className="mt-3 text-sm text-muted-foreground">
-                    可见范围中还没有按邮箱授权的成员。请先在「可见范围」中添加成员邮箱。
+                    {mode === "all"
+                      ? "全员可见模式下暂无已签发成员：新成员可在「接入」弹窗自助签发（签发即进入名单），或在「可见范围」中添加成员邮箱后由你签发。"
+                      : "可见范围中还没有按邮箱授权的成员。请先在「可见范围」中添加成员邮箱。"}
                   </p>
                 ) : (
                   <ul className="mt-3 divide-y">
