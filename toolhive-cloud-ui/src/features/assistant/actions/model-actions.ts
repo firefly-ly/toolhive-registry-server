@@ -117,7 +117,9 @@ export async function getOpenRouterModels(): Promise<string[]> {
       (error.cause as { missingOpenRouterApiKey?: boolean })
         ?.missingOpenRouterApiKey
     ) {
-      console.error("No OpenRouter API key found");
+      // 缺 key 属于预期配置缺失（本地 dev 常态），降级为 warn——
+      // 避免每个页面加载都在 dev Issues 浮标里刷一条 error，掩盖真正的报错。
+      console.warn("No OpenRouter API key found — assistant model list disabled");
       return [];
     }
     console.error("Error fetching OpenRouter models:", error);
