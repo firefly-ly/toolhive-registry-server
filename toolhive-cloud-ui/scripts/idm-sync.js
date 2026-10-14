@@ -12,7 +12,7 @@
  *   headers:
  *     X-HW-ID:      {X_HW_ID}
  *     X-HW-AppKey:  {X_HW_APPKEY}
- *     url:          {真实目标地址，如 https://iam.dongpeng.net/esc-idm/api/v1/public/appSync...}
+ *     url:          {真实目标地址，如 https://iam.dongpeng.net/esc-idm/api/v1/public/account/list}
  *     AuthToken:    自签 JWT（{iss:AppID, iat:now, jti:uuid}，HMAC256(AppSecret)）
  *   params: page / size / time（增量时间戳，秒）
  *
@@ -78,14 +78,28 @@ const CONFIG = {
   // JWT 前缀形态：bearer（默认，"Bearer x.y.z"）或 raw（裸 token）——文档对
   // header 名（AuthToken vs Authorization）与前缀的描述存在歧义，两头都发。
   tokenScheme: process.env.IDM_TOKEN_SCHEME || "bearer",
-  // 真实目标地址（经接口中台转发的 url header）。生产实锤：单端点裸 appSync，
-  // 三类数据共用；IDM 按 body/params 区分类型。
+  // 真实目标地址（经接口中台转发的 url header）。文档 5.2.1：account/org/job 各有
+  // 独立 list 路径（+各自 callback）。旧版曾误用单端点 appSync，已按文档改正；
+  // 可用 IDM_ACCOUNT_URL / IDM_ORG_URL / IDM_JOB_URL 覆盖。
   accountUrl: process.env.IDM_ACCOUNT_URL || "",
   orgUrl: process.env.IDM_ORG_URL || "",
   jobUrl: process.env.IDM_JOB_URL || "",
+  // 增量时间戳（秒）：文档三接口均为"查询增量数据"。缺省不给 = 全量。
+  since: process.env.IDM_SINCE || "",
 };
 
-const APPSYNC_BASE = process.env.IDM_APPSYNC_BASE_URL || "https://iam.dongpeng.net/esc-idm/api/v1/public/appSync";
+const IDM_PUBLIC_BASE = process.env.IDM_BASE_URL || "https://iam.dongpeng.net/esc-idm/api/v1/public";
+const DEFAULT_TARGETS = {
+  account: `${IDM_PUBLIC_BASE}/account/list`,
+  org: `${IDM_PUBLIC_BASE}/org/list`,
+  job: `${IDM_PUBLIC_BASE}/job/list`,
+};
+
+function targetFor(kind) {
+  const byKind =
+    kind === "account" ? CONFIG.accountUrl : kind === "org" ? CONFIG.orgUrl : CONFIG.jobUrl;
+  return byKind || DEFAULT_TARGETS[kind];
+}
 
 function requireConfig() {
   const missing = [];
@@ -164,12 +178,7 @@ async function fetchViaGateway(targetUrl, params = {}) {
 
 async function probe(kind, page = 1, size = 5) {
   requireConfig();
-  const targets = {
-    account: CONFIG.accountUrl || APPSYNC_BASE,
-    org: CONFIG.orgUrl || APPSYNC_BASE,
-    job: CONFIG.jobUrl || APPSYNC_BASE,
-  };
-  const targetUrl = targets[kind];
+  const targetUrl = targetFor(kind);
   if (!targetUrl) {
     console.error(`[idm-sync] 未知类别: ${kind}（可选 account|org|job）`);
     process.exit(1);
@@ -183,25 +192,58 @@ async function probe(kind, page = 1, size = 5) {
 // ---------- sync 模式：全量拉取 + upsert（字段映射确认后启用） ----------
 
 /**
- * 字段映射收口点（待 probe 输出后最终确认）：
- *   mapAccount(row) → { id(工号), orgIds[], jobIds[], userTypes[] }
- *   mapOrg(row)     → { orgId, orgName }
- *   mapJob(row)     → { jobId, jobName }
- * 下面的实现是占位猜测，probe 确认前 sync 不应运行。
+ * 字段映射——按《权限平台接口文档》5.2.x 的真实字段名实现（此前为占位猜测）：
+ *   account: app_account__account_no(登录名) / idt_user__work_no(工号) /
+ *            app_account__status(0停用 1正常) / idt_org__org_code / idt_job__code /
+ *            idt_user_type__code(IN=内部员工 EX_TAB2=经销商 EX_TAB1=供应商)
+ *   org:     idt_org__org_code / idt_org__name / idt_org__sup_org_code / idt_org__status
+ *   job:     idt_job__code / idt_job__name / idt_job__status
+ * 取值带无前缀短名兜底（防文档与实际部署的键名出入，probe 时最终确认）。
+ * TODO(callback)：文档要求同步后调 account/org/job 的 callback 回报状态，暂未实现。
+ * TODO(层级)：idt_org__sup_org_code 父链展开未做——restricted.groups 目前按直属部门名匹配。
  */
+function pick(row, prefixed, fallbacks = []) {
+  for (const k of [prefixed, ...fallbacks]) {
+    if (row[k] !== undefined && row[k] !== null && row[k] !== "") return row[k];
+  }
+  return undefined;
+}
+
+/** 账号 status 归一："1"=正常；"0"停用、"-1"删除、2=删除(操作标识) 视为非在职 */
+function isAccountActive(row) {
+  return String(pick(row, "app_account__status", ["status"]) ?? "1") === "1";
+}
+
 function mapAccount(row) {
+  // 合成邮箱主键 = <工号>@dongpeng.net，与 SSO profile 的 id（工号形态）对齐：
+  // 优先 work_no，回退 account_no（两者通常一致，probe 时最终确认）。
+  const id = String(
+    pick(row, "idt_user__work_no", ["work_no", "app_account__account_no", "accountNo", "id"]) ?? "",
+  );
+  const orgCode = pick(row, "idt_org__org_code", ["org_code", "orgId"]);
+  const jobCode = pick(row, "idt_job__code", ["job_code", "jobId"]);
+  const userType = pick(row, "idt_user_type__code", ["user_type", "userTypes"]);
   return {
-    id: String(row.accountNo ?? row.id ?? ""),
-    orgIds: Array.isArray(row.orgIds) ? row.orgIds.map(String) : row.orgId ? [String(row.orgId)] : [],
-    jobIds: Array.isArray(row.jobIds) ? row.jobIds.map(String) : row.jobId ? [String(row.jobId)] : [],
-    userTypes: Array.isArray(row.userTypes) ? row.userTypes.map(String) : [],
+    id,
+    active: isAccountActive(row),
+    orgIds: orgCode !== undefined ? [String(orgCode)] : [],
+    jobIds: jobCode !== undefined ? [String(jobCode)] : [],
+    userTypes: userType !== undefined ? [String(userType)] : [],
   };
 }
 function mapOrg(row) {
-  return { orgId: String(row.orgId ?? row.id ?? ""), orgName: String(row.orgName ?? row.name ?? "") };
+  return {
+    orgId: String(pick(row, "idt_org__org_code", ["org_code", "orgId"]) ?? ""),
+    orgName: String(pick(row, "idt_org__name", ["name", "orgName"]) ?? ""),
+    active: String(pick(row, "idt_org__status", ["status"]) ?? "1") === "1",
+  };
 }
 function mapJob(row) {
-  return { jobId: String(row.jobId ?? row.id ?? ""), jobName: String(row.jobName ?? row.name ?? "") };
+  return {
+    jobId: String(pick(row, "idt_job__code", ["code", "jobId"]) ?? ""),
+    jobName: String(pick(row, "idt_job__name", ["name", "jobName"]) ?? ""),
+    active: String(pick(row, "idt_job__status", ["status"]) ?? "1") === "1",
+  };
 }
 
 async function fetchAllPages(targetUrl, mapRow) {
@@ -209,7 +251,9 @@ async function fetchAllPages(targetUrl, mapRow) {
   let page = 1;
   const size = 200;
   for (;;) {
-    const data = await fetchViaGateway(targetUrl, { page, size });
+    const params = { page, size };
+    if (CONFIG.since) params.time = CONFIG.since; // 文档：增量查询时间戳（秒）
+    const data = await fetchViaGateway(targetUrl, params);
     // 分页结构同样待 probe 确认：兼容 {data:{list:[...]}} / {list:[...]} / 数组
     const list =
       (data && data.data && Array.isArray(data.data.list) && data.data.list) ||
@@ -230,25 +274,41 @@ async function sync() {
   await client.connect();
   try {
     console.error("[idm-sync] 拉取 org...");
-    const orgs = await fetchAllPages(CONFIG.orgUrl || APPSYNC_BASE, mapOrg);
+    const orgs = (await fetchAllPages(CONFIG.orgUrl || targetFor("org"), mapOrg)).filter(
+      (o) => o.orgId && o.active,
+    );
     const orgNameById = new Map(orgs.map((o) => [o.orgId, o.orgName]));
-    console.error(`[idm-sync] org 共 ${orgs.length} 条`);
+    console.error(`[idm-sync] org 共 ${orgs.length} 条（已过滤停用/删除）`);
 
     console.error("[idm-sync] 拉取 job...");
-    const jobs = await fetchAllPages(CONFIG.jobUrl || APPSYNC_BASE, mapJob);
+    const jobs = (await fetchAllPages(CONFIG.jobUrl || targetFor("job"), mapJob)).filter(
+      (j) => j.jobId && j.active,
+    );
     const jobNameById = new Map(jobs.map((j) => [j.jobId, j.jobName]));
-    console.error(`[idm-sync] job 共 ${jobs.length} 条`);
+    console.error(`[idm-sync] job 共 ${jobs.length} 条（已过滤停用/删除）`);
 
     console.error("[idm-sync] 拉取 account...");
-    const accounts = await fetchAllPages(CONFIG.accountUrl || APPSYNC_BASE, mapAccount);
+    const accounts = await fetchAllPages(CONFIG.accountUrl || targetFor("account"), mapAccount);
     console.error(`[idm-sync] account 共 ${accounts.length} 条`);
 
     let upserted = 0;
+    let removed = 0;
     for (const acc of accounts) {
       if (!acc.id) continue;
       const email = `${acc.id}@${process.env.SSO_EMAIL_DOMAIN || "dongpeng.net"}`;
+      // 安全省界：停用(status=0)/删除(status=-1 或操作标识 2) 的账号不得残留可见性数据
+      if (!acc.active) {
+        await client.query("DELETE FROM user_profile WHERE email = $1", [email]);
+        removed += 1;
+        continue;
+      }
       const orgNames = acc.orgIds.map((id) => orgNameById.get(id)).filter(Boolean);
       const jobNames = acc.jobIds.map((id) => jobNameById.get(id)).filter(Boolean);
+      if (!orgNames.length && !jobNames.length) {
+        // 停用的组织/岗位被过滤后无有效映射：不清空（避免误伤），但也不写入新数据
+        console.error(`[idm-sync] 跳过 ${email}：org/job 无有效映射`);
+        continue;
+      }
       await client.query(
         `INSERT INTO user_profile (email, orgs, jobs, user_types, raw, updated_at)
          VALUES ($1, $2::jsonb, $3::jsonb, $4::jsonb, $5::jsonb, NOW())
@@ -264,7 +324,7 @@ async function sync() {
       );
       upserted += 1;
     }
-    console.error(`[idm-sync] 完成: upsert ${upserted} 条 user_profile`);
+    console.error(`[idm-sync] 完成: upsert ${upserted} 条，清理停用/删除 ${removed} 条`);
   } finally {
     await client.end();
   }
@@ -291,13 +351,14 @@ function showToken() {
 
 // ---------- direct 模式：绕过接口中台直连 IDM——用于区分"网关剥头"与"凭证/签名错" ----------
 
-async function probeDirect(page = 1, size = 3) {
+async function probeDirect(kind = "account", page = 1, size = 3) {
   requireConfig();
   const jwt = makeAuthToken();
-  const url = new URL(APPSYNC_BASE);
+  const targetUrl = targetFor(kind);
+  const url = new URL(targetUrl);
   url.searchParams.set("page", String(page));
   url.searchParams.set("size", String(size));
-  console.error(`[idm-sync] direct → ${url.toString()}（不经接口中台）`);
+  console.error(`[idm-sync] direct ${kind} → ${url.toString()}（不经接口中台）`);
   const response = await fetch(url, {
     method: "POST",
     headers: {
@@ -327,9 +388,9 @@ async function probeDirect(page = 1, size = 3) {
     } else if (cmd === "token") {
       showToken();
     } else if (cmd === "direct") {
-      await probeDirect(Number(a1) || 1, Number(a2) || 3);
+      await probeDirect(kind || "account", Number(a1) || 1, Number(a2) || 3);
     } else {
-      console.error("用法: node scripts/idm-sync.js probe account|org|job [page] [size] | sync | token | direct [page] [size]");
+      console.error("用法: node scripts/idm-sync.js probe account|org|job [page] [size] | sync | token | direct [kind] [page] [size]");
       process.exit(1);
     }
   } catch (error) {
