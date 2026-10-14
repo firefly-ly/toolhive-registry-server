@@ -17,18 +17,16 @@ function b64url(input) {
  *  @param {string} o.appSecret HMAC256 签名密钥
  *  @param {string} [o.authToken] 显式提供的现成 token（优先于自签）
  *  @param {string} [o.tokenScheme] "bearer"（默认，加 Bearer 前缀）| "raw"（裸 token）
+ *  @param {boolean} [o.withExp] JWT 附带 exp 声明（iat+300s）——部分校验端强制要求过期时间
  *  @param {number} [o.now] 可注入时钟（毫秒），默认 Date.now()
  *  @returns {string}
  */
-function makeAuthToken({ appId, appSecret, authToken = "", tokenScheme = "bearer", now = Date.now() }) {
+function makeAuthToken({ appId, appSecret, authToken = "", tokenScheme = "bearer", withExp = false, now = Date.now() }) {
   const header = b64url(JSON.stringify({ alg: "HS256", typ: "JWT" }));
-  const payload = b64url(
-    JSON.stringify({
-      iss: appId,
-      iat: Math.floor(now / 1000),
-      jti: crypto.randomUUID(),
-    }),
-  );
+  const iat = Math.floor(now / 1000);
+  const claims = { iss: appId, iat, jti: crypto.randomUUID() };
+  if (withExp) claims.exp = iat + 300;
+  const payload = b64url(JSON.stringify(claims));
   const signature = b64url(
     crypto.createHmac("sha256", appSecret).update(`${header}.${payload}`).digest(),
   );

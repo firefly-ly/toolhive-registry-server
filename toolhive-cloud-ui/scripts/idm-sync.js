@@ -133,6 +133,8 @@ function makeAuthToken() {
     appSecret: CONFIG.appSecret,
     authToken: CONFIG.authToken,
     tokenScheme: CONFIG.tokenScheme,
+    // IDM_TOKEN_EXP=1 时附带 exp 声明（iat+300s）——部分校验端强制要求过期时间
+    withExp: process.env.IDM_TOKEN_EXP === "1",
   });
 }
 
