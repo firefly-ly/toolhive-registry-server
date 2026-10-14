@@ -28,9 +28,11 @@ function readVisibility(s: Submission): VisibilityData {
   try {
     const meta = s.meta ? (JSON.parse(s.meta) as Record<string, unknown>) : {};
     const v = meta.visibility as Partial<VisibilityData> | undefined;
-    if (v && v.mode === "restricted") {
+    if (v && (v.mode === "restricted" || v.mode === "all")) {
+      // 2026-10-14：mode=all 也回读已存名单——名单在后端与模式解耦持久化，
+      // 切回 restricted 时输入框要能带出原名单（否则保存会以空名单覆盖）。
       return {
-        mode: "restricted",
+        mode: v.mode,
         users: Array.isArray(v.users) ? v.users : [],
         groups: Array.isArray(v.groups) ? v.groups : [],
       };
@@ -122,6 +124,9 @@ export function VisibilityDialog({ s }: { s: Submission }) {
                 <span className="block text-sm font-medium">全员可见</span>
                 <span className="block text-xs text-muted-foreground">
                   所有登录用户都可在目录中查看、下载、调用该条目。
+                  {vis.users.length > 0
+                    ? ` 已保存的名单（${vis.users.length} 人）会保留，切回“仅指定成员”时继续生效。`
+                    : ""}
                 </span>
               </span>
             </label>
