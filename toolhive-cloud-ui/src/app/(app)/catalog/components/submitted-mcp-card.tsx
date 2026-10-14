@@ -155,6 +155,7 @@ export function SubmittedMcpCard({
               serverName={cur.name}
               config={{ url: cur.public_endpoint, headers: cur.mcp_headers }}
               tokenRequired={cur.mcp_token_required}
+              submissionId={cur.id}
               triggerLabel="接入"
               className="rounded-full"
             />

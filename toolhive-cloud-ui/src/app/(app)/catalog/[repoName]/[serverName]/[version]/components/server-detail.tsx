@@ -26,12 +26,15 @@ function GettingStarted({
   serverUrl,
   serverHeaders,
   tokenRequired,
+  submissionId,
 }: {
   serverName?: string;
   serverUrl?: string;
   serverHeaders?: Record<string, string>;
-  /** D1 成员视角：restricted + 未签发成员 token（后端不下发 headers 时置位），复制弹窗改提示联系管理员 */
+  /** D1 成员视角：restricted + 未签发成员 token（后端不下发 headers 时置位），复制弹窗给自助签发入口 */
   tokenRequired?: boolean;
+  /** 平台提交型 MCP 的 submission id：透传给复制弹窗展示自助签发按钮 */
+  submissionId?: string;
 }) {
   return (
     <div className="space-y-3 rounded-lg border bg-muted/30 p-4">
@@ -56,6 +59,7 @@ function GettingStarted({
             serverName={serverName ?? ""}
             config={{ url: serverUrl, headers: serverHeaders }}
             tokenRequired={tokenRequired}
+            submissionId={submissionId}
             variant="outline"
             size="lg"
             className="gap-2"
@@ -80,8 +84,10 @@ interface ServerDetailProps {
   // 平台提交型 MCP 的代理调用凭证（Authorization: Bearer <mcp_token>），
   // 由后端在探活可达时随详情下发；registry 服务器无此字段（undefined，行为不变）。
   serverHeaders?: Record<string, string>;
-  /** D1 成员视角：restricted + 未签发成员 token（后端不下发 headers 时置位），复制弹窗改提示联系管理员 */
+  /** D1 成员视角：restricted + 未签发成员 token（后端不下发 headers 时置位），复制弹窗给自助签发入口 */
   tokenRequired?: boolean;
+  /** 平台提交型 MCP 的 submission id：透传给复制弹窗展示自助签发按钮 */
+  submissionId?: string;
   repositoryUrl?: string;
   publisher?: string;
   type?: string;
@@ -94,6 +100,7 @@ export function ServerDetail({
   serverUrl,
   serverHeaders,
   tokenRequired,
+  submissionId,
   repositoryUrl,
   publisher,
   type,
@@ -146,6 +153,7 @@ export function ServerDetail({
         serverUrl={serverUrl}
         serverHeaders={serverHeaders}
         tokenRequired={tokenRequired}
+        submissionId={submissionId}
       />
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">

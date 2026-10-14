@@ -15,6 +15,7 @@ import {
   deployMcp,
   getMcpMemberTokenConfig,
   issueMcpMemberToken,
+  issueMyMemberToken,
   listMcpMemberTokens,
   type McpMemberTokenList,
   type RegistryClassify,
@@ -547,3 +548,22 @@ export async function setVisibilityAction(formData: FormData) {
 }
 // （原 activateVersionAction 已随激活指针废弃移除——用户侧版本下拉自选已上架版本，
 //  目录默认展示"最新已上架版本"，不再维护激活指针。）
+
+// 自助签发（2026-10-14，D1/D2 修订）：登录用户为自己签发/轮换某 MCP 的成员 token。
+// 资格由后端 canAccessSubmission 判定（mode=all / 名单 / 组），签发即并入可见范围名单。
+// 供「复制配置」弹窗在 tokenRequired（未签发）时引导用户一键自签，成功后刷新页面，
+// mcp_headers 即携带个人 token，弹窗自动切换为可复制配置形态。
+export async function issueMyMemberTokenAction(id: string) {
+  try {
+    const res = await issueMyMemberToken(id);
+    revalidatePath("/admin");
+    revalidatePath("/catalog");
+    revalidatePath("/mcp/[ref]", "page");
+    return { ok: true as const, token: res.token, url: res.url, headers: res.headers, adopted: res.adopted };
+  } catch (e) {
+    return {
+      ok: false as const,
+      error: e instanceof Error ? e.message : String(e),
+    };
+  }
+}

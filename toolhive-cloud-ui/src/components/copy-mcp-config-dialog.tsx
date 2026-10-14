@@ -1,7 +1,8 @@
 "use client";
 
-import { Check, Clipboard, Copy, HelpCircle } from "lucide-react";
-import { type ComponentProps, useState } from "react";
+import { Check, Clipboard, Copy, HelpCircle, KeyRound } from "lucide-react";
+import { type ComponentProps, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -70,9 +71,12 @@ interface CopyMcpConfigDialogProps {
   size?: ButtonSize;
   className?: string;
   labelClassName?: string;
-  /** D1 成员视角（2026-10-13）：restricted 条目且当前用户未被签发成员 token 时为 true——
-   *  后端此时不下发 mcp_headers，弹窗改为提示「联系管理员签发」，而不是给出必然 403 的配置。 */
+  /** D1 成员视角（2026-10-13）：条目未为当前用户签发成员 token 时为 true——
+   *  后端此时不下发 mcp_headers，弹窗给出「自助签发」入口（2026-10-14 起不再要求联系管理员），
+   *  而不是给出必然 403 的配置。 */
   tokenRequired?: boolean;
+  /** 平台提交型 MCP 的 submission id：提供后 memberGate 分支展示「自助签发」按钮 */
+  submissionId?: string;
   /** 受控 open（可选）：Token 管理弹窗内复用本组件复制成员专属配置时由外部控制开关 */
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
@@ -93,13 +97,42 @@ export function CopyMcpConfigDialog({
   className,
   labelClassName,
   tokenRequired = false,
+  submissionId,
   open: controlledOpen,
   onOpenChange,
 }: CopyMcpConfigDialogProps) {
   const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
+  const [issuing, startIssuing] = useTransition();
+  const router = useRouter();
   const open = controlledOpen ?? uncontrolledOpen;
   const setOpen = onOpenChange ?? setUncontrolledOpen;
   const name = normalizeServerName(serverName);
+
+  // 自助签发：调 Server Action 为当前登录用户签发成员 token，成功后刷新——
+  // 服务端组件重取 mcp_headers（此时已携带个人 token），memberGate 自动解除。
+  function handleSelfIssue() {
+    if (!submissionId) return;
+    startIssuing(async () => {
+      try {
+        const { issueMyMemberTokenAction } = await import(
+          "@/app/(app)/submissions/actions"
+        );
+        const res = await issueMyMemberTokenAction(submissionId);
+        if (res.ok) {
+          toast.success(
+            res.adopted
+              ? "已签发你的专属访问 Token，配置已更新"
+              : "已轮换你的访问 Token，旧 Token 即刻失效，请重新复制配置",
+          );
+          router.refresh();
+        } else {
+          toast.error(res.error || "自助签发失败");
+        }
+      } catch {
+        toast.error("自助签发失败，请稍后重试");
+      }
+    });
+  }
 
   const workbuddy = buildWorkbuddyConfig(name, config);
   const claudeCode = buildClaudeCodeCommand(name, config);
@@ -134,20 +167,33 @@ export function CopyMcpConfigDialog({
           <DialogTitle>在客户端中接入「{serverName}」</DialogTitle>
           <DialogDescription>
             {memberGate
-              ? "该 MCP 为受限访问，尚未为你签发访问凭证。"
+              ? "尚未签发你的访问凭证，签发后即可复制配置。"
               : "复制下方配置粘贴到你的客户端配置文件中，即可使用该 MCP。"}
           </DialogDescription>
         </DialogHeader>
 
         {memberGate ? (
           <div className="rounded-md border border-warning/40 bg-warning/10 p-4 text-sm leading-6">
-            <p className="font-medium">需要管理员签发访问凭证</p>
+            <p className="font-medium">还没有你的专属访问 Token</p>
             <p className="mt-1 text-muted-foreground">
-              该 MCP 开启了成员级访问控制：每位成员使用独立
+              该 MCP 启用了成员级访问控制：每位成员使用独立
               Token，轮换或吊销只影响本人，不影响其他成员。
-              请联系管理员在「已发布管理 → Token
-              管理」中为你签发，签发后回到本页重新复制配置。
+              {submissionId
+                ? "点击下方按钮即可自助签发（资格即时校验），签发后本页直接展示可复制配置。"
+                : "请联系管理员在「已发布管理 → Token 管理」中为你签发，签发后回到本页重新复制配置。"}
             </p>
+            {submissionId && (
+              <Button
+                type="button"
+                size="sm"
+                className="mt-3 gap-1.5"
+                disabled={issuing}
+                onClick={handleSelfIssue}
+              >
+                <KeyRound className="size-4" />
+                {issuing ? "签发中…" : "自助签发我的 Token"}
+              </Button>
+            )}
           </div>
         ) : (
           <Tabs defaultValue="workbuddy">

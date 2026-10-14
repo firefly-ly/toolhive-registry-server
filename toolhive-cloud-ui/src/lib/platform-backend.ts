@@ -135,6 +135,25 @@ export async function setSubmissionVisibility(
   });
 }
 
+// 自助签发（2026-10-14，D1/D2 修订）：登录用户为自己签发/轮换某 MCP 的成员 token，
+// 资格由后端 canAccessSubmission 判定；签发即把成员并入可见范围名单。
+export async function issueMyMemberToken(
+  id: string,
+): Promise<{
+  ok: boolean;
+  id: string;
+  member: string;
+  token: string;
+  adopted: boolean;
+  url: string | null;
+  headers: { Authorization: string };
+}> {
+  return request(`/submissions/${id}/my-member-token`, {
+    method: "POST",
+    body: "{}",
+  });
+}
+
 export async function setSubmissionStatus(
   id: string,
   status: string,
