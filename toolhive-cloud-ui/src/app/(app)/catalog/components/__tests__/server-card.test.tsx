@@ -15,7 +15,7 @@ describe("ServerCard", () => {
   };
 
   it("display server information with name and description (grid)", () => {
-    render(<ServerCard server={mockServer} serverUrl="/servers/test-server" />);
+    render(<ServerCard server={mockServer} />);
 
     // 效果图 01 网格卡：标题 + 描述；作者并入「N 次调用 · 作者」行（仅列表形态展示）
     expect(screen.getByText("test-org/test-server")).toBeTruthy();
@@ -23,13 +23,7 @@ describe("ServerCard", () => {
   });
 
   it("shows author in the list layout meta line", () => {
-    render(
-      <ServerCard
-        server={mockServer}
-        serverUrl="/servers/test-server"
-        layout="list"
-      />,
-    );
+    render(<ServerCard server={mockServer} layout="list" />);
 
     expect(screen.getAllByText(/test-org/).length).toBeGreaterThan(0);
   });
@@ -50,18 +44,12 @@ describe("ServerCard", () => {
     expect(screen.getByText("暂无描述")).toBeTruthy();
   });
 
-  it("has 接入 (connect) button in list layout", () => {
-    // 效果图 01：网格卡去接入钮（保留查看）；列表形态保留「接入」弹出客户端接入配置
-    render(
-      <ServerCard
-        server={mockServer}
-        serverUrl="/servers/test-server"
-        layout="list"
-      />,
-    );
+  it("does not show 接入 (connect) button in list layout", () => {
+    // 2026-10-14 拍板：列表卡接入钮整体移除——registry 数据链无凭证字段，
+    // 受限条目从列表卡复制出的配置必然 403；接入统一收口到详情页。
+    render(<ServerCard server={mockServer} layout="list" />);
 
-    const callButton = screen.getAllByRole("button", { name: /接入/ })[0];
-    expect(callButton).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /接入/ })).toBeNull();
   });
 
   it("displays Virtual MCP badge for Virtual MCP servers", () => {

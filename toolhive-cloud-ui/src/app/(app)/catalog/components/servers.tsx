@@ -111,7 +111,6 @@ export function Servers({
             <ServerCard
               key={server.name}
               server={server}
-              serverUrl={server.remotes?.[0]?.url}
               favorited={favoritedRefs.includes(server.name ?? "")}
               callCount={callsByRef[server.name ?? ""] ?? 0}
               onClick={() => handleServerClick(server)}
@@ -141,7 +140,6 @@ export function Servers({
             <ServerCard
               key={server.name}
               server={server}
-              serverUrl={server.remotes?.[0]?.url}
               favorited={favoritedRefs.includes(server.name ?? "")}
               callCount={callsByRef[server.name ?? ""] ?? 0}
               onClick={() => handleServerClick(server)}

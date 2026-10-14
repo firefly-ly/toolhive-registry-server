@@ -1,7 +1,6 @@
 "use client";
 
 import { Star } from "lucide-react";
-import { CopyMcpConfigDialog } from "@/components/copy-mcp-config-dialog";
 import { CardCornerDeco, CardTypeTab, McpGlyph } from "@/components/type-glyph";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,7 +10,6 @@ import { isVirtualMCPServer } from "@/lib/utils";
 
 interface ServerCardProps {
   server: V0ServerJson;
-  serverUrl?: string;
   favorited?: boolean;
   callCount?: number;
   onClick?: () => void;
@@ -23,10 +21,11 @@ interface ServerCardProps {
  * Registry 上游 MCP 卡片（变体 B「色带横幅」）：
  * 卡顶一条 info 色横幅装符号 + 名称，下方白底描述与元信息行。
  * 列表视图换横向形态：6px 类型色左脊，标题行/描述/元信息顶格，操作列贴右。
+ * 接入入口统一收口到详情页（2026-10-14 拍板移除列表卡接入钮）：
+ * registry 数据链无凭证字段，受限条目从这里复制出的配置必然 403。
  */
 export function ServerCard({
   server,
-  serverUrl,
   favorited = false,
   callCount = 0,
   onClick,
@@ -98,14 +97,6 @@ export function ServerCard({
         </div>
         <div className="flex shrink-0 items-center gap-1.5 px-5">
           {starButton}
-          {serverUrl && (
-            <CopyMcpConfigDialog
-              serverName={server.title ?? name ?? ""}
-              config={{ url: serverUrl }}
-              triggerLabel="接入"
-              className="rounded-full"
-            />
-          )}
           <Button
             type="button"
             size="sm"
