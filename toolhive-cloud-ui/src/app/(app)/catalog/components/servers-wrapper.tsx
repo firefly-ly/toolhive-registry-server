@@ -7,7 +7,6 @@ import type {
   V0ServerJson,
 } from "@/generated/types.gen";
 import type { McpServer, Skill } from "@/lib/platform-backend";
-import { SkillCard } from "../../skills/skill-card";
 import { CATALOG_PAGE_SIZE } from "../constants";
 import { useAutofillPageSize } from "../hooks/use-autofill-page-size";
 import { useCatalogFilters } from "../hooks/use-catalog-filters";
@@ -84,9 +83,9 @@ export function ServersWrapper({
   } = useCatalogFilters();
 
   // 顶栏搜索（效果图 01：搜索在顶栏）→ /catalog?q= → 同步到本页搜索状态
+  // biome-ignore lint/correctness/useExhaustiveDependencies: 仅响应 URL 参数一次性同步，handleSearchChange 引用不稳定会循环
   useEffect(() => {
     if (qParam && qParam !== search) handleSearchChange(qParam);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [qParam]);
 
   // 类型筛选：IA 合并后目录一页承载 MCP + Skill

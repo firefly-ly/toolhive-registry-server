@@ -1,8 +1,8 @@
 "use client";
 
 import { Check, Clipboard, Copy, HelpCircle, KeyRound } from "lucide-react";
-import { type ComponentProps, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { type ComponentProps, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {

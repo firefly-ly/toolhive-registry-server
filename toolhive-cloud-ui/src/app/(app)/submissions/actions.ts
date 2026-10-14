@@ -559,7 +559,13 @@ export async function issueMyMemberTokenAction(id: string) {
     revalidatePath("/admin");
     revalidatePath("/catalog");
     revalidatePath("/mcp/[ref]", "page");
-    return { ok: true as const, token: res.token, url: res.url, headers: res.headers, adopted: res.adopted };
+    return {
+      ok: true as const,
+      token: res.token,
+      url: res.url,
+      headers: res.headers,
+      adopted: res.adopted,
+    };
   } catch (e) {
     return {
       ok: false as const,

@@ -236,10 +236,13 @@ export function CatalogHero({
 
       {/* ── 下层：精选带（左字形 + 内容，右切换 + 黑 CTA，底全宽进度条） ── */}
       {cur && (
+        /* biome-ignore lint/a11y/noStaticElementInteractions: 轮播悬停暂停为增强行为，键盘用户有 onFocus 等价与 CTA 入口 */
         <div
           className="anim-pop-d2 relative border-b-2 border-foreground"
           onMouseEnter={() => setPaused(true)}
           onMouseLeave={() => setPaused(false)}
+          onFocus={() => setPaused(true)}
+          onBlur={() => setPaused(false)}
         >
           <div className="flex items-center gap-6 py-6 pr-2">
             {/* 大几何字形：MCP=拱（同心） / Skill=圆（同心），中心琥珀点呼吸+涟漪 */}

@@ -39,6 +39,7 @@ export function ServerCard({
   const toggleFav = toggleFavoriteAction.bind(null, "mcp", itemRef, favorited);
 
   const starButton = (
+    /* biome-ignore lint/a11y/useKeyWithClickEvents: stopPropagation 阻止冒泡是刻意行为，星标按钮自身键盘可达 */
     <form action={toggleFav} onClick={(e) => e.stopPropagation()}>
       <Button
         type="submit"
@@ -61,7 +62,16 @@ export function ServerCard({
 
   if (layout === "list") {
     return (
+      /* biome-ignore lint/a11y/useSemanticElements: 卡片整体为点击区且内部含真实按钮，嵌套 button 非法 */
       <div
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (onClick && (e.key === "Enter" || e.key === " ")) {
+            e.preventDefault();
+            onClick();
+          }
+        }}
         className="card-hover flex w-full cursor-pointer items-stretch overflow-hidden rounded-xl border bg-card transition-colors"
         onClick={onClick ? () => onClick() : undefined}
       >
@@ -114,7 +124,16 @@ export function ServerCard({
   }
 
   return (
+    /* biome-ignore lint/a11y/useSemanticElements: 卡片整体为点击区且内部含真实按钮，嵌套 button 非法 */
     <div
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (onClick && (e.key === "Enter" || e.key === " ")) {
+          e.preventDefault();
+          onClick();
+        }
+      }}
       className="group relative flex h-full w-full cursor-pointer flex-col overflow-hidden bg-card px-6 pt-9 pb-5 transition-[background,transform] duration-150 [border-bottom-width:1.5px] [border-right-width:1.5px] border-border hover:-translate-y-[3px] hover:bg-muted/40"
       onClick={onClick ? () => onClick() : undefined}
     >

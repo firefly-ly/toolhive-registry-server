@@ -58,6 +58,7 @@ export function ServerFilters({
     <div className="flex w-full flex-wrap items-center justify-between gap-3">
       {/* 左：类型分段 + 状态/排序 + 数据源 */}
       <div className="flex min-w-0 flex-1 items-center gap-3">
+        {/* biome-ignore lint/a11y/useSemanticElements: fieldset 默认样式与 min-width 会破坏 flex 布局，div+role 已满足语义 */}
         <div
           role="group"
           aria-label="类型筛选"

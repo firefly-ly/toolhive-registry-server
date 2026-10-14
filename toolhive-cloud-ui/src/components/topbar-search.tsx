@@ -13,6 +13,7 @@ export function TopbarSearch() {
   const [q, setQ] = useState("");
 
   return (
+    // biome-ignore lint/a11y/useSemanticElements: form 的隐式提交语义（Enter 触发）不可用 <search> 等价替代
     <form
       role="search"
       onSubmit={(e) => {

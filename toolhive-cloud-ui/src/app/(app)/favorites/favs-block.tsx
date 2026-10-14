@@ -169,6 +169,7 @@ export function FavsBlock({
                   : "bg-muted-foreground/40";
               return (
                 <div
+                  // biome-ignore lint/suspicious/noArrayIndexKey: 同日同内容条目可能重复，index 兜底保证唯一
                   key={`${a.date}-${a.text}-${i}`}
                   className="flex items-start gap-3 border-b border-border py-3 last:border-b-0"
                 >

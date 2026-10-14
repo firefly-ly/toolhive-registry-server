@@ -31,6 +31,8 @@ function ScanMark({ status }: { status?: string }) {
   if (s === "clean") {
     return (
       <svg viewBox="0 0 26 26" className="size-6.5 shrink-0" aria-hidden>
+        <title>{s}</title>
+        <title>{s}</title>
         <circle
           cx="13"
           cy="13"
@@ -52,6 +54,8 @@ function ScanMark({ status }: { status?: string }) {
   if (s === "warn") {
     return (
       <svg viewBox="0 0 26 26" className="size-6.5 shrink-0" aria-hidden>
+        <title>{s}</title>
+        <title>{s}</title>
         <circle
           cx="13"
           cy="13"
@@ -72,6 +76,8 @@ function ScanMark({ status }: { status?: string }) {
   if (s === "alert" || s === "critical" || s === "error") {
     return (
       <svg viewBox="0 0 26 26" className="size-6.5 shrink-0" aria-hidden>
+        <title>{s}</title>
+        <title>{s}</title>
         <circle
           cx="13"
           cy="13"
@@ -91,6 +97,7 @@ function ScanMark({ status }: { status?: string }) {
   }
   return (
     <svg viewBox="0 0 26 26" className="size-6.5 shrink-0" aria-hidden>
+      <title>{s}</title>
       <circle
         cx="13"
         cy="13"
