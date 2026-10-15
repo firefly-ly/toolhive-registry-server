@@ -1,5 +1,9 @@
 "use client";
 
+// 审批弹窗主组件（自检整改重构③：面板拆分至 approve-dialog/ 子目录，本文件只做编排）。
+// 职责：状态机（idle/approving/rejecting）、两段式豁免勾选状态、通过/拒绝动作、弹窗编排。
+// 面板：ScanResultsPanel（安全扫描）/ DataSourcePanel（数据源声明）/ ScanBadge（共享徽章）。
+
 import { Download } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -19,163 +23,27 @@ import {
 import type { Submission } from "@/lib/platform-backend";
 import { cn } from "@/lib/utils";
 import { approveSubmissionAction, rejectSubmissionAction } from "./actions";
+import { DataSourcePanel } from "./approve-dialog/DataSourcePanel";
+import { ScanResultsPanel } from "./approve-dialog/ScanResultsPanel";
+import type {
+  DataSourceDecl,
+  PromptScanResult,
+  TrivyResult,
+} from "./approve-dialog/shared";
+import {
+  Field,
+  formatDate,
+  isPublicTarget,
+  parseMeta,
+} from "./approve-dialog/shared";
 
-function parseMeta(meta?: string): Record<string, unknown> {
-  try {
-    return meta ? (JSON.parse(meta) as Record<string, unknown>) : {};
-  } catch {
-    return {};
-  }
-}
-
-// 公网目标判定：私网/回环/本地域名返回 false，公网 IPv4 与域名返回 true（审批页标红）。
-// 域名无法静态判定解析范围，保守按公网处理，交由审批人人工确认。
-function isPublicTarget(t: string): boolean {
-  const host = t.replace(/:\d+$/, "").trim().toLowerCase();
-  if (!host) return false;
-  if (
-    host === "localhost" ||
-    host.endsWith(".local") ||
-    host.endsWith(".internal")
-  ) {
-    return false;
-  }
-  if (/^127\./.test(host)) return false;
-  if (/^10\./.test(host)) return false;
-  if (/^192\.168\./.test(host)) return false;
-  const m = host.match(/^172\.(\d+)\./);
-  if (m) {
-    const n = Number(m[1]);
-    return !(n >= 16 && n <= 31);
-  }
-  return true;
-}
-
-type ScanStatus =
-  | "clean"
-  | "warn"
-  | "critical"
-  | "alert"
-  | "error"
-  | "skipped"
-  | "scanning";
-
-export interface TrivyResult {
-  status: ScanStatus;
-  critical?: number;
-  high?: number;
-  secrets?: number;
-  summary?: { id: string; severity: string; pkg: string }[];
-  scanned_at?: string;
-  error?: string;
-}
-
-export interface PromptScanResult {
-  status: ScanStatus;
-  total?: number;
-  hits?: {
-    rule_id: string;
-    category: string;
-    severity: string;
-    file: string;
-    line: number;
-    excerpt: string;
-  }[];
-  scanned_at?: string;
-  error?: string;
-}
-
-// 扫描三态徽章：绿=clean/低危，黄=warn/等待，红=critical/alert/扫描失败，灰=skipped
-// 导出供管理页「指挥台」档案摘要复用（同一套状态→文案口径）
-export function ScanBadge({
-  label,
-  status,
-  extra,
-}: {
-  label: string;
-  status?: ScanStatus;
-  extra?: string;
-}) {
-  const s = status ?? "skipped";
-  // 色彩语义对齐全站纪律：绿=通过、琥珀=有提示、红=需人工/失败、灰=未扫描。
-  // clean 不用 default（实心品牌红）——「红=通过」与「红=危险」语义冲突。
-  const { variant, className, text } =
-    s === "clean"
-      ? {
-          variant: "outline" as const,
-          className: "border-success/40 bg-success/10 text-success",
-          text: "通过",
-        }
-      : s === "warn"
-        ? {
-            variant: "outline" as const,
-            className: "border-warning/40 bg-warning/10 text-warning",
-            text: "有提示",
-          }
-        : s === "critical" || s === "alert"
-          ? {
-              variant: "destructive" as const,
-              className: "",
-              text: "需人工确认",
-            }
-          : s === "error"
-            ? {
-                variant: "destructive" as const,
-                className: "",
-                text: "扫描失败",
-              }
-            : s === "scanning"
-              ? { variant: "outline" as const, className: "", text: "扫描中" }
-              : {
-                  variant: "secondary" as const,
-                  className: "",
-                  text: "未扫描",
-                };
-  return (
-    <span className="flex items-center gap-1.5">
-      <Badge
-        variant={variant}
-        className={className}
-      >{`${label}: ${text}`}</Badge>
-      {extra && <span className="text-xs text-muted-foreground">{extra}</span>}
-    </span>
-  );
-}
-
-function formatDate(iso?: string) {
-  if (!iso) return "—";
-  return new Date(iso).toLocaleString("zh-CN", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
-function Field({
-  label,
-  value,
-  mono,
-}: {
-  label: string;
-  value?: React.ReactNode;
-  mono?: boolean;
-}) {
-  return (
-    <div>
-      <p className="text-sm font-medium text-muted-foreground">{label}</p>
-      <p
-        className={cn(
-          "mt-1 break-words",
-          mono ? "font-mono text-sm" : "text-base",
-        )}
-      >
-        {value ?? "—"}
-      </p>
-    </div>
-  );
-}
+// 共享导出保持兼容：published-block / 指挥台档案摘要复用同一套徽章与类型
+export { ScanBadge } from "./approve-dialog/ScanBadge";
+export type {
+  PromptScanResult,
+  ScanStatus,
+  TrivyResult,
+} from "./approve-dialog/shared";
 
 export function ApproveDialog({
   submission,
@@ -226,11 +94,8 @@ export function ApproveDialog({
   // 两段式豁免：数据源声明（提交者填）展示 + 审批授权勾选（admin）
   const dataSource = useMemo(() => {
     const d = meta.data_source;
-    return d && typeof d === "object"
-      ? (d as { type?: string; targets?: string[]; note?: string })
-      : undefined;
+    return d && typeof d === "object" ? (d as DataSourceDecl) : undefined;
   }, [meta]);
-  const hasPublicTarget = (dataSource?.targets ?? []).some(isPublicTarget);
   const [confirmExempt, setConfirmExempt] = useState(false);
 
   // 扫描进行中自动轮询：每 5s 刷新一次服务端数据（router.refresh 重新拉取提交列表，
@@ -437,169 +302,20 @@ export function ApproveDialog({
           )}
 
           {/* 安全扫描结果（Trivy 漏洞/密钥 + SKILL.md 提示词注入规则） */}
-          <div className="space-y-3 rounded-xl border bg-muted/30 p-4">
-            <div className="flex flex-wrap items-center gap-2">
-              <p className="text-sm font-medium">安全扫描</p>
-              <ScanBadge
-                label="Trivy 漏洞"
-                status={trivy?.status}
-                extra={
-                  trivy
-                    ? `CRITICAL ${trivy.critical} · HIGH ${trivy.high} · 密钥 ${trivy.secrets}`
-                    : undefined
-                }
-              />
-              {!isMcp && (
-                <ScanBadge
-                  label="注入规则"
-                  status={promptScan?.status}
-                  extra={promptScan ? `命中 ${promptScan.total}` : undefined}
-                />
-              )}
-              {(trivy?.status === "scanning" ||
-                (!isMcp && promptScan?.status === "scanning")) && (
-                <span className="text-xs text-muted-foreground">
-                  扫描进行中，结果将自动刷新
-                </span>
-              )}
-            </div>
-
-            {needPromptConfirm && (promptScan?.hits?.length ?? 0) > 0 && (
-              <div className="max-h-48 overflow-y-auto rounded-lg border border-destructive/40 bg-destructive/5">
-                <table className="w-full text-left text-xs">
-                  <thead className="text-muted-foreground">
-                    <tr>
-                      <th className="px-2 py-1.5 font-medium">级别</th>
-                      <th className="px-2 py-1.5 font-medium">规则</th>
-                      <th className="px-2 py-1.5 font-medium">类别</th>
-                      <th className="px-2 py-1.5 font-medium">位置</th>
-                      <th className="px-2 py-1.5 font-medium">命中内容</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {(promptScan?.hits ?? []).map((h) => (
-                      <tr key={JSON.stringify(h)} className="border-t">
-                        <td className="px-2 py-1.5">
-                          <span
-                            className={cn(
-                              "rounded px-1.5 py-0.5 font-semibold",
-                              h.severity === "alert"
-                                ? "bg-destructive/15 text-destructive"
-                                : "bg-warning/15 text-warning",
-                            )}
-                          >
-                            {h.severity === "alert"
-                              ? "警报"
-                              : h.severity === "warn"
-                                ? "提示"
-                                : h.severity}
-                          </span>
-                        </td>
-                        <td className="px-2 py-1.5 font-mono">{h.rule_id}</td>
-                        <td className="px-2 py-1.5">{h.category}</td>
-                        <td className="px-2 py-1.5 font-mono">
-                          {h.file}:{h.line}
-                        </td>
-                        <td
-                          className="max-w-[280px] truncate px-2 py-1.5"
-                          title={h.excerpt}
-                        >
-                          {h.excerpt}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-
-            {(needScanOverride || needPromptConfirm) && (
-              <div className="space-y-2 rounded-lg border border-destructive/50 bg-destructive/5 p-3">
-                {needScanOverride && (
-                  <label className="flex items-start gap-2 text-sm">
-                    <input
-                      type="checkbox"
-                      className="mt-1"
-                      checked={confirmScan}
-                      onChange={(e) => setConfirmScan(e.target.checked)}
-                    />
-                    <span>
-                      Trivy 发现 <b>{trivy?.critical}</b> 个 CRITICAL 漏洞 /{" "}
-                      <b>{trivy?.secrets}</b> 处明文密钥。
-                      我已知晓风险，坚持放行该制品（此操作将记入审计轨迹）。
-                    </span>
-                  </label>
-                )}
-                {needPromptConfirm && (
-                  <label className="flex items-start gap-2 text-sm">
-                    <input
-                      type="checkbox"
-                      className="mt-1"
-                      checked={confirmPrompt}
-                      onChange={(e) => setConfirmPrompt(e.target.checked)}
-                    />
-                    <span>
-                      注入规则命中 <b>{promptScan?.total}</b>{" "}
-                      处。我已逐条人工审阅上述命中内容，确认无提示词注入风险（此操作将记入审计轨迹）。
-                    </span>
-                  </label>
-                )}
-              </div>
-            )}
-          </div>
+          <ScanResultsPanel
+            isMcp={isMcp}
+            trivy={trivy}
+            promptScan={promptScan}
+            needScanOverride={needScanOverride}
+            needPromptConfirm={needPromptConfirm}
+            confirmScan={confirmScan}
+            confirmPrompt={confirmPrompt}
+            setConfirmScan={setConfirmScan}
+            setConfirmPrompt={setConfirmPrompt}
+          />
 
           {/* 数据源声明（两段式豁免第 1 段）：提交者声明意图，公网目标标红供审批重点审查 */}
-          {isMcp && (
-            <div className="space-y-2 rounded-lg border bg-muted/30 p-3">
-              <p className="text-sm font-medium">数据源声明</p>
-              {!dataSource || dataSource.type === "none" ? (
-                <p className="text-xs text-muted-foreground">
-                  未声明外部数据源；若实际需要连库，请让提交者重新提交并补充声明。
-                </p>
-              ) : (
-                <div className="space-y-1.5 text-sm">
-                  <p>
-                    类型：
-                    {dataSource.type === "database"
-                      ? "数据库直连（隔离网内不可达，需解除隔离或改用中转）"
-                      : "HTTP API"}
-                  </p>
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    <span>目标：</span>
-                    {(dataSource.targets ?? []).length ? (
-                      (dataSource.targets ?? []).map((t) => (
-                        <span
-                          key={t}
-                          className={cn(
-                            "rounded px-1.5 py-0.5 font-mono text-xs",
-                            isPublicTarget(t)
-                              ? "bg-destructive/15 text-destructive"
-                              : "bg-muted",
-                          )}
-                        >
-                          {t}
-                        </span>
-                      ))
-                    ) : (
-                      <span className="text-xs text-muted-foreground">
-                        未填写
-                      </span>
-                    )}
-                  </div>
-                  {dataSource.note && (
-                    <p className="text-xs text-muted-foreground">
-                      用途：{dataSource.note}
-                    </p>
-                  )}
-                  {hasPublicTarget && (
-                    <p className="text-xs font-medium text-destructive">
-                      存在公网目标地址：解除隔离后容器可直连公网，与数据不出内网红线冲突，请谨慎确认。
-                    </p>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
+          {isMcp && <DataSourcePanel dataSource={dataSource} />}
 
           {/* 私密配置 .env：只展示键名清单，值在加密凭据库中，任何角色不可见 */}
           {isMcp &&
@@ -688,3 +404,6 @@ export function ApproveDialog({
     </Dialog>
   );
 }
+
+// hasPublicTarget 的单一实现（原内联 some 逻辑收敛，公网目标判定统一走 isPublicTarget）
+export { isPublicTarget };
