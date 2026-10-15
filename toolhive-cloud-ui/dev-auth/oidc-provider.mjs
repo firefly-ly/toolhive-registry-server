@@ -124,6 +124,14 @@ const configuration = {
 
 const oidc = new Provider(ISSUER, configuration);
 
+// Casdoor 路径兼容（2026-10-15）：Cloud UI 的 genericOAuth 按生产 Casdoor 路径拼
+// authorize URL（/login/oauth/authorize），而本 mock 的端点是 /auth——
+// 这里做一次路径改写，使 mock 与生产路径对齐，UI 无需区分。
+oidc.use(async (ctx, next) => {
+  if (ctx.path === "/login/oauth/authorize") ctx.path = "/auth";
+  await next();
+});
+
 // Simple interaction endpoint for dev - auto-login as test-user
 oidc.use(async (ctx, next) => {
   if (ctx.path.startsWith("/interaction/")) {
